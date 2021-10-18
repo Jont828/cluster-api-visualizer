@@ -4,17 +4,18 @@
       id="tree"
       :dataset="treeData"
       :config="treeConfig"
+      :collapse-enabled="false"
     >
       <template v-slot:node="{ node, collapsed }">
         <div
-          class="rich-media-node"
+          class="node"
           :style="{ border: collapsed ? '2px solid grey' : '' }"
         >
-          <!-- <img
-            :src="node.avatar"
-            style="width: 48px; height: 48px; border-raduis: 4px;"
-          /> -->
-          <span>{{ node.name }}</span>
+          <router-link :to="'/cluster/' + node.name">
+            <p>{{ node.name }}</p>
+          </router-link>
+          <p>{{ node.provider }}</p>
+          <p>{{ node.status }}</p>
         </div>
       </template>
     </vue-tree>
@@ -33,26 +34,31 @@ export default {
     return {
       treeData: {
         name: 'kind-capz',
-        value: 800,
+        provider: 'Local',
+        status: 'Provisioned',
         children: [
           {
-            name: 'default-27983',
-            value: 400,
+            name: 'default-1',
+            provider: 'Azure',
+            status: 'Provisioned',
             children: []
           },
           {
-            name: 'Smith',
-            value: 200,
+            name: 'public-cluster',
+            provider: 'Azure',
+            status: 'Provisioned',
             children: [
               {
-                name: 'S1',
-                value: 230,
+                name: 'private-cluster',
+                provider: 'Azure',
+                status: 'Provisioning',
               }
             ]
           },
           {
-            name: 'Jackson',
-            value: 300,
+            name: 'default-2',
+            provider: 'Azure',
+            status: 'Provisioned',
           }
         ]
       },
@@ -63,7 +69,7 @@ export default {
 }
 </script>
 
-<style scoped >
+<style>
 #tree {
   width: 80%;
   height: 80%;
@@ -77,16 +83,25 @@ export default {
   height: 100%;
 }
 
-.rich-media-node {
+.node-slot {
+  cursor: default !important;
+}
+
+.node {
   width: 150px;
   height: 150px;
   /* padding: 8px; */
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   color: #2c3e50;
   background-color: #DAE8FC;
   border-radius: 4px;
 }
+
+.node p {
+  margin: 6px;
+}
+
 </style>

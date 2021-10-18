@@ -1,19 +1,8 @@
 <template>
   <div id="app">
-    <Tree/>
+    <router-view/>
   </div>
 </template>
-
-<script>
-import Tree from './components/Tree.vue'
-
-export default {
-  name: 'App',
-  components: {
-    Tree
-  }
-}
-</script>
 
 <style>
 html, body {
