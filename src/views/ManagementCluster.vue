@@ -1,6 +1,7 @@
 <template>
+
   <div class="container">
-    <h1>Overview of Clusters</h1>
+    <h1>Management Cluster: {{ this.$route.params.id }}</h1>
     <vue-tree
       id="tree"
       :dataset="treeData"
@@ -13,21 +14,29 @@
           :style="{ border: collapsed ? '2px solid grey' : '' }"
         >
           <router-link :to="'/management-cluster/' + node.name">
-            <p>{{ node.name }}</p>
+            <span>{{ node.name }}</span>
           </router-link>
-          <p>{{ node.provider }}</p>
-          <p>{{ node.status }}</p>
+          <router-link
+            :to="'/target-cluster/' + node.name"
+            v-if="!node.children.length"
+          >
+            <span>Managed resources</span>
+          </router-link>
         </div>
       </template>
     </vue-tree>
+    <b-container>
+      <!-- <h1>Managed resources:</h1> -->
+    </b-container>
   </div>
+
 </template>
 
 <script>
 import VueTree from "@ssthouse/vue-tree-chart";
 
 export default {
-  name: "Tree",
+  name: "ManagementCluster",
   components: {
     VueTree,
   },
@@ -48,22 +57,17 @@ export default {
             name: "public-cluster",
             provider: "Azure",
             status: "Provisioned",
-            children: [
-              {
-                name: "private-cluster",
-                provider: "Azure",
-                status: "Provisioning",
-              },
-            ],
+            children: [],
           },
           {
             name: "default-2",
             provider: "Azure",
             status: "Provisioned",
+            children: [],
           },
         ],
       },
-      treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 },
+      treeConfig: { nodeWidth: 250, nodeHeight: 100, levelHeight: 250 },
       // treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 }
     };
   },
@@ -73,7 +77,7 @@ export default {
 <style scoped>
 #tree {
   width: 80%;
-  height: 80%;
+  height: 1000px;
   border: 1px solid black;
 }
 
@@ -89,8 +93,8 @@ export default {
 }
 
 .node {
-  width: 150px;
-  height: 150px;
+  width: 200px;
+  height: 120px;
   /* padding: 8px; */
   display: flex;
   flex-direction: column;
@@ -102,6 +106,6 @@ export default {
 }
 
 .node p {
-  margin: 6px;
+  margin: 2px;
 }
 </style>
