@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
-import ManagementCluster from '../views/ManagementCluster.vue'
 import TargetCluster from '../views/TargetCluster.vue'
 
 Vue.use(VueRouter)
@@ -11,12 +10,6 @@ const routes = [
     path: '/',
     name: 'Home',
     component: Home
-  },
-  {
-    path: '/management-cluster/:id',
-    name: 'ManagementCluster',
-    component: ManagementCluster,
-    props: true
   },
   {
     path: '/target-cluster/:id',

@@ -12,11 +12,20 @@
           class="node"
           :style="{ border: collapsed ? '2px solid grey' : '' }"
         >
-          <router-link :to="'/management-cluster/' + node.name">
-            <p>{{ node.name }}</p>
+          <p>{{ node.name }}</p>
+          <router-link
+            :to="'/target-cluster/' + node.name"
+            class="node-router-link"
+          >
+            <!-- v-if="!node.children.length" -->
+            <p>View Representation</p>
           </router-link>
-          <p>{{ node.provider }}</p>
-          <p>{{ node.status }}</p>
+          <router-link
+            :to="'/'"
+            class="node-router-link"
+          >
+            <p>View Cluster</p>
+          </router-link>
         </div>
       </template>
     </vue-tree>
@@ -36,34 +45,31 @@ export default {
       treeData: {
         name: "kind-capz",
         provider: "Local",
-        status: "Provisioned",
         children: [
           {
             name: "default-1",
             provider: "Azure",
-            status: "Provisioned",
             children: [],
           },
           {
             name: "public-cluster",
             provider: "Azure",
-            status: "Provisioned",
             children: [
               {
                 name: "private-cluster",
                 provider: "Azure",
-                status: "Provisioning",
+                children: [],
               },
             ],
           },
           {
             name: "default-2",
             provider: "Azure",
-            status: "Provisioned",
+            children: [],
           },
         ],
       },
-      treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 },
+      treeConfig: { nodeWidth: 250, nodeHeight: 80, levelHeight: 200 },
       // treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 }
     };
   },
@@ -89,19 +95,25 @@ export default {
 }
 
 .node {
-  width: 150px;
-  height: 150px;
+  width: 140px;
+  height: 80px;
   /* padding: 8px; */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #2c3e50;
   background-color: #dae8fc;
   border-radius: 4px;
 }
 
 .node p {
-  margin: 6px;
+  font-size: 12px;
+  margin: 2px;
+  color: #2c3e50;
+}
+
+.node-router-link {
+  text-decoration: none;
+  font-style: italic;
 }
 </style>
