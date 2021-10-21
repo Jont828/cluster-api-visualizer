@@ -63,27 +63,27 @@ export default {
         name: "",
         kind: "All Resources",
         id: "root",
-        category: "root",
+        category: "none",
         children: [
           {
             name: "crs-calico",
             kind: "ClusterResourceSets",
             id: "crsCalico",
-            category: "none",
+            category: "infra",
             children: [],
           },
           {
             name: "crs-calico-ipv6",
             kind: "ClusterResourceSets",
             id: "crsCalicoIpv6",
-            category: "none",
+            category: "infra",
             children: [],
           },
           {
             name: "flannel-windows",
             kind: "ClusterResourceSet",
             id: "flannelWindows",
-            category: "none",
+            category: "infra",
             children: [],
           },
           {
@@ -96,13 +96,13 @@ export default {
                 name: this.$route.params.id + "",
                 kind: "ClusterResourceSetBinding",
                 id: "clusterResourceSetBinding",
-                category: "none",
+                category: "infra",
                 children: [],
               },
               {
                 name: this.$route.params.id + "-control-plane",
-                kind: "KubeAdmCtrlPlane",
-                id: "kubeAdmCtrlPlane",
+                kind: "KubeadmCtrlPlane",
+                id: "kubeadmCtrlPlane",
                 category: "ctrlPlane",
                 children: [
                   {
@@ -120,8 +120,8 @@ export default {
                       },
                       {
                         name: this.$route.params.id + "-control-plane",
-                        kind: "KubeAdmConfig",
-                        id: "kubeAdmConfigCtrl",
+                        kind: "KubeadmConfig",
+                        id: "kubeadmConfigCtrl",
                         category: "ctrlPlane",
                         children: [],
                       },
@@ -145,9 +145,9 @@ export default {
               },
               {
                 name: this.$route.params.id + "-md",
-                kind: "KubeAdmConfigTemplate",
-                id: "kubeAdmConfigTemp",
-                category: "none",
+                kind: "KubeadmConfigTemplate",
+                id: "kubeadmConfigTemp",
+                category: "infra",
                 children: [],
               },
               {
@@ -184,8 +184,8 @@ export default {
                           },
                           {
                             name: this.$route.params.id + "-control-plane",
-                            kind: "KubeAdmConfig",
-                            id: "kubeAdmConfig1",
+                            kind: "KubeadmConfig",
+                            id: "kubeadmConfig1",
                             category: "worker",
                             children: [],
                           },
@@ -207,7 +207,7 @@ export default {
                           // {
                           //   name: "...",
                           // kind: "",
-                          //   id: "kubeAdmConfig2",
+                          //   id: "kubeadmConfig2",
                           //   category: "worker",
                           //   children: [],
                           // },
@@ -228,8 +228,8 @@ export default {
                           },
                           {
                             name: "default-3-control-plane",
-                            kind: "KubeAdmConfig",
-                            id: "kubeAdmConfig3",
+                            kind: "KubeadmConfig",
+                            id: "kubeadmConfig3",
                             category: "worker",
                             children: [],
                           },
@@ -245,19 +245,19 @@ export default {
             name: "cluster-identity",
             kind: "AzureClusterIdentity",
             id: "clusterIdentity",
-            category: "none",
+            category: "infra",
             children: [],
           },
         ],
         links: [
-          {
-            parent: "kubeAdmCtrlPlane",
-            child: "azureMachineCtrl",
-          },
-          {
-            parent: "kubeAdmCtrlPlane",
-            child: "kubeAdmConfigCtrl",
-          },
+          // {
+          //   parent: "kubeadmCtrlPlane",
+          //   child: "azureMachineCtrl",
+          // },
+          // {
+          //   parent: "kubeadmCtrlPlane",
+          //   child: "kubeadmConfigCtrl",
+          // },
           {
             parent: "crsCalico",
             child: "clusterResourceSetBinding",
