@@ -1,8 +1,8 @@
 <template>
-  <div class="container">
+  <div class="treeContainer">
     <h1>Overview of Clusters</h1>
     <vue-tree
-      id="tree"
+      id="overviewTree"
       :dataset="treeData"
       :config="treeConfig"
       :collapse-enabled="false"
@@ -76,14 +76,14 @@ export default {
 };
 </script>
 
-<style scoped>
-#tree {
+<style lang="less" scoped>
+#overviewTree {
   width: 80%;
   height: 80%;
   border: 1px solid black;
 }
 
-.container {
+.treeContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -104,12 +104,12 @@ export default {
   justify-content: center;
   background-color: #dae8fc;
   border-radius: 4px;
-}
 
-.node p {
-  font-size: 12px;
-  margin: 2px;
-  color: #2c3e50;
+  p {
+    font-size: 12px;
+    margin: 2px;
+    color: #2c3e50;
+  }
 }
 
 .node-router-link {

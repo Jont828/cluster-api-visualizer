@@ -1,8 +1,8 @@
 <template>
-  <div class="container">
+  <div class="treeContainer">
     <h1>Cluster Resource Ownership: {{ this.$route.params.id }}</h1>
     <vue-tree
-      id="tree"
+      id="resourceTree"
       :dataset="treeData"
       :config="treeConfig"
       :collapse-enabled="false"
@@ -14,7 +14,6 @@
           :style="{ 
             'background-color': colors[node.provider], 
             border: collapsed ? '2px solid grey' : '',
-            stroke: 'black'
           }"
         >
           <router-link
@@ -298,14 +297,14 @@ export default {
 };
 </script>
 
-<style scoped>
-#tree {
+<style lang="less" scoped>
+#resourceTree {
   width: 100%;
   height: 800px;
   border: 1px solid black;
 }
 
-.container {
+.treeContainer {
   height: 100%;
   width: 100%;
   max-width: 100%;
@@ -317,7 +316,7 @@ export default {
 }
 
 .node {
-  width: 130px;
+  width: 140px;
   height: 40px;
   /* padding: 8px; */
   display: flex;
@@ -326,32 +325,36 @@ export default {
   justify-content: center;
   background-color: #dae8fc;
   border-radius: 4px;
-}
 
-.node p {
-  font-size: 10px;
-  margin: 2px;
-  color: #2c3e50;
-}
+  p {
+    font-size: 10px;
+    margin: 2px;
+    color: #2c3e50;
+  }
 
-.node .node-router-link {
-  text-decoration: none;
-}
+  .node-router-link {
+    text-decoration: none;
+  }
 
-.name {
-  font-style: italic;
+  .name {
+    font-style: italic;
+  }
+
+  .kind {
+    font-size: 12px;
+  }
 }
 
 .legend-entry {
   display: inline-block;
   margin-right: 10px;
-}
 
-.legend-entry div {
-  display: inline-block;
-  border: 1px solid black;
-  margin: 0 5px;
-  width: 12px;
-  height: 12px;
+  div {
+    display: inline-block;
+    border: 1px solid black;
+    margin: 0 5px;
+    width: 12px;
+    height: 12px;
+  }
 }
 </style>
