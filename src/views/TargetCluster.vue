@@ -7,8 +7,13 @@
       :config="treeConfig"
       :collapse-enabled="false"
     >
-      <!-- <template v-slot:node="{ node }"> -->
       <template v-slot:node="{ node, collapsed }">
+        <div
+          class="machine"
+          v-if="node.id == 'machine1'"
+        >
+          <span>3x</span>
+        </div>
         <div
           class="node"
           :style="{ 
@@ -42,7 +47,8 @@
 </template>
 
 <script>
-import VueTree from "@ssthouse/vue-tree-chart";
+import VueTree from "./VueTree.vue";
+// import VueTree from "@ssthouse/vue-tree-chart";
 
 export default {
   name: "TargetCluster",
@@ -53,10 +59,11 @@ export default {
   data() {
     return {
       colors: {
-        bootstrap: "#FFF2CC",
-        capi: "#DAE3F3",
-        infra: "#E2F0D9",
-        addons: "#FBE5D6",
+        bootstrap: "#ffdf7d",
+        capi: "#a8c8ff",
+        ctrlPlane: "#daadf0",
+        infra: "#bbf895",
+        addons: "#ffb786",
         none: "#D0CECE",
       },
       treeData: {
@@ -96,7 +103,7 @@ export default {
                 name: this.$route.params.id,
                 kind: "Cluster",
                 id: "capi",
-                provider: "cluster",
+                provider: "capi",
                 children: [
                   {
                     name: this.$route.params.id + "",
@@ -139,7 +146,7 @@ export default {
             children: [
               {
                 name: this.$route.params.id + "-control-plane",
-                kind: "KubeadmCtrlPlane",
+                kind: "KubeadmControlPlane",
                 id: "kubeadmCtrlPlane",
                 provider: "ctrlPlane",
                 children: [
@@ -223,50 +230,6 @@ export default {
                           },
                         ],
                       },
-                      {
-                        name: "... (3x)",
-                        kind: "",
-                        id: "machine2",
-                        provider: "capi",
-                        children: [
-                          // {
-                          //   name: "...",
-                          // kind: "",
-                          //   id: "azureMachine2",
-                          //   provider: "worker",
-                          //   children: [],
-                          // },
-                          // {
-                          //   name: "...",
-                          // kind: "",
-                          //   id: "kubeadmConfig2",
-                          //   provider: "worker",
-                          //   children: [],
-                          // },
-                        ],
-                      },
-                      {
-                        name: this.$route.params.id + "-md-3",
-                        kind: "Machine",
-                        id: "machine3",
-                        provider: "capi",
-                        children: [
-                          {
-                            name: this.$route.params.id + "-md-3",
-                            kind: "AzureMachine",
-                            id: "azureMachine3",
-                            provider: "infra",
-                            children: [],
-                          },
-                          {
-                            name: "default-3-control-plane",
-                            kind: "KubeadmConfig",
-                            id: "kubeadmConfig3",
-                            provider: "bootstrap",
-                            children: [],
-                          },
-                        ],
-                      },
                     ],
                   },
                 ],
@@ -290,7 +253,7 @@ export default {
         ],
         identifier: "id",
       },
-      treeConfig: { nodeWidth: 150, nodeHeight: 40, levelHeight: 100 },
+      treeConfig: { nodeWidth: 160, nodeHeight: 40, levelHeight: 100 },
       // treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 }
     };
   },
@@ -316,15 +279,15 @@ export default {
 }
 
 .node {
-  width: 140px;
+  width: 150px;
   height: 40px;
-  /* padding: 8px; */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   background-color: #dae8fc;
   border-radius: 4px;
+  box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.3);
 
   p {
     font-size: 10px;
@@ -355,6 +318,22 @@ export default {
     margin: 0 5px;
     width: 12px;
     height: 12px;
+  }
+}
+
+.machine {
+  position: absolute;
+  transform: translate(0, 55px);
+  width: 375px;
+  height: 220px;
+  border: 3px solid #a8c8ff;
+  box-shadow: 3px 4px 3px rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+
+  span {
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
   }
 }
 </style>
