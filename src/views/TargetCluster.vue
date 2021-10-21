@@ -12,8 +12,9 @@
         <div
           class="node"
           :style="{ 
-            'background-color': colors[node.category], 
-            border: collapsed ? '2px solid grey' : '' 
+            'background-color': colors[node.provider], 
+            border: collapsed ? '2px solid grey' : '',
+            stroke: 'black'
           }"
         >
           <router-link
@@ -29,13 +30,13 @@
     <div class="legend">
       <div
         class="legend-entry"
-        v-for="(color, category) in this.colors"
-        :key="category"
+        v-for="(color, provider) in this.colors"
+        :key="provider"
       >
         <div :style="{
           'background-color': color
         }" />
-        <span>{{ category }}</span>
+        <span>{{ provider }}</span>
       </div>
     </div>
   </div>
@@ -53,76 +54,114 @@ export default {
   data() {
     return {
       colors: {
-        root: "#FFF2CC",
-        infra: "#FBE5D6",
-        ctrlPlane: "#DAE3F3",
-        worker: "#E2F0D9",
+        bootstrap: "#FFF2CC",
+        capi: "#DAE3F3",
+        infra: "#E2F0D9",
+        addons: "#FBE5D6",
         none: "#D0CECE",
       },
       treeData: {
         name: "",
         kind: "All Resources",
         id: "root",
-        category: "none",
+        provider: "none",
         children: [
           {
-            name: "crs-calico",
-            kind: "ClusterResourceSets",
-            id: "crsCalico",
-            category: "infra",
-            children: [],
-          },
-          {
-            name: "crs-calico-ipv6",
-            kind: "ClusterResourceSets",
-            id: "crsCalicoIpv6",
-            category: "infra",
-            children: [],
-          },
-          {
-            name: "flannel-windows",
-            kind: "ClusterResourceSet",
-            id: "flannelWindows",
-            category: "infra",
-            children: [],
-          },
-          {
-            name: this.$route.params.id,
-            kind: "Cluster",
-            id: "cluster",
-            category: "infra",
+            name: "",
+            kind: "ClusterInfrastructure",
+            id: "clusterInfra",
+            provider: "none",
             children: [
               {
-                name: this.$route.params.id + "",
-                kind: "ClusterResourceSetBinding",
-                id: "clusterResourceSetBinding",
-                category: "infra",
+                name: "crs-calico",
+                kind: "ClusterResourceSets",
+                id: "crsCalico",
+                provider: "addons",
                 children: [],
               },
+              {
+                name: "crs-calico-ipv6",
+                kind: "ClusterResourceSets",
+                id: "crsCalicoIpv6",
+                provider: "addons",
+                children: [],
+              },
+              {
+                name: "flannel-windows",
+                kind: "ClusterResourceSet",
+                id: "flannelWindows",
+                provider: "addons",
+                children: [],
+              },
+              {
+                name: this.$route.params.id,
+                kind: "Cluster",
+                id: "capi",
+                provider: "cluster",
+                children: [
+                  {
+                    name: this.$route.params.id + "",
+                    kind: "ClusterResourceSetBinding",
+                    id: "clusterResourceSetBinding",
+                    provider: "addons",
+                    children: [],
+                  },
+
+                  {
+                    name: this.$route.params.id + "",
+                    kind: "AzureCluster",
+                    id: "azureCluster",
+                    provider: "infra",
+                    children: [],
+                  },
+                  {
+                    name: this.$route.params.id + "-md",
+                    kind: "KubeadmConfigTemplate",
+                    id: "kubeadmConfigTemp",
+                    provider: "bootstrap",
+                    children: [],
+                  },
+                ],
+              },
+              {
+                name: "cluster-identity",
+                kind: "AzureClusterIdentity",
+                id: "clusterIdentity",
+                provider: "infra",
+                children: [],
+              },
+            ],
+          },
+          {
+            name: "",
+            kind: "ControlPlane",
+            id: "controlPlane",
+            provider: "none",
+            children: [
               {
                 name: this.$route.params.id + "-control-plane",
                 kind: "KubeadmCtrlPlane",
                 id: "kubeadmCtrlPlane",
-                category: "ctrlPlane",
+                provider: "ctrlPlane",
                 children: [
                   {
                     name: this.$route.params.id + "-control-plane",
                     kind: "Machine",
                     id: "machineCtrlPlane",
-                    category: "ctrlPlane",
+                    provider: "capi",
                     children: [
                       {
                         name: this.$route.params.id + "-control-plane",
                         kind: "AzureMachine",
                         id: "azureMachineCtrl",
-                        category: "ctrlPlane",
+                        provider: "infra",
                         children: [],
                       },
                       {
                         name: this.$route.params.id + "-control-plane",
                         kind: "KubeadmConfig",
                         id: "kubeadmConfigCtrl",
-                        category: "ctrlPlane",
+                        provider: "bootstrap",
                         children: [],
                       },
                     ],
@@ -133,60 +172,54 @@ export default {
                 name: this.$route.params.id + "-control-plane",
                 kind: "AzureMachineTemplate",
                 id: "azureMachineTemplateCtrl",
-                category: "ctrlPlane",
+                provider: "infra",
                 children: [],
               },
-              {
-                name: this.$route.params.id + "",
-                kind: "AzureCluster",
-                id: "azureCluster",
-                category: "infra",
-                children: [],
-              },
-              {
-                name: this.$route.params.id + "-md",
-                kind: "KubeadmConfigTemplate",
-                id: "kubeadmConfigTemp",
-                category: "infra",
-                children: [],
-              },
+            ],
+          },
+          {
+            name: "",
+            kind: "Workers",
+            id: "workers",
+            provider: "none",
+            children: [
               {
                 name: this.$route.params.id + "-control-plane",
                 kind: "AzureMachineTemp",
                 id: "azureMachineTempMd",
-                category: "worker",
+                provider: "infra",
                 children: [],
               },
               {
                 name: this.$route.params.id + "-md",
                 kind: "MachineDeployment",
                 id: "machineDeployment",
-                category: "worker",
+                provider: "capi",
                 children: [
                   {
                     name: this.$route.params.id + "",
                     kind: "MachineSet",
                     id: "machineSet",
-                    category: "worker",
+                    provider: "capi",
                     children: [
                       {
                         name: this.$route.params.id + "-md-1",
                         kind: "Machine",
                         id: "machine1",
-                        category: "worker",
+                        provider: "capi",
                         children: [
                           {
                             name: this.$route.params.id + "-md-1",
                             kind: "AzureMachine",
                             id: "azureMachine1",
-                            category: "worker",
+                            provider: "infra",
                             children: [],
                           },
                           {
                             name: this.$route.params.id + "-control-plane",
                             kind: "KubeadmConfig",
                             id: "kubeadmConfig1",
-                            category: "worker",
+                            provider: "bootstrap",
                             children: [],
                           },
                         ],
@@ -195,20 +228,20 @@ export default {
                         name: "... (3x)",
                         kind: "",
                         id: "machine2",
-                        category: "worker",
+                        provider: "capi",
                         children: [
                           // {
                           //   name: "...",
                           // kind: "",
                           //   id: "azureMachine2",
-                          //   category: "worker",
+                          //   provider: "worker",
                           //   children: [],
                           // },
                           // {
                           //   name: "...",
                           // kind: "",
                           //   id: "kubeadmConfig2",
-                          //   category: "worker",
+                          //   provider: "worker",
                           //   children: [],
                           // },
                         ],
@@ -217,20 +250,20 @@ export default {
                         name: this.$route.params.id + "-md-3",
                         kind: "Machine",
                         id: "machine3",
-                        category: "worker",
+                        provider: "capi",
                         children: [
                           {
                             name: this.$route.params.id + "-md-3",
                             kind: "AzureMachine",
                             id: "azureMachine3",
-                            category: "worker",
+                            provider: "infra",
                             children: [],
                           },
                           {
                             name: "default-3-control-plane",
                             kind: "KubeadmConfig",
                             id: "kubeadmConfig3",
-                            category: "worker",
+                            provider: "bootstrap",
                             children: [],
                           },
                         ],
@@ -240,13 +273,6 @@ export default {
                 ],
               },
             ],
-          },
-          {
-            name: "cluster-identity",
-            kind: "AzureClusterIdentity",
-            id: "clusterIdentity",
-            category: "infra",
-            children: [],
           },
         ],
         links: [
