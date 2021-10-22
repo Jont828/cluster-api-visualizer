@@ -23,7 +23,6 @@
     "vuetify": "^2.5.10"
   },
   "devDependencies": {
-    "@ssthouse/vue-tree-chart": "^0.5.4",
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-service": "~4.5.0",

@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import VueTree from "./VueTree.vue";
+import VueTree from "../components/VueTree.vue";
 // import AzureCluster from "../assets/yaml/default/azurecluster.yaml";
 
 import yaml from "js-yaml";
@@ -287,9 +287,46 @@ export default {
           },
         ],
         links: [
+          {
+            parent: "machine1",
+            child: "azureMachine1",
+            styles: {
+              "stroke-width": "4px",
+              stroke: "#555",
+            },
+          },
+          {
+            parent: "machineCtrlPlane",
+            child: "azureMachineCtrl",
+            styles: {
+              "stroke-width": "4px",
+              stroke: "#555",
+            },
+          },
+          // {
+          //   parent: "cluster",
+          //   child: "clusterInfra",
+          //   styles: {
+          //     "stroke-width": "4px",
+          //     stroke: "#555",
+          //   },
+          // },
+          {
+            parent: "clusterInfra",
+            child: "azureCluster",
+            styles: {
+              "stroke-width": "4px",
+              stroke: "#555",
+            },
+          },
           // {
           //   parent: "azureCluster",
           //   child: "clusterResourceSetBinding",
+          //   styles: {
+          //     "stroke-width": "4px",
+          //     "stroke-dasharray": "5",
+          //     stroke: "#000",
+          //   },
           // },
         ],
         identifier: "id",

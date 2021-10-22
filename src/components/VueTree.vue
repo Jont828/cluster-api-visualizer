@@ -321,12 +321,11 @@ export default {
       linkDataList = linkDataList.filter(
         (x) => x.source.data.name !== "__invisible_root"
       );
-      console.log("Got links");
-      console.log(linkDataList);
       this.linkDataList = linkDataList;
       this.nodeDataList = nodeDataList;
       const identifier = this.dataset["identifier"];
       const specialLinks = this.dataset["links"];
+
       if (specialLinks && identifier) {
         for (const link of specialLinks) {
           let parent,
@@ -348,10 +347,13 @@ export default {
           }
           if (parent && children) {
             for (const child of children) {
-              const new_link = {
-                source: parent,
-                target: child,
-              };
+              const new_link = Object.assign(
+                {
+                  source: parent,
+                  target: child,
+                },
+                link.styles
+              );
               this.linkDataList.push(new_link);
             }
           }
@@ -373,6 +375,11 @@ export default {
         .duration(ANIMATION_DURATION)
         .ease(d3.easeCubicInOut)
         .style("opacity", 1)
+        .style("stroke", (d, i) => d.stroke)
+        .style("stroke-width", (d, i) => d["stroke-width"])
+        .style("stroke-dashoffset", (d, i) => d["stroke-dashoffset"])
+        .style("stroke-dasharray", (d, i) => d["stroke-dasharray"])
+        .style("stroke-linecap", (d, i) => d["stroke-linecap"])
         .attr("class", "link")
         .attr("d", function (d, i) {
           return self.generateLinkPath(d);
@@ -496,13 +503,13 @@ export default {
 <style lang="less">
 .tree-container {
   .node {
-    fill: grey !important;
+    fill: grey;
   }
 
   .link {
-    stroke-width: 2px !important;
-    fill: transparent !important;
-    stroke: #999 !important;
+    stroke-width: 2px;
+    fill: transparent;
+    stroke: #999;
   }
 }
 </style>

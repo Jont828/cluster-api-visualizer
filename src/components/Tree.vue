@@ -16,16 +16,16 @@
           <router-link
             :to="'/target-cluster/' + node.name"
             class="node-router-link"
+            v-if="!node.isRoot"
           >
-            <!-- v-if="!node.children.length" -->
             <p>View Representation</p>
           </router-link>
-          <router-link
+          <!-- <router-link
             :to="'/'"
             class="node-router-link"
           >
             <p>View Cluster</p>
-          </router-link>
+          </router-link> -->
         </div>
       </template>
     </vue-tree>
@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import VueTree from "@ssthouse/vue-tree-chart";
+import VueTree from "./VueTree.vue";
 
 export default {
   name: "Tree",
@@ -44,6 +44,7 @@ export default {
     return {
       treeData: {
         name: "kind-capz",
+        isRoot: true,
         provider: "Local",
         children: [
           {
@@ -95,8 +96,9 @@ export default {
 }
 
 .node {
+  cursor: default !important;
   width: 140px;
-  height: 80px;
+  height: 60px;
   /* padding: 8px; */
   display: flex;
   flex-direction: column;
@@ -104,6 +106,7 @@ export default {
   justify-content: center;
   background-color: #a8c8ff;
   border-radius: 4px;
+  box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.3);
 
   p {
     font-size: 12px;
