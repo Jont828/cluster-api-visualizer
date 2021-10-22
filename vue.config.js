@@ -4,5 +4,9 @@ module.exports = {
     module: {
       rules: [{ test: /\.yaml$/, use: 'raw-loader' }],
     },
-  }
+  },
+
+  transpileDependencies: [
+    'vuetify'
+  ]
 }
