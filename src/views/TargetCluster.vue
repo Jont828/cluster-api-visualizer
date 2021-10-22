@@ -5,19 +5,19 @@
       id="resourceTree"
       :dataset="treeData"
       :config="treeConfig"
-      :collapse-enabled="false"
+      :collapse-enabled="true"
     >
       <template v-slot:node="{ node, collapsed }">
         <div
           class="machine"
           v-if="node.id == 'machine1'"
         >
-          <span>3x</span>
+          <span>x2</span>
         </div>
         <div
           class="node"
           :style="{ 
-            'background-color': colors[node.provider], 
+            'background-color': legend[node.provider].color, 
             border: collapsed ? '2px solid grey' : '',
           }"
           v-on:click="selectNode(node)"
@@ -27,7 +27,18 @@
             class="node-router-link"
           > -->
           <p class="kind">{{ node.kind }}</p>
-          <p class="name">{{ node.name }}</p>
+          <p
+            class="name"
+            v-if="node.name"
+          >{{ node.name }}</p>
+          <p
+            class="chevron"
+            v-else-if="collapsed"
+          >&#9660;</p>
+          <p
+            class="chevron"
+            v-else
+          >&#9650;</p>
           <!-- </router-link> -->
         </div>
       </template>
@@ -35,25 +46,37 @@
     <div class="legend">
       <div
         class="legend-entry"
-        v-for="(color, provider) in this.colors"
+        v-for="(entry, provider) in this.legend"
         :key="provider"
       >
         <div :style="{
-          'background-color': color
+          'background-color': entry.color
         }" />
-        <span>{{ provider }}</span>
+        <span>{{ entry.name }}</span>
       </div>
     </div>
-    <div>
-      <p>Name: {{ selected.name }}</p>
-      <p>ID: {{ selected.id }}</p>
+    <div
+      class="left"
+      v-if="selected.name"
+    >
+      <h1>Resource: {{ selected.kind }}/{{ selected.name }} </h1>
+      <p>{{ selected.name }} is ...</p>
+      <!-- <ul
+        v-for="(value, key) in this.crd"
+        :key="key"
+      >
+        <li>{{ key }}: {{ value }}</li>
+      </ul> -->
     </div>
   </div>
 </template>
 
 <script>
 import VueTree from "./VueTree.vue";
-// import VueTree from "@ssthouse/vue-tree-chart";
+// import AzureCluster from "../assets/yaml/default/azurecluster.yaml";
+
+import yaml from "js-yaml";
+// import VueTree from '@ssthouse/vue-tree-chart';
 
 export default {
   name: "TargetCluster",
@@ -62,23 +85,40 @@ export default {
   },
   methods: {
     selectNode(node) {
-      console.log("Got " + node.name + " (" + node.id + ")");
       this.selected = node;
-      console.log(
-        "Selected " + this.selected.name + " (" + this.selected.id + ")"
-      );
+      // this.crd = yaml.load(AzureCluster);
+      // console.log(this.crd);
     },
   },
   data() {
     return {
+      crd: "",
       selected: {},
-      colors: {
-        bootstrap: "#ffdf7d",
-        capi: "#a8c8ff",
-        ctrlPlane: "#daadf0",
-        infra: "#bbf895",
-        addons: "#ffb786",
-        none: "#D0CECE",
+      legend: {
+        bootstrap: {
+          name: "Bootstrap Provider (Kubeadm)",
+          color: "#ffdf7d",
+        },
+        ctrlPlane: {
+          name: "Control Plane (Kubeadm)",
+          color: "#daadf0",
+        },
+        infra: {
+          name: "Infrastructure (Azure)",
+          color: "#bbf895",
+        },
+        capi: {
+          name: "Cluster API",
+          color: "#a8c8ff",
+        },
+        addons: {
+          name: "Addons",
+          color: "#ffb786",
+        },
+        "": {
+          name: "None",
+          color: "#D0CECE",
+        },
       },
       treeData: {
         name: this.$route.params.id,
@@ -90,7 +130,8 @@ export default {
             name: "",
             kind: "ClusterInfrastructure",
             id: "clusterInfra",
-            provider: "none",
+            provider: "",
+            collapsable: true,
             children: [
               {
                 name: "crs-calico",
@@ -148,7 +189,8 @@ export default {
             name: "",
             kind: "ControlPlane",
             id: "controlPlane",
-            provider: "none",
+            provider: "",
+            collapsable: true,
             children: [
               {
                 name: this.$route.params.id + "-control-plane",
@@ -193,11 +235,12 @@ export default {
             name: "",
             kind: "Workers",
             id: "workers",
-            provider: "none",
+            provider: "",
+            collapsable: true,
             children: [
               {
                 name: this.$route.params.id + "-control-plane",
-                kind: "AzureMachineTemp",
+                kind: "AzureMachineTemplate",
                 id: "azureMachineTempMd",
                 provider: "infra",
                 children: [],
@@ -245,7 +288,7 @@ export default {
         ],
         links: [
           // {
-          //   parent: "crsCalico",
+          //   parent: "azureCluster",
           //   child: "clusterResourceSetBinding",
           // },
         ],
@@ -293,6 +336,10 @@ export default {
     color: #2c3e50;
   }
 
+  p.chevron {
+    margin: 0;
+  }
+
   .node-router-link {
     text-decoration: none;
   }
@@ -333,5 +380,9 @@ export default {
     bottom: 5px;
     right: 10px;
   }
+}
+
+.left {
+  text-align: left;
 }
 </style>

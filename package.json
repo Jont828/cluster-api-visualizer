@@ -13,7 +13,9 @@
     "core-js": "^3.6.5",
     "css-loader": "^6.4.0",
     "d3": "^7.1.1",
+    "js-yaml": "^4.1.0",
     "less-loader": "^10.1.0",
+    "raw-loader": "^4.0.2",
     "sass-loader": "^10.1.1",
     "vnodes": "^1.1.9",
     "vue": "^2.6.11",
@@ -28,9 +30,9 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",
-    "vue-template-compiler": "^2.6.11",
     "less": "^4.1.1",
-    "less-loader": "7.3.0"
+    "less-loader": "7.3.0",
+    "vue-template-compiler": "^2.6.11"
   },
   "eslintConfig": {
     "root": true,

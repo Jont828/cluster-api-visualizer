@@ -321,6 +321,8 @@ export default {
       linkDataList = linkDataList.filter(
         (x) => x.source.data.name !== "__invisible_root"
       );
+      console.log("Got links");
+      console.log(linkDataList);
       this.linkDataList = linkDataList;
       this.nodeDataList = nodeDataList;
       const identifier = this.dataset["identifier"];
@@ -450,6 +452,8 @@ export default {
     onClickNode(index) {
       if (this.collapseEnabled) {
         const curNode = this.nodeDataList[index];
+        if (!curNode.data.collapsable) return;
+
         if (curNode.data.children) {
           curNode.data._children = curNode.data.children;
           curNode.data.children = null;

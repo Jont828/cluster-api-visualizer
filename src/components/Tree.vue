@@ -102,7 +102,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #dae8fc;
+  background-color: #a8c8ff;
   border-radius: 4px;
 
   p {
