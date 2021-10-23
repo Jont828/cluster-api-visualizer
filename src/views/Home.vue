@@ -1,14 +1,14 @@
 <template>
-  <Tree/>
+  <Tree />
 </template>
 
 <script>
-import Tree from '../components/Tree.vue'
+import Tree from "../components/Tree.vue";
 
 export default {
-  name: 'Home',
+  name: "Home",
   components: {
-    Tree
-  }
-}
+    Tree,
+  },
+};
 </script>
