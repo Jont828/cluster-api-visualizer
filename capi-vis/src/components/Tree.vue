@@ -5,6 +5,7 @@
       :dataset="treeData"
       :config="treeConfig"
       :collapse-enabled="false"
+      v-if="treeIsReady"
     >
       <template v-slot:node="{ node, collapsed }">
         <router-link
@@ -40,44 +41,32 @@
 
 <script>
 import VueTree from "./VueTree.vue";
-
-import colors from "vuetify/lib/util/colors";
+import { getClusterOverview } from "../services/Service.js";
 
 export default {
   name: "Tree",
   components: {
     VueTree,
   },
+  methods: {
+    async fetchOverview() {
+      try {
+        const response = await getClusterOverview();
+        this.treeData = response;
+        this.treeIsReady = true;
+      } catch (error) {
+        console.log("Error fetching cluster overview");
+        console.log(error);
+      }
+    },
+  },
+  async beforeMount() {
+    await this.fetchOverview();
+  },
   data() {
     return {
-      treeData: {
-        name: "kind-capz",
-        isRoot: true,
-        icon: "kubernetes",
-        children: [
-          {
-            name: "default-1",
-            icon: "microsoft-azure",
-            children: [],
-          },
-          {
-            name: "public-cluster",
-            icon: "microsoft-azure",
-            children: [
-              {
-                name: "private-cluster",
-                icon: "microsoft-azure",
-                children: [],
-              },
-            ],
-          },
-          {
-            name: "default-2",
-            icon: "microsoft-azure",
-            children: [],
-          },
-        ],
-      },
+      treeIsReady: false,
+      treeData: {},
       treeConfig: { nodeWidth: 250, nodeHeight: 120, levelHeight: 200 },
       // treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 }
     };

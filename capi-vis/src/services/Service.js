@@ -4,6 +4,13 @@ const http = axios.create({
   baseURL: 'http://localhost:3080/',
 })
 
+export async function getClusterOverview() {
+  console.log('Getting cluster overview');
+  const response = await axios.get(`/api/cluster-overview/`);
+  return response.data;
+}
+
+
 export async function getCluster(clusterId) {
   console.log('Getting Cluster ' + clusterId);
   const response = await axios.get(`/api/cluster/`, { params: { ID: clusterId } });

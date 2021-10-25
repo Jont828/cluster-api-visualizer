@@ -13,11 +13,14 @@ const clusters = [];
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../capi-vis/build')));
 
+app.get('/api/cluster-overview', (req, res) => {
+  console.log('api/clusters-overview called!')
+  res.json(getOverview());
+});
+
 app.get('/api/cluster', (req, res) => {
   console.log('api/clusters called!')
-  // console.log(req.query);
   let id = req.query.ID;
-  // console.log('Got cluster ID ' + id);
   res.json(getTree(id));
 });
 
@@ -80,6 +83,37 @@ function formatToTreeview(resource, id = 0) {
   }
 
   return result;
+}
+
+function getOverview() {
+  return {
+    name: "kind-capz",
+    isRoot: true,
+    icon: "kubernetes",
+    children: [
+      {
+        name: "default-1",
+        icon: "microsoft-azure",
+        children: [],
+      },
+      {
+        name: "public-cluster",
+        icon: "microsoft-azure",
+        children: [
+          {
+            name: "private-cluster",
+            icon: "microsoft-azure",
+            children: [],
+          },
+        ],
+      },
+      {
+        name: "default-2",
+        icon: "microsoft-azure",
+        children: [],
+      },
+    ],
+  }
 }
 
 function getTree(clusterId) {
