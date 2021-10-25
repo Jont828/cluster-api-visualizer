@@ -1,6 +1,9 @@
 <template>
   <div class="treeContainer">
-    <AppBar :title="'Cluster Resources: ' + this.$route.params.id" />
+    <AppBar
+      :title="'Cluster Resources: ' + this.$route.params.id"
+      :showBack="true"
+    />
 
     <vue-tree
       id="resourceTree"
@@ -8,7 +11,8 @@
       :config="treeConfig"
       :collapse-enabled="true"
     >
-      <template v-slot:node="{ node, collapsed }">
+      <template v-slot:node="{ node }">
+        <!-- <template v-slot:node="{ node, collapsed }"> -->
         <div
           class="machine"
           v-if="node.id == 'machine1'"
@@ -19,13 +23,13 @@
           <template v-slot:default="{ hover }">
             <v-card
               class="node mx-auto transition-swing"
-              :elevation="hover ? 12 : 3"
+              :elevation="hover ? 8  : 4"
               :style="{ 
                 'background-color': legend[node.provider].color, 
-                border: collapsed ? '2px solid grey' : '',
               }"
               v-on:click="selectNode(node)"
             >
+              <!-- border: collapsed ? '2px solid white' : '', -->
               <!-- <router-link
                 :to="'/'"
                 class="node-router-link"
@@ -35,14 +39,18 @@
                 class="font-italic"
                 v-if="node.name"
               >{{ node.name }}</p>
-              <p
+              <v-icon
                 class="chevron"
+                size="18"
+                color="white"
                 v-else-if="collapsed"
-              >&#9660;</p>
-              <p
+              >mdi-chevron-down</v-icon>
+              <v-icon
                 class="chevron"
+                size="18"
+                color="white"
                 v-else
-              >&#9650;</p>
+              >mdi-chevron-up</v-icon>
               <!-- </router-link> -->
             </v-card>
           </template>
@@ -108,27 +116,27 @@ export default {
       legend: {
         bootstrap: {
           name: "Bootstrap Provider (Kubeadm)",
-          color: colors.yellow.lighten2,
+          color: colors.amber.darken2,
         },
         ctrlPlane: {
           name: "Control Plane (Kubeadm)",
-          color: colors.purple.lighten3,
+          color: colors.purple.darken1,
         },
         infra: {
           name: "Infrastructure (Azure)",
-          color: colors.green.lighten2,
+          color: colors.green.base,
         },
         capi: {
           name: "Cluster API",
-          color: colors.blue.lighten3,
+          color: colors.blue.darken1,
         },
         addons: {
           name: "Addons",
-          color: colors.red.lighten2,
+          color: colors.red.darken1,
         },
         "": {
           name: "None",
-          color: colors.grey.lighten2,
+          color: colors.grey.darken1,
         },
       },
       treeData: {
@@ -333,7 +341,7 @@ export default {
         ],
         identifier: "id",
       },
-      treeConfig: { nodeWidth: 160, nodeHeight: 50, levelHeight: 120 },
+      treeConfig: { nodeWidth: 170, nodeHeight: 50, levelHeight: 120 },
       // treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 }
     };
   },
@@ -344,6 +352,7 @@ export default {
 #resourceTree {
   width: 100%;
   height: 100%;
+  background-color: #f8f3f2;
   // border: 1px solid black;
 }
 
@@ -359,7 +368,7 @@ export default {
 }
 
 .node {
-  width: 150px;
+  width: 160px;
   height: 50px;
   display: flex;
   flex-direction: column;
@@ -368,13 +377,14 @@ export default {
   // background-color: #dae8fc;
   // border-radius: 4px;
   // box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.3);
+  color: white;
 
   p {
-    font-size: 10px;
+    font-size: 11px;
     margin: 2px;
   }
 
-  p.chevron {
+  .chevron {
     margin: 0;
   }
 
@@ -383,31 +393,37 @@ export default {
   }
 
   .kind {
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 
-.legend-entry {
-  display: inline-block;
-  margin-right: 10px;
+.legend {
+  text-align: center;
 
-  div {
+  .legend-entry {
     display: inline-block;
-    border: 1px solid black;
-    margin: 0 5px;
-    width: 12px;
-    height: 12px;
+    margin-right: 10px;
+
+    div {
+      display: inline-block;
+      border: 1px solid black;
+      margin: 0 5px;
+      width: 12px;
+      height: 12px;
+    }
   }
 }
 
 .machine {
   position: absolute;
-  transform: translate(0, 55px);
+  transform: translate(0, 65px);
   width: 375px;
-  height: 220px;
-  border: 3px solid #a8c8ff;
+  height: 230px;
+  border: 3px solid #1e88e5;
+  // border: 3px solid #a8c8ff;
   box-shadow: 3px 4px 3px rgba(0, 0, 0, 0.3);
   border-radius: 5px;
+  z-index: -10000;
 
   span {
     position: absolute;

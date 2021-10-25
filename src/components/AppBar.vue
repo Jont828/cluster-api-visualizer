@@ -5,21 +5,23 @@
     dense
     dark
   >
-    <v-btn
-      icon
-      text
-      class="ma-2"
+    <router-link
+      :to="'/'"
+      class="router-link"
+      v-if="showBack"
     >
-      <router-link
-        :to="'/'"
-        class="router-link"
+      <v-btn
+        icon
+        text
+        class="ma-2"
       >
         <v-icon color="white">
           mdi-chevron-left
         </v-icon>
-      </router-link>
+      </v-btn>
+    </router-link>
+    <v-app-bar-nav-icon v-else></v-app-bar-nav-icon>
 
-    </v-btn>
     <!-- <v-spacer></v-spacer> -->
 
     <v-toolbar-title class="text-no-wrap">{{ title }}</v-toolbar-title>
@@ -34,6 +36,7 @@ export default {
   name: "AppBar",
   props: {
     title: String,
+    showBack: Boolean,
   },
 };
 </script>

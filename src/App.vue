@@ -17,11 +17,12 @@ body {
 
 #app {
   font-family: Roboto;
-  text-align: center;
+  /* text-align: center; */
   height: 100%;
 }
 
 #main {
   height: 100%;
+  /* background-color: #f8f3f2; */
 }
 </style>

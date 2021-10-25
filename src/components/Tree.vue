@@ -1,6 +1,5 @@
 <template>
   <div class="treeContainer">
-    <h1>Overview of Clusters</h1>
     <vue-tree
       id="overviewTree"
       :dataset="treeData"
@@ -8,25 +7,32 @@
       :collapse-enabled="false"
     >
       <template v-slot:node="{ node, collapsed }">
-        <div
-          class="node"
-          :style="{ border: collapsed ? '2px solid grey' : '' }"
+        <router-link
+          :to="'/target-cluster/' + node.name"
+          class="node-router-link"
         >
-          <p>{{ node.name }}</p>
-          <router-link
-            :to="'/target-cluster/' + node.name"
-            class="node-router-link"
-            v-if="!node.isRoot"
+          <v-card
+            class="node"
+            :style="{ 
+            'background-color': '#fff', 
+            border: collapsed ? '2px solid grey' : '',
+          }"
           >
-            <p>View Representation</p>
-          </router-link>
-          <!-- <router-link
-            :to="'/'"
-            class="node-router-link"
-          >
-            <p>View Cluster</p>
-          </router-link> -->
-        </div>
+            <v-card-title>{{ node.name }}
+              <v-spacer></v-spacer>
+              <v-icon color="blue">
+                mdi-{{node.icon}}
+              </v-icon>
+            </v-card-title>
+            <v-card-actions v-if="!node.isRoot">
+              <v-card-text class="card-bottom-text">Resources</v-card-text>
+              <v-spacer></v-spacer>
+              <v-icon>mdi-arrow-top-right</v-icon>
+
+            </v-card-actions>
+
+          </v-card>
+        </router-link>
       </template>
     </vue-tree>
   </div>
@@ -34,6 +40,8 @@
 
 <script>
 import VueTree from "./VueTree.vue";
+
+import colors from "vuetify/lib/util/colors";
 
 export default {
   name: "Tree",
@@ -45,32 +53,32 @@ export default {
       treeData: {
         name: "kind-capz",
         isRoot: true,
-        provider: "Local",
+        icon: "kubernetes",
         children: [
           {
             name: "default-1",
-            provider: "Azure",
+            icon: "microsoft-azure",
             children: [],
           },
           {
             name: "public-cluster",
-            provider: "Azure",
+            icon: "microsoft-azure",
             children: [
               {
                 name: "private-cluster",
-                provider: "Azure",
+                icon: "microsoft-azure",
                 children: [],
               },
             ],
           },
           {
             name: "default-2",
-            provider: "Azure",
+            icon: "microsoft-azure",
             children: [],
           },
         ],
       },
-      treeConfig: { nodeWidth: 250, nodeHeight: 80, levelHeight: 200 },
+      treeConfig: { nodeWidth: 250, nodeHeight: 120, levelHeight: 200 },
       // treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 }
     };
   },
@@ -79,9 +87,9 @@ export default {
 
 <style lang="less" scoped>
 #overviewTree {
-  width: 80%;
-  height: 80%;
-  border: 1px solid black;
+  width: 100%;
+  height: 100%;
+  background-color: #f8f3f2;
 }
 
 .treeContainer {
@@ -92,31 +100,33 @@ export default {
 }
 
 .node-slot {
-  cursor: default !important;
+  // cursor: default !important;
 }
 
 .node {
-  cursor: default !important;
-  width: 140px;
-  height: 60px;
+  // cursor: default !important;
+  width: 200px;
+  height: 120px;
   /* padding: 8px; */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  // display: flex;
+  // flex-direction: column;
+  // align-items: center;
+  // justify-content: center;
   background-color: #a8c8ff;
-  border-radius: 4px;
-  box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.3);
 
   p {
     font-size: 12px;
     margin: 2px;
-    color: #2c3e50;
+    // color: #2c3e50;
+  }
+
+  .card-bottom-text {
+    padding-left: 8px;
   }
 }
 
 .node-router-link {
   text-decoration: none;
-  font-style: italic;
+  // font-style: italic;
 }
 </style>

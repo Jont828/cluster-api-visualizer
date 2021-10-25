@@ -554,7 +554,6 @@ export default {
 }
 
 .node-slot {
-  cursor: pointer;
   pointer-events: all;
   position: absolute;
   background-color: transparent;
