@@ -56,18 +56,21 @@
           </template>
         </v-hover>
       </template>
+
     </vue-tree>
     <div class="legend">
-      <div
-        class="legend-entry"
-        v-for="(entry, provider) in this.legend"
-        :key="provider"
-      >
-        <div :style="{
-          'background-color': entry.color
-        }" />
-        <span>{{ entry.name }}</span>
-      </div>
+      <v-card class="legend-card">
+        <div
+          class="legend-entry"
+          v-for="(entry, provider) in legend"
+          :key="provider"
+        >
+          <div :style="{
+            'background-color': entry.color
+          }" />
+          <span>{{ entry.name }}</span>
+        </div>
+      </v-card>
     </div>
     <div
       class="left"
@@ -358,6 +361,7 @@ export default {
 
 .treeContainer {
   height: 750px;
+  // height: 100%;
   width: 100%;
   max-width: 100%;
   margin: 0 !important;
@@ -399,19 +403,29 @@ export default {
 
 .legend {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
-  .legend-entry {
-    display: inline-block;
-    margin-right: 10px;
+  .legend-card {
+    padding: 10px 10px;
 
-    div {
+    .legend-entry {
       display: inline-block;
-      border: 1px solid black;
-      margin: 0 5px;
-      width: 12px;
-      height: 12px;
+      margin-right: 10px;
+
+      div {
+        display: inline-block;
+        border-radius: 3px;
+        // border: 1px solid black;
+        margin: 0 5px;
+        width: 12px;
+        height: 12px;
+      }
     }
   }
+
 }
 
 .machine {
