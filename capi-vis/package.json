@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@mdi/font": "5.9.55",
+    "axios": "^0.24.0",
     "bootstrap": "^5.1.3",
     "core-js": "^3.6.5",
     "css-loader": "^6.4.0",

@@ -96,6 +96,8 @@ import AppBar from "../components/AppBar.vue";
 
 import colors from "vuetify/lib/util/colors";
 
+import { getCluster, postCluster } from "../services/Service.js";
+
 import yaml from "js-yaml";
 // import VueTree from '@ssthouse/vue-tree-chart';
 
@@ -108,6 +110,10 @@ export default {
   methods: {
     selectNode(node) {
       this.selected = node;
+      getCluster(this.$route.params.id).then((response) => {
+        console.log("Server response:");
+        console.log(response);
+      });
       // this.crd = yaml.load(AzureCluster);
       // console.log(this.crd);
     },
@@ -425,7 +431,6 @@ export default {
       }
     }
   }
-
 }
 
 .machine {
