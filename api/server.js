@@ -4,6 +4,9 @@ const app = express(),
   bodyParser = require("body-parser");
 port = 3080;
 
+const yaml = require('js-yaml');
+const fs = require('fs');
+
 // place holder for the data
 const clusters = [];
 
@@ -12,18 +15,28 @@ app.use(express.static(path.join(__dirname, '../capi-vis/build')));
 
 app.get('/api/cluster', (req, res) => {
   console.log('api/clusters called!')
-  console.log(req.query);
+  // console.log(req.query);
   let id = req.query.ID;
-  console.log('Got cluster ID ' + id);
+  // console.log('Got cluster ID ' + id);
   res.json(getTree(id));
 });
 
-app.post('/api/cluster', (req, res) => {
-  const cluster = req.body.cluster;
-  console.log('Adding cluster:::::', cluster);
-  clusters.push(cluster);
-  res.json("cluster added");
+app.get('/api/cluster-resource', (req, res) => {
+  console.log('api/cluster-resource called!')
+  console.log(req.query);
+  let id = req.query.ID;
+
+  try {
+    const file = yaml.load(fs.readFileSync('./temp-assets/azureclusters.infrastructure.cluster.x-k8s.io-default-1495.yaml', 'utf8'));
+    // console.log(JSON.stringify(file, null, 2));
+    let result = formatToTreeview(file);
+    res.json(result);
+  } catch (e) {
+    console.log(e);
+    res.status(500);
+  }
 });
+
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../capi-vis/build/index.html'));
@@ -32,6 +45,40 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server listening on the port::${port}`);
 });
+
+function formatToTreeview(resource, id = 0) {
+  let result = [];
+  if (Array.isArray(resource)) {
+    let children = [];
+    resource.forEach((e, i) => {
+      result.push({
+        id: id++,
+        name: i,
+        children: formatToTreeview(e, id)
+      });
+    });
+
+  } else { // isObject
+    Object.entries(resource).forEach(([key, value]) => {
+      let name = '';
+      let children = [];
+      if (typeof (value) == 'string') {
+        name = key + ': ' + value
+      } else {
+        name = key;
+        children = formatToTreeview(value, id);
+      }
+      result.push({
+        id: id++,
+        name: name,
+        children: children
+      });
+    });
+
+  }
+
+  return result;
+}
 
 function getTree(clusterId) {
   return {

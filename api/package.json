@@ -6,7 +6,8 @@
     "dev": "nodemon ./server.js localhost 3080"
   },
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "js-yaml": "^4.1.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.14"

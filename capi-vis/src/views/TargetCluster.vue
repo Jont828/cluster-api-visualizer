@@ -10,7 +10,7 @@
       :dataset="treeData"
       :config="treeConfig"
       :collapse-enabled="true"
-      v-if="isReady"
+      v-if="treeIsReady"
     >
       <template v-slot:node="{ node, collapsed }">
         <div
@@ -77,13 +77,14 @@
       v-if="selected.name"
     >
       <h1>Resource: {{ selected.kind }}/{{ selected.name }} </h1>
-      <p>{{ selected.name }} is ...</p>
-      <!-- <ul
-        v-for="(value, key) in this.crd"
-        :key="key"
-      >
-        <li>{{ key }}: {{ value }}</li>
-      </ul> -->
+      <template>
+        <v-treeview
+          hoverable
+          :items="resource"
+          v-if="resourceIsReady"
+        />
+
+      </template>
     </div>
   </div>
 </template>
@@ -92,13 +93,11 @@
 /* eslint-disable */
 import VueTree from "../components/VueTree.vue";
 import AppBar from "../components/AppBar.vue";
-// import AzureCluster from "../assets/yaml/default/azurecluster.yaml";
 
 import colors from "vuetify/lib/util/colors";
 
-import { getCluster, postCluster } from "../services/Service.js";
+import { getCluster, getClusterResource } from "../services/Service.js";
 
-import yaml from "js-yaml";
 // import VueTree from '@ssthouse/vue-tree-chart';
 
 export default {
@@ -108,18 +107,26 @@ export default {
     AppBar,
   },
   methods: {
-    selectNode(node) {
+    async selectNode(node) {
       this.selected = node;
-      // this.crd = yaml.load(AzureCluster);
-      // console.log(this.crd);
+      try {
+        const response = await getClusterResource(
+          this.$route.params.id,
+          "azurecluster",
+          "default"
+        );
+        this.resource = response;
+        this.resourceIsReady = true;
+      } catch (error) {
+        console.log("Error fetching CRD");
+        console.log(error);
+      }
     },
     async fetchCluster() {
       try {
         const response = await getCluster(this.$route.params.id);
-        console.log("Server response:");
-        console.log(response);
         this.treeData = response;
-        this.isReady = true;
+        this.treeIsReady = true;
       } catch (error) {
         console.log("Error fetching cluster");
         console.log(error);
@@ -131,8 +138,9 @@ export default {
   },
   data() {
     return {
-      isReady: false,
-      crd: "",
+      treeIsReady: false,
+      resourceIsReady: false,
+      resource: [],
       selected: {},
       legend: {
         bootstrap: {
