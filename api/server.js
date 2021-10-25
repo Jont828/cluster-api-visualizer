@@ -28,7 +28,7 @@ app.get('/api/cluster-resource', (req, res) => {
 
   try {
     const file = yaml.load(fs.readFileSync('./temp-assets/azureclusters.infrastructure.cluster.x-k8s.io-default-1495.yaml', 'utf8'));
-    // console.log(JSON.stringify(file, null, 2));
+    console.log(JSON.stringify(file, null, 2));
     let result = formatToTreeview(file);
     res.json(result);
   } catch (e) {
@@ -48,12 +48,14 @@ app.listen(port, () => {
 
 function formatToTreeview(resource, id = 0) {
   let result = [];
-  if (Array.isArray(resource)) {
+  if (typeof (resource) == 'string') {
+    return [{ name: resource }]
+  } else if (Array.isArray(resource)) {
     let children = [];
     resource.forEach((e, i) => {
       result.push({
         id: id++,
-        name: i,
+        name: i.toString(),
         children: formatToTreeview(e, id)
       });
     });

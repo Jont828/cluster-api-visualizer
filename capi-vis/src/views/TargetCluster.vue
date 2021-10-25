@@ -73,18 +73,15 @@
       </v-card>
     </div>
     <div
-      class="left"
+      class="resourceView"
       v-if="selected.name"
     >
-      <h1>Resource: {{ selected.kind }}/{{ selected.name }} </h1>
-      <template>
-        <v-treeview
-          hoverable
-          :items="resource"
-          v-if="resourceIsReady"
-        />
+      <CustomResourceTree
+        :items="resource"
+        :title="'Resource: ' + selected.kind + '/' + selected.name"
+        v-if="resourceIsReady"
+      />
 
-      </template>
     </div>
   </div>
 </template>
@@ -93,6 +90,7 @@
 /* eslint-disable */
 import VueTree from "../components/VueTree.vue";
 import AppBar from "../components/AppBar.vue";
+import CustomResourceTree from "../components/CustomResourceTree.vue";
 
 import colors from "vuetify/lib/util/colors";
 
@@ -105,6 +103,7 @@ export default {
   components: {
     VueTree,
     AppBar,
+    CustomResourceTree,
   },
   methods: {
     async selectNode(node) {
@@ -115,6 +114,7 @@ export default {
           "azurecluster",
           "default"
         );
+        // console.log(JSON.stringify(response));
         this.resource = response;
         this.resourceIsReady = true;
       } catch (error) {
@@ -270,7 +270,8 @@ export default {
   }
 }
 
-.left {
-  text-align: left;
+.resourceView {
+  margin: 30px;
+  padding-bottom: 30px;
 }
 </style>
