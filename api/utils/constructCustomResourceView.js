@@ -1,10 +1,19 @@
-const yaml = require('js-yaml');
-const fs = require('fs');
+const k8s = require('@kubernetes/client-node');
+const { default: cluster } = require('cluster');
+const { assert } = require('console');
 
-module.exports = function constructCustomResourceView() {
-  const file = yaml.load(fs.readFileSync('./temp-assets/azureclusters.infrastructure.cluster.x-k8s.io-default-1495.yaml', 'utf8'));
-  console.log(JSON.stringify(file, null, 2));
-  return formatToTreeview(file);
+const kc = new k8s.KubeConfig();
+kc.loadFromDefault();
+const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
+
+module.exports = async function constructCustomResourceView(group, plural, name) {
+  // Hack since getClusterCustomObject is getting a 404
+  const response = await k8sCrd.listClusterCustomObject(group, 'v1beta1', plural);
+  let items = response.body.items.filter(e => e.metadata.name == name);
+  assert(items.length == 1);
+  // End hack
+
+  return formatToTreeview(items[0]);
 }
 
 function formatToTreeview(resource, id = 0) {

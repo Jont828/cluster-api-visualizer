@@ -17,10 +17,10 @@ export async function getCluster(clusterId) {
   return response.data;
 }
 
-export async function getClusterResource(clusterId, resourceKind, resourceName) {
-  console.log('Getting CRD ' + clusterId + ' ' + resourceKind + ' ' + resourceName);
+export async function getClusterResource(group, plural, name) {
+  console.log('Getting CRD ' + group + ' ' + plural + ' ' + name);
   const response = await axios.get(`/api/cluster-resource/`, {
-    params: { ID: clusterId, resourceKind: resourceKind, resourceName: resourceName }
+    params: { group: group, plural: plural, name: name }
   });
   return response.data;
 }

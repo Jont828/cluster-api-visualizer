@@ -79,6 +79,7 @@
       <CustomResourceTree
         :items="resource"
         :title="'Resource: ' + selected.kind + '/' + selected.name"
+        :color="legend[selected.provider].color"
         v-if="resourceIsReady"
       />
 
@@ -107,12 +108,13 @@ export default {
   },
   methods: {
     async selectNode(node) {
+      if (node.provider == "") return;
       this.selected = node;
       try {
         const response = await getClusterResource(
-          this.$route.params.id,
-          this.selected.kind.toLowerCase(),
-          "default"
+          this.selected.group,
+          this.selected.plural.toLowerCase(),
+          this.selected.name
         );
         // console.log(JSON.stringify(response));
         this.resource = response;

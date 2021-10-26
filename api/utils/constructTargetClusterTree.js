@@ -45,6 +45,7 @@ async function getCRDInstances(group, plural, initCategory, clusterName, cluster
       name: e.metadata.name,
       kind: e.kind,
       group: group,
+      plural: plural,
       provider: group.substr(0, group.indexOf('.')),
     }
 

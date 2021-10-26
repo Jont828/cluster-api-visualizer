@@ -1,7 +1,8 @@
 <template>
   <v-card class="mx-auto">
     <v-sheet
-      class="pa-4 primary"
+      :color="color"
+      class="pa-4"
       dark
     >
       <v-card-title class="text-h5">{{ title }}</v-card-title>
@@ -48,6 +49,7 @@ export default {
   props: {
     items: Array,
     title: String,
+    color: String,
   },
   data() {
     return {

@@ -24,13 +24,15 @@ app.get('/api/cluster', async (req, res) => {
   res.json(tree);
 });
 
-app.get('/api/cluster-resource', (req, res) => {
+app.get('/api/cluster-resource', async (req, res) => {
   console.log('api/cluster-resource called!')
   console.log(req.query);
-  let id = req.query.ID;
+  let group = req.query.group;
+  let plural = req.query.plural;
+  let name = req.query.name;
 
   try {
-    let result = constructCustomResourceView();
+    const result = await constructCustomResourceView(group, plural, name);
     res.json(result);
   } catch (e) {
     console.log(e);
