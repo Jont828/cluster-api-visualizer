@@ -17,10 +17,11 @@ app.get('/api/cluster-overview', async (req, res) => {
   res.json(tree);
 });
 
-app.get('/api/cluster', (req, res) => {
+app.get('/api/cluster', async (req, res) => {
   console.log('api/clusters called!')
   let id = req.query.ID;
-  res.json(constructTargetClusterTree(id));
+  const tree = await constructTargetClusterTree(id);
+  res.json(tree);
 });
 
 app.get('/api/cluster-resource', (req, res) => {
