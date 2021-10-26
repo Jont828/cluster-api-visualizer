@@ -13,25 +13,34 @@ app.use(express.static(path.join(__dirname, '../capi-vis/build')));
 
 app.get('/api/cluster-overview', async (req, res) => {
   console.log('api/clusters-overview called!')
-  const tree = await constructOverview();
-  res.json(tree);
+  try {
+    const tree = await constructOverview();
+    res.json(tree);
+  } catch (e) {
+    console.log(e);
+    res.status(500);
+  }
 });
 
 app.get('/api/cluster', async (req, res) => {
   console.log('api/clusters called!')
-  let id = req.query.ID;
-  const tree = await constructTargetClusterTree(id);
-  res.json(tree);
+  try {
+    let id = req.query.ID;
+    const tree = await constructTargetClusterTree(id);
+    res.json(tree);
+  } catch (e) {
+    console.log(e);
+    res.status(500);
+  }
 });
 
 app.get('/api/cluster-resource', async (req, res) => {
   console.log('api/cluster-resource called!')
-  console.log(req.query);
-  let group = req.query.group;
-  let plural = req.query.plural;
-  let name = req.query.name;
 
   try {
+    let group = req.query.group;
+    let plural = req.query.plural;
+    let name = req.query.name;
     const result = await constructCustomResourceView(group, plural, name);
     res.json(result);
   } catch (e) {

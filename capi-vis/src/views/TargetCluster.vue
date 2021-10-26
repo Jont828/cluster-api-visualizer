@@ -1,89 +1,103 @@
 <template>
-  <div class="treeContainer">
+  <div class="wrapper">
     <AppBar
       :title="'Cluster Resources: ' + this.$route.params.id"
       :showBack="true"
     />
-
-    <vue-tree
-      id="resourceTree"
-      :dataset="treeData"
-      :config="treeConfig"
-      :collapse-enabled="true"
+    <div
+      id="dataBodyWrapper"
       v-if="treeIsReady"
     >
-      <template v-slot:node="{ node, collapsed }">
-        <div
-          class="machine"
-          v-if="node.id == 'machine1'"
-        >
-          <span>x2</span>
-        </div>
-        <v-hover>
-          <template v-slot:default="{ hover }">
-            <v-card
-              class="node mx-auto transition-swing"
-              :elevation="hover ? 8  : 4"
-              :style="{ 
+      <vue-tree
+        id="resourceTree"
+        :dataset="treeData"
+        :config="treeConfig"
+        :collapse-enabled="true"
+      >
+        <template v-slot:node="{ node, collapsed }">
+          <div
+            class="machine"
+            v-if="node.id == 'machine1'"
+          >
+            <span>x2</span>
+          </div>
+          <v-hover>
+            <template v-slot:default="{ hover }">
+              <v-card
+                class="node mx-auto transition-swing"
+                :elevation="hover ? 8  : 4"
+                :style="{ 
                 'background-color': legend[node.provider].color, 
                 border: collapsed ? '' : '',
               }"
-              v-on:click="selectNode(node)"
-            >
-              <!-- <router-link
+                v-on:click="selectNode(node)"
+              >
+                <!-- <router-link
                 :to="'/'"
                 class="node-router-link"
               > -->
-              <p class="kind font-weight-medium">{{ node.kind }}</p>
-              <p
-                class="name font-italic"
-                v-if="node.name"
-              >{{ node.name }}</p>
-              <v-icon
-                class="chevron"
-                size="18"
-                color="white"
-                v-else-if="collapsed"
-              >mdi-chevron-down</v-icon>
-              <v-icon
-                class="chevron"
-                size="18"
-                color="white"
-                v-else
-              >mdi-chevron-up</v-icon>
-              <!-- </router-link> -->
-            </v-card>
-          </template>
-        </v-hover>
-      </template>
+                <p class="kind font-weight-medium">{{ node.kind }}</p>
+                <p
+                  class="name font-italic"
+                  v-if="node.name"
+                >{{ node.name }}</p>
+                <v-icon
+                  class="chevron"
+                  size="18"
+                  color="white"
+                  v-else-if="collapsed"
+                >mdi-chevron-down</v-icon>
+                <v-icon
+                  class="chevron"
+                  size="18"
+                  color="white"
+                  v-else
+                >mdi-chevron-up</v-icon>
+                <!-- </router-link> -->
+              </v-card>
+            </template>
+          </v-hover>
+        </template>
 
-    </vue-tree>
-    <div class="legend">
-      <v-card class="legend-card">
-        <div
-          class="legend-entry"
-          v-for="(entry, provider) in legend"
-          :key="provider"
-        >
-          <div :style="{
+      </vue-tree>
+      <div class="legend">
+        <v-card class="legend-card">
+          <div
+            class="legend-entry"
+            v-for="(entry, provider) in legend"
+            :key="provider"
+          >
+            <div :style="{
             'background-color': entry.color
           }" />
-          <span>{{ entry.name }}</span>
-        </div>
-      </v-card>
+            <span>{{ entry.name }}</span>
+          </div>
+        </v-card>
+      </div>
+      <div
+        class="resourceView"
+        v-if="selected.name"
+      >
+        <CustomResourceTree
+          :items="resource"
+          :title="'Resource: ' + selected.kind + '/' + selected.name"
+          :color="legend[selected.provider].color"
+          v-if="resourceIsReady"
+        />
+
+      </div>
     </div>
     <div
-      class="resourceView"
-      v-if="selected.name"
+      id="resourceTree"
+      class="spinner"
+      v-else
     >
-      <CustomResourceTree
-        :items="resource"
-        :title="'Resource: ' + selected.kind + '/' + selected.name"
-        :color="legend[selected.provider].color"
-        v-if="resourceIsReady"
-      />
-
+      <v-progress-circular
+        indeterminate
+        color="primary"
+      ></v-progress-circular>
     </div>
+    <AlertError :message="errorMessage" />
   </div>
 </template>
 
@@ -92,12 +106,11 @@
 import VueTree from "../components/VueTree.vue";
 import AppBar from "../components/AppBar.vue";
 import CustomResourceTree from "../components/CustomResourceTree.vue";
+import AlertError from "../components/AlertError.vue";
 
 import colors from "vuetify/lib/util/colors";
 
 import { getCluster, getClusterResource } from "../services/Service.js";
-
-// import VueTree from '@ssthouse/vue-tree-chart';
 
 export default {
   name: "TargetCluster",
@@ -105,6 +118,7 @@ export default {
     VueTree,
     AppBar,
     CustomResourceTree,
+    AlertError,
   },
   methods: {
     async selectNode(node) {
@@ -120,6 +134,11 @@ export default {
         this.resource = response;
         this.resourceIsReady = true;
       } catch (error) {
+        this.errorMessage =
+          "Failed to fetch CRD for `" +
+          this.selected.kind +
+          this.selected.name +
+          "`";
         console.log("Error fetching CRD");
         console.log(error);
       }
@@ -130,7 +149,10 @@ export default {
         this.treeData = response;
         this.treeIsReady = true;
       } catch (error) {
-        console.log("Error fetching cluster");
+        this.errorMessage =
+          "Failed to fetch resources for cluster `" +
+          this.$route.params.id +
+          "`";
         console.log(error);
       }
     },
@@ -140,6 +162,7 @@ export default {
   },
   data() {
     return {
+      errorMessage: "",
       treeIsReady: false,
       resourceIsReady: false,
       resource: [],
@@ -181,13 +204,13 @@ export default {
 <style lang="less" scoped>
 #resourceTree {
   width: 100%;
-  height: 100%;
+  // height: 100%;
+  height: 750px;
   background-color: #f8f3f2;
   // border: 1px solid black;
 }
 
-.treeContainer {
-  height: 750px;
+.wrapper {
   // height: 100%;
   width: 100%;
   max-width: 100%;
@@ -285,5 +308,14 @@ export default {
 .resourceView {
   margin: 30px;
   padding-bottom: 30px;
+}
+</style>
+
+<style lang="less">
+.spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 </style>

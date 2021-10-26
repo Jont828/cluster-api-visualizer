@@ -36,17 +36,30 @@
         </router-link>
       </template>
     </vue-tree>
+    <div
+      id="overviewTree"
+      class="spinner"
+      v-else
+    >
+      <v-progress-circular
+        indeterminate
+        color="primary"
+      ></v-progress-circular>
+    </div>
+    <AlertError :message="errorMessage" />
   </div>
 </template>
 
 <script>
 import VueTree from "./VueTree.vue";
+import AlertError from "./AlertError.vue";
 import { getClusterOverview } from "../services/Service.js";
 
 export default {
   name: "Tree",
   components: {
     VueTree,
+    AlertError,
   },
   methods: {
     async fetchOverview() {
@@ -55,7 +68,7 @@ export default {
         this.treeData = response;
         this.treeIsReady = true;
       } catch (error) {
-        console.log("Error fetching cluster overview");
+        this.errorMessage = "Failed to construct cluster overview";
         console.log(error);
       }
     },
@@ -65,6 +78,7 @@ export default {
   },
   data() {
     return {
+      errorMessage: "",
       treeIsReady: false,
       treeData: {},
       treeConfig: { nodeWidth: 300, nodeHeight: 120, levelHeight: 200 },

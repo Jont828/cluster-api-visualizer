@@ -396,6 +396,12 @@ export default {
         .transition()
         .duration(ANIMATION_DURATION / 2)
         .ease(d3.easeCubicInOut)
+        .style("opacity", 1)
+        .style("stroke", (d, i) => "")
+        .style("stroke-width", (d, i) => "")
+        .style("stroke-dashoffset", (d, i) => "")
+        .style("stroke-dasharray", (d, i) => "")
+        .style("stroke-linecap", (d, i) => "")
         .style("opacity", 0)
         .remove();
     },
@@ -509,7 +515,7 @@ export default {
   .link {
     stroke-width: 2px;
     fill: transparent;
-    stroke: #999;
+    stroke: #555;
   }
 }
 </style>

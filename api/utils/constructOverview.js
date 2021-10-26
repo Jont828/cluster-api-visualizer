@@ -1,13 +1,17 @@
 const k8s = require('@kubernetes/client-node');
 const { default: cluster } = require('cluster');
+const { assert } = require('console');
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
 const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
 
 module.exports = async function constructOverview() {
-  let tree = {
-    name: "kind-capz",
+  const context = kc.currentContext;
+  const cluster = kc.clusters.find(ctx => ctx.name == context);
+
+  let root = {
+    name: cluster.name,
     isRoot: true,
     icon: "kubernetes",
     children: [],
@@ -20,7 +24,7 @@ module.exports = async function constructOverview() {
     response.body.items.forEach((e, i) => {
       let clusterName = e.metadata.name;
       console.log('Found cluster', clusterName);
-      tree.children.push({
+      root.children.push({
         name: clusterName,
         icon: 'microsoft-azure',
         children: []
@@ -31,5 +35,5 @@ module.exports = async function constructOverview() {
     console.log(error);
   }
 
-  return tree;
+  return root;
 }
