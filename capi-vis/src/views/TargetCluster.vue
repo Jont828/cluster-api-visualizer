@@ -36,7 +36,7 @@
               > -->
               <p class="kind font-weight-medium">{{ node.kind }}</p>
               <p
-                class="font-italic"
+                class="name font-italic"
                 v-if="node.name"
               >{{ node.name }}</p>
               <v-icon
@@ -111,7 +111,7 @@ export default {
       try {
         const response = await getClusterResource(
           this.$route.params.id,
-          "azurecluster",
+          this.selected.kind.toLowerCase(),
           "default"
         );
         // console.log(JSON.stringify(response));
@@ -223,6 +223,16 @@ export default {
 
   .kind {
     font-size: 13px;
+  }
+
+  .name {
+    width: 150px;
+    text-align: center;
+    white-space: nowrap;
+    display: inline-block;
+    // word-break: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
