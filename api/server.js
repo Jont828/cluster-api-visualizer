@@ -4,32 +4,23 @@ const app = express(),
   bodyParser = require("body-parser");
 port = 3080;
 
-const yaml = require('js-yaml');
-const fs = require('fs');
-
-const k8s = require('@kubernetes/client-node');
-const { default: cluster } = require('cluster');
-
-const kc = new k8s.KubeConfig();
-kc.loadFromDefault();
-const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
-
-// place holder for the data
-const clusters = [];
+const constructOverview = require('./utils/constructOverview.js');
+const constructTargetClusterTree = require('./utils/constructTargetClusterTree.js');
+const constructCustomResourceView = require('./utils/constructCustomResourceView.js');
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../capi-vis/build')));
 
 app.get('/api/cluster-overview', async (req, res) => {
   console.log('api/clusters-overview called!')
-  const tree = await getOverview();
+  const tree = await constructOverview();
   res.json(tree);
 });
 
 app.get('/api/cluster', (req, res) => {
   console.log('api/clusters called!')
   let id = req.query.ID;
-  res.json(getTree(id));
+  res.json(constructTargetClusterTree(id));
 });
 
 app.get('/api/cluster-resource', (req, res) => {
@@ -38,9 +29,7 @@ app.get('/api/cluster-resource', (req, res) => {
   let id = req.query.ID;
 
   try {
-    const file = yaml.load(fs.readFileSync('./temp-assets/azureclusters.infrastructure.cluster.x-k8s.io-default-1495.yaml', 'utf8'));
-    console.log(JSON.stringify(file, null, 2));
-    let result = formatToTreeview(file);
+    let result = constructCustomResourceView();
     res.json(result);
   } catch (e) {
     console.log(e);
@@ -48,303 +37,11 @@ app.get('/api/cluster-resource', (req, res) => {
   }
 });
 
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../capi-vis/build/index.html'));
-});
+// app.get('/', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../capi-vis/build/index.html'));
+// });
 
 app.listen(port, () => {
   console.log(`Server listening on the port::${port}`);
 });
 
-function formatToTreeview(resource, id = 0) {
-  let result = [];
-  if (typeof (resource) == 'string') {
-    return [{ name: resource }]
-  } else if (Array.isArray(resource)) {
-    let children = [];
-    resource.forEach((e, i) => {
-      result.push({
-        id: id++,
-        name: i.toString(),
-        children: formatToTreeview(e, id)
-      });
-    });
-
-  } else { // isObject
-    Object.entries(resource).forEach(([key, value]) => {
-      let name = '';
-      let children = [];
-      if (typeof (value) == 'string') {
-        name = key + ': ' + value
-      } else {
-        name = key;
-        children = formatToTreeview(value, id);
-      }
-      result.push({
-        id: id++,
-        name: name,
-        children: children
-      });
-    });
-
-  }
-
-  return result;
-}
-
-async function getOverview() {
-  let tree = {
-    name: "kind-capz",
-    isRoot: true,
-    icon: "kubernetes",
-    children: [
-      // {
-      //   name: "default-1",
-      //   icon: "microsoft-azure",
-      //   children: [],
-      // },
-      // {
-      //   name: "public-cluster",
-      //   icon: "microsoft-azure",
-      //   children: [
-      //     {
-      //       name: "private-cluster",
-      //       icon: "microsoft-azure",
-      //       children: [],
-      //     },
-      //   ],
-      // },
-      // {
-      //   name: "default-2",
-      //   icon: "microsoft-azure",
-      //   children: [],
-      // },
-    ],
-  }
-
-  try {
-    const response = await k8sCrd.listClusterCustomObject('cluster.x-k8s.io', 'v1beta1', 'clusters');
-    // console.log(response.body);
-    response.body.items.forEach((e, i) => {
-      let clusterName = e.metadata.name;
-      console.log('Found cluster', clusterName);
-      tree.children.push({
-        name: clusterName,
-        icon: 'microsoft-azure',
-        children: []
-      })
-    });
-  } catch (error) {
-    console.log('Error fetching cluster overview');
-    console.log(error);
-  }
-
-
-  return tree;
-}
-
-function getTree(clusterId) {
-  return {
-    name: clusterId,
-    kind: "Cluster",
-    id: "cluster",
-    provider: "capi",
-    children: [
-      {
-        name: "",
-        kind: "ClusterInfrastructure",
-        id: "clusterInfra",
-        provider: "",
-        collapsable: true,
-        children: [
-          {
-            name: "crs-calico",
-            kind: "ClusterResourceSets",
-            id: "crsCalico",
-            provider: "addons",
-            children: [
-              {
-                name: clusterId + "",
-                kind: "ClusterResourceSetBinding",
-                id: "clusterResourceSetBinding",
-                provider: "addons",
-                children: [],
-              },
-            ],
-          },
-          {
-            name: "crs-calico-ipv6",
-            kind: "ClusterResourceSets",
-            id: "crsCalicoIpv6",
-            provider: "addons",
-            children: [],
-          },
-          {
-            name: "flannel-windows",
-            kind: "ClusterResourceSet",
-            id: "flannelWindows",
-            provider: "addons",
-            children: [],
-          },
-          {
-            name: clusterId + "",
-            kind: "AzureCluster",
-            id: "azureCluster",
-            provider: "infra",
-            children: [],
-          },
-          {
-            name: clusterId + "-md",
-            kind: "KubeadmConfigTemplate",
-            id: "kubeadmConfigTemp",
-            provider: "bootstrap",
-            children: [],
-          },
-          {
-            name: "cluster-identity",
-            kind: "AzureClusterIdentity",
-            id: "clusterIdentity",
-            provider: "infra",
-            children: [],
-          },
-        ],
-      },
-      {
-        name: "",
-        kind: "ControlPlane",
-        id: "controlPlane",
-        provider: "",
-        collapsable: true,
-        children: [
-          {
-            name: clusterId + "-control-plane",
-            kind: "KubeadmControlPlane",
-            id: "kubeadmCtrlPlane",
-            provider: "ctrlPlane",
-            children: [
-              {
-                name: clusterId + "-control-plane",
-                kind: "Machine",
-                id: "machineCtrlPlane",
-                provider: "capi",
-                children: [
-                  {
-                    name: clusterId + "-control-plane",
-                    kind: "AzureMachine",
-                    id: "azureMachineCtrl",
-                    provider: "infra",
-                    children: [],
-                  },
-                  {
-                    name: clusterId + "-control-plane",
-                    kind: "KubeadmConfig",
-                    id: "kubeadmConfigCtrl",
-                    provider: "bootstrap",
-                    children: [],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            name: clusterId + "-control-plane",
-            kind: "AzureMachineTemplate",
-            id: "azureMachineTemplateCtrl",
-            provider: "infra",
-            children: [],
-          },
-        ],
-      },
-      {
-        name: "",
-        kind: "Workers",
-        id: "workers",
-        provider: "",
-        collapsable: true,
-        children: [
-          {
-            name: clusterId + "-control-plane",
-            kind: "AzureMachineTemplate",
-            id: "azureMachineTempMd",
-            provider: "infra",
-            children: [],
-          },
-          {
-            name: clusterId + "-md",
-            kind: "MachineDeployment",
-            id: "machineDeployment",
-            provider: "capi",
-            children: [
-              {
-                name: clusterId + "",
-                kind: "MachineSet",
-                id: "machineSet",
-                provider: "capi",
-                children: [
-                  {
-                    name: clusterId + "-md-1",
-                    kind: "Machine",
-                    id: "machine1",
-                    provider: "capi",
-                    children: [
-                      {
-                        name: clusterId + "-md-1",
-                        kind: "AzureMachine",
-                        id: "azureMachine1",
-                        provider: "infra",
-                        children: [],
-                      },
-                      {
-                        name: clusterId + "-control-plane",
-                        kind: "KubeadmConfig",
-                        id: "kubeadmConfig1",
-                        provider: "bootstrap",
-                        children: [],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    links: [
-      // {
-      //   parent: "machine1",
-      //   child: "azureMachine1",
-      //   styles: {
-      //     "stroke-width": "4px",
-      //     stroke: "#555",
-      //   },
-      // },
-      // {
-      //   parent: "machineCtrlPlane",
-      //   child: "azureMachineCtrl",
-      //   styles: {
-      //     "stroke-width": "4px",
-      //     stroke: "#555",
-      //   },
-      // },
-      // {
-      //   parent: "cluster",
-      //   child: "clusterInfra",
-      //   styles: {
-      //     "stroke-width": "4px",
-      //     stroke: "#555",
-      //   },
-      // },
-      // {
-      //   parent: "clusterInfra",
-      //   child: "azureCluster",
-      //   styles: {
-      //     "stroke-width": "4px",
-      //     stroke: "#555",
-      //   },
-      // },
-    ],
-    identifier: "id",
-  }
-}
