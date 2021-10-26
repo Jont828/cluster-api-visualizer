@@ -7,15 +7,23 @@ port = 3080;
 const yaml = require('js-yaml');
 const fs = require('fs');
 
+const k8s = require('@kubernetes/client-node');
+const { default: cluster } = require('cluster');
+
+const kc = new k8s.KubeConfig();
+kc.loadFromDefault();
+const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
+
 // place holder for the data
 const clusters = [];
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../capi-vis/build')));
 
-app.get('/api/cluster-overview', (req, res) => {
+app.get('/api/cluster-overview', async (req, res) => {
   console.log('api/clusters-overview called!')
-  res.json(getOverview());
+  const tree = await getOverview();
+  res.json(tree);
 });
 
 app.get('/api/cluster', (req, res) => {
@@ -85,35 +93,55 @@ function formatToTreeview(resource, id = 0) {
   return result;
 }
 
-function getOverview() {
-  return {
+async function getOverview() {
+  let tree = {
     name: "kind-capz",
     isRoot: true,
     icon: "kubernetes",
     children: [
-      {
-        name: "default-1",
-        icon: "microsoft-azure",
-        children: [],
-      },
-      {
-        name: "public-cluster",
-        icon: "microsoft-azure",
-        children: [
-          {
-            name: "private-cluster",
-            icon: "microsoft-azure",
-            children: [],
-          },
-        ],
-      },
-      {
-        name: "default-2",
-        icon: "microsoft-azure",
-        children: [],
-      },
+      // {
+      //   name: "default-1",
+      //   icon: "microsoft-azure",
+      //   children: [],
+      // },
+      // {
+      //   name: "public-cluster",
+      //   icon: "microsoft-azure",
+      //   children: [
+      //     {
+      //       name: "private-cluster",
+      //       icon: "microsoft-azure",
+      //       children: [],
+      //     },
+      //   ],
+      // },
+      // {
+      //   name: "default-2",
+      //   icon: "microsoft-azure",
+      //   children: [],
+      // },
     ],
   }
+
+  try {
+    const response = await k8sCrd.listClusterCustomObject('cluster.x-k8s.io', 'v1beta1', 'clusters');
+    // console.log(response.body);
+    response.body.items.forEach((e, i) => {
+      let clusterName = e.metadata.name;
+      console.log('Found cluster', clusterName);
+      tree.children.push({
+        name: clusterName,
+        icon: 'microsoft-azure',
+        children: []
+      })
+    });
+  } catch (error) {
+    console.log('Error fetching cluster overview');
+    console.log(error);
+  }
+
+
+  return tree;
 }
 
 function getTree(clusterId) {

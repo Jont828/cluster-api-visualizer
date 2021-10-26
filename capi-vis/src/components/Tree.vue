@@ -67,7 +67,7 @@ export default {
     return {
       treeIsReady: false,
       treeData: {},
-      treeConfig: { nodeWidth: 250, nodeHeight: 120, levelHeight: 200 },
+      treeConfig: { nodeWidth: 300, nodeHeight: 120, levelHeight: 200 },
       // treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 }
     };
   },
@@ -94,7 +94,7 @@ export default {
 
 .node {
   // cursor: default !important;
-  width: 200px;
+  width: 250px;
   height: 120px;
   /* padding: 8px; */
   // display: flex;
