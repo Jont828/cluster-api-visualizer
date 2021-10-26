@@ -6,6 +6,33 @@ const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
 const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
 
+const resourceMap = {
+  clusterresourcesetbindings: { group: "addons.cluster.x-k8s.io", category: "clusterInfra" },
+  clusterresourcesets: { group: "addons.cluster.x-k8s.io", category: "clusterInfra" },
+  // clusterclasses: { group: "cluster.x-k8s.io", category: "clusterInfra" },
+  clusters: { group: "cluster.x-k8s.io", category: "clusterInfra" },
+  machinedeployments: { group: "cluster.x-k8s.io", category: "clusterInfra" },
+  // machinehealthchecks: { group: "cluster.x-k8s.io", category: "clusterInfra" },
+  // machinepools: { group: "cluster.x-k8s.io", category: "clusterInfra" },
+  machinesets: { group: "cluster.x-k8s.io", category: "workers" },
+  machines: { group: "cluster.x-k8s.io", category: "clusterInfra" },
+  azureclusteridentities: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  azureclusters: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  // azuremachinepoolmachines: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  // azuremachinepools: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  azuremachines: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  azuremachinetemplates: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  // azuremanagedclusters: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  // azuremanagedcontrolplanes: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  // azuremanagedmachinepools: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  // azureserviceprincipals: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  // azuresystemassignedidentites: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  // azureuserassignedidentites: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  kubeadmconfigs: { group: "bootstrap.cluster.x-k8s.io", category: "clusterInfra" },
+  kubeadmconfigtemplates: { group: "bootstrap.cluster.x-k8s.io", category: "clusterInfra" },
+  kubeadmcontrolplanes: { group: "controlplane.cluster.x-k8s.io", category: "controlPlane" },
+  // kubeadmcontrolplanetemplates: { group: "controlplane.cluster.x-k8s.io", category: "controlPlane" },
+};
 const customResources = [
   { group: "addons.cluster.x-k8s.io", plural: "clusterresourcesetbindings", category: "clusterInfra" },
   { group: "addons.cluster.x-k8s.io", plural: "clusterresourcesets", category: "clusterInfra" },
@@ -39,13 +66,14 @@ async function getCRDInstances(group, plural, category, clusterName) {
   // Hack since getClusterCustomObject is getting a 404
   const response = await k8sCrd.listClusterCustomObject('cluster.x-k8s.io', 'v1beta1', 'clusters');
   let clusters = response.body.items.filter(e => e.metadata.name == clusterName);
-  assert(clusters.length == 1)
+  assert(clusters.length == 1);
   let clusterUid = clusters[0].metadata.uid;
   // End hack
 
   const res = await k8sCrd.listClusterCustomObject(group, 'v1beta1', plural);
   let crds = [];
   res.body.items.forEach((e, i) => {
+    // 1. Init easy fields
     let crd = {
       id: e.metadata.uid,
       name: e.metadata.name,
@@ -54,6 +82,7 @@ async function getCRDInstances(group, plural, category, clusterName) {
       provider: group.substr(0, group.indexOf('.')),
     }
 
+    // 2. If the category depends on context, i.e. Machine, then resolve it now
     if (!category) {
       if (crd.name.indexOf(clusterName + '-control-plane') == 0) {
         crd.category = 'controlPlane'
@@ -64,22 +93,36 @@ async function getCRDInstances(group, plural, category, clusterName) {
       crd.category = category
     }
 
-    console.log(crd.kind + '/' + crd.name);
+    // 3. If there are resources left without owners, bind them to the root
     let owners = e.metadata.ownerReferences;
     let owner;
+    if (crd.kind != 'Cluster') {
+      if (owners === undefined) { // If no owners and not the root
+        owner = clusterUid;
+      } else if (owners.length > 1) { // If two owners 
+        if (owners.find(elt => elt.kind == 'Cluster')) // And one is a cluster (which is redundant)
+          owners = owners.filter(elt => elt.kind != 'Cluster');
+        else if (crd.kind == 'AzureMachine' && owners.find(elt => elt.kind == 'KubeadmControlPlane')) // Implied ownership can be dropped
+          owners = owners.filter(elt => elt.kind != 'KubeadmControlPlane');
 
-    if (owners === undefined) {
-      owner = clusterUid;
-    } else if (owners.length > 1) {
-      owners = owners.filter(elt => elt.kind != 'Cluster');
-      assert(owners.length == 1);
-      owner = owners[0].uid;
+        assert(owners.length == 1);
+        if (owners.length > 1)
+          console.log('Kind is', crd.kind, crd.name);
+        owner = owners[0].uid;
+      } else { // If only one owner, easy case
+        owner = owners[0].uid;
+      }
     }
 
-    crds.parent = owner
-    crds.push(crd)
 
+    // Lastly, take all the parents that point to the root and bind them to their respective category node
+    if (owner == clusterUid)
+      owner = resourceMap[plural].category;
+
+    crd.parent = owner;
+    crds.push(crd)
   })
+
 
   return crds;
 }
@@ -87,8 +130,8 @@ async function getCRDInstances(group, plural, category, clusterName) {
 module.exports = async function constructTargetClusterTree(clusterId) {
   let allCrds = [];
 
-  for (e of customResources) {
-    const instances = await getCRDInstances(e.group, e.plural, e.category, clusterId);
+  for (const [plural, value] of Object.entries(resourceMap)) {
+    const instances = await getCRDInstances(value.group, plural, value.category, clusterId);
     allCrds = allCrds.concat(instances);
   }
 
@@ -138,7 +181,7 @@ module.exports = async function constructTargetClusterTree(clusterId) {
     name: clusterId,
     kind: "Cluster",
     id: "cluster",
-    provider: "capi",
+    provider: "cluster",
     children: [
       {
         name: "",
@@ -180,7 +223,7 @@ module.exports = async function constructTargetClusterTree(clusterId) {
             name: clusterId + "",
             kind: "AzureCluster",
             id: "azureCluster",
-            provider: "infra",
+            provider: "infrastructure",
             children: [],
           },
           {
@@ -194,7 +237,7 @@ module.exports = async function constructTargetClusterTree(clusterId) {
             name: "cluster-identity",
             kind: "AzureClusterIdentity",
             id: "clusterIdentity",
-            provider: "infra",
+            provider: "infrastructure",
             children: [],
           },
         ],
@@ -210,19 +253,19 @@ module.exports = async function constructTargetClusterTree(clusterId) {
             name: clusterId + "-control-plane",
             kind: "KubeadmControlPlane",
             id: "kubeadmCtrlPlane",
-            provider: "ctrlPlane",
+            provider: "controlplane",
             children: [
               {
                 name: clusterId + "-control-plane",
                 kind: "Machine",
                 id: "machineCtrlPlane",
-                provider: "capi",
+                provider: "cluster",
                 children: [
                   {
                     name: clusterId + "-control-plane",
                     kind: "AzureMachine",
                     id: "azureMachineCtrl",
-                    provider: "infra",
+                    provider: "infrastructure",
                     children: [],
                   },
                   {
@@ -240,7 +283,7 @@ module.exports = async function constructTargetClusterTree(clusterId) {
             name: clusterId + "-control-plane",
             kind: "AzureMachineTemplate",
             id: "azureMachineTemplateCtrl",
-            provider: "infra",
+            provider: "infrastructure",
             children: [],
           },
         ],
@@ -256,32 +299,32 @@ module.exports = async function constructTargetClusterTree(clusterId) {
             name: clusterId + "-control-plane",
             kind: "AzureMachineTemplate",
             id: "azureMachineTempMd",
-            provider: "infra",
+            provider: "infrastructure",
             children: [],
           },
           {
             name: clusterId + "-md",
             kind: "MachineDeployment",
             id: "machineDeployment",
-            provider: "capi",
+            provider: "cluster",
             children: [
               {
                 name: clusterId + "",
                 kind: "MachineSet",
                 id: "machineSet",
-                provider: "capi",
+                provider: "cluster",
                 children: [
                   {
                     name: clusterId + "-md-1",
                     kind: "Machine",
                     id: "machine1",
-                    provider: "capi",
+                    provider: "cluster",
                     children: [
                       {
                         name: clusterId + "-md-1",
                         kind: "AzureMachine",
                         id: "azureMachine1",
-                        provider: "infra",
+                        provider: "infrastructure",
                         children: [],
                       },
                       {

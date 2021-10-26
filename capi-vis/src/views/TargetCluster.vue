@@ -147,15 +147,15 @@ export default {
           name: "Bootstrap Provider (Kubeadm)",
           color: colors.amber.darken2,
         },
-        ctrlPlane: {
+        controlplane: {
           name: "Control Plane (Kubeadm)",
           color: colors.purple.darken1,
         },
-        infra: {
+        infrastructure: {
           name: "Infrastructure (Azure)",
           color: colors.green.base,
         },
-        capi: {
+        cluster: {
           name: "Cluster API",
           color: colors.blue.darken1,
         },
