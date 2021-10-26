@@ -74,14 +74,12 @@
           </div>
         </v-card>
       </div>
-      <div
-        class="resourceView"
-        v-if="selected.name"
-      >
+      <div class="resourceView">
         <CustomResourceTree
           :items="resource"
           :title="'Resource: ' + selected.kind + '/' + selected.name"
           :color="legend[selected.provider].color"
+          :selectedNode="selected.name"
           v-if="resourceIsReady"
         />
 

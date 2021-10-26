@@ -1,11 +1,25 @@
 <template>
-  <v-card class="mx-auto">
+  <v-card
+    class="mx-auto"
+    v-if="selectedNode"
+  >
     <v-sheet
       :color="color"
       class="pa-4"
       dark
     >
-      <v-card-title class="text-h5">{{ title }}</v-card-title>
+      <v-card-title class="text-h5">
+        {{ title }}
+        <v-spacer></v-spacer>
+        <v-btn
+          icon
+          color="white"
+          @click="selectedNode=''"
+        >
+          <v-icon>mdi-close-circle</v-icon>
+        </v-btn>
+
+      </v-card-title>
       <v-text-field
         v-model="search"
         label="Search Company Directory"
@@ -50,6 +64,7 @@ export default {
     items: Array,
     title: String,
     color: String,
+    selectedNode: String,
   },
   data() {
     return {
