@@ -1,8 +1,5 @@
 <template>
-  <v-card
-    class="mx-auto"
-    v-if="selectedNode"
-  >
+  <v-card class="mx-auto">
     <v-sheet
       :color="color"
       class="pa-4"
@@ -14,7 +11,7 @@
         <v-btn
           icon
           color="white"
-          @click="selectedNode=''"
+          @click="() => { this.$emit('unselectNode', {}); }"
         >
           <v-icon>mdi-close-circle</v-icon>
         </v-btn>
@@ -22,7 +19,7 @@
       </v-card-title>
       <v-text-field
         v-model="search"
-        label="Search Company Directory"
+        label="Search Custom Resource Fields"
         dark
         flat
         solo-inverted
@@ -65,7 +62,6 @@ export default {
     items: Array,
     title: String,
     color: String,
-    selectedNode: String,
   },
   data() {
     return {

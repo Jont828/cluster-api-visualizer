@@ -5,83 +5,94 @@
       :showBack="true"
     />
     <div
-      id="dataBodyWrapper"
+      id="chartLoadWrapper"
       v-if="treeIsReady"
     >
-      <vue-tree
-        id="resourceTree"
-        :dataset="treeData"
-        :config="treeConfig"
-        :collapse-enabled="true"
+      <div
+        id="treeChartWrapper"
+        :style="{
+          height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 142px)' 
+        }"
       >
-        <template v-slot:node="{ node, collapsed }">
-          <div
-            class="machine"
-            v-if="node.id == 'machine1'"
-          >
-            <span>x2</span>
-          </div>
-          <v-hover>
-            <template v-slot:default="{ hover }">
-              <v-card
-                class="node mx-auto transition-swing"
-                :elevation="hover ? 6 : 3"
-                :style="{ 
+        <vue-tree
+          id="resourceTree"
+          :dataset="treeData"
+          :config="treeConfig"
+          :collapse-enabled="true"
+        >
+          <template v-slot:node="{ node, collapsed }">
+            <div
+              class="machine"
+              v-if="node.id == 'machine1'"
+            >
+              <span>x2</span>
+            </div>
+            <v-hover>
+              <template v-slot:default="{ hover }">
+                <v-card
+                  class="node mx-auto transition-swing"
+                  :elevation="hover ? 6 : 3"
+                  :style="{ 
                   'background-color': legend[node.provider].color, 
                 // 'background-color': legend[node.provider][hover ? 'hoverColor' : 'color'], 
                 border: collapsed ? '' : '',
               }"
-                v-on:click="selectNode(node)"
-              >
-                <!-- <router-link
+                  v-on:click="selectNode(node)"
+                >
+                  <!-- <router-link
                 :to="'/'"
                 class="node-router-link"
               > -->
-                <p class="kind font-weight-medium">{{ node.kind }}</p>
-                <p
-                  class="name font-italic"
-                  v-if="node.name"
-                >{{ node.name }}</p>
-                <v-icon
-                  class="chevron"
-                  size="18"
-                  color="white"
-                  v-else-if="collapsed"
-                >mdi-chevron-down</v-icon>
-                <v-icon
-                  class="chevron"
-                  size="18"
-                  color="white"
-                  v-else
-                >mdi-chevron-up</v-icon>
-                <!-- </router-link> -->
-              </v-card>
-            </template>
-          </v-hover>
-        </template>
+                  <p class="kind font-weight-medium">{{ node.kind }}</p>
+                  <p
+                    class="name font-italic"
+                    v-if="node.name"
+                  >{{ node.name }}</p>
+                  <v-icon
+                    class="chevron"
+                    size="18"
+                    color="white"
+                    v-else-if="collapsed"
+                  >mdi-chevron-down</v-icon>
+                  <v-icon
+                    class="chevron"
+                    size="18"
+                    color="white"
+                    v-else
+                  >mdi-chevron-up</v-icon>
+                  <!-- </router-link> -->
+                </v-card>
+              </template>
+            </v-hover>
+          </template>
 
-      </vue-tree>
-      <div class="legend">
-        <v-card class="legend-card">
-          <div
-            class="legend-entry"
-            v-for="(entry, provider) in legend"
-            :key="provider"
-          >
-            <div :style="{
+        </vue-tree>
+        <div class="legend">
+          <v-card class="legend-card">
+            <div
+              class="legend-entry"
+              v-for="(entry, provider) in legend"
+              :key="provider"
+            >
+              <div :style="{
             'background-color': entry.color
           }" />
-            <span>{{ entry.name }}</span>
-          </div>
-        </v-card>
+              <span>{{ entry.name }}</span>
+            </div>
+          </v-card>
+        </div>
       </div>
-      <div class="resourceView">
+
+      <div
+        class="resourceView"
+        v-if="resourceIsReady && this.selected.name"
+      >
         <CustomResourceTree
           :items="resource"
           :title="'Resource: ' + selected.kind + '/' + selected.name"
           :color="legend[selected.provider].color"
-          :selectedNode="selected.name"
-          v-if="resourceIsReady"
+          :selectedNode="this.selected.name"
+          @unselectNode="() => { this.selected={}; }"
         />
 
       </div>
@@ -207,16 +218,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
-#resourceTree {
-  width: 100%;
-  // height: 100%;
-  height: 750px;
-  background-color: #f8f3f2;
-  // border: 1px solid black;
-}
-
 .wrapper {
-  // height: 100%;
+  height: 100%;
   width: 100%;
   max-width: 100%;
   margin: 0 !important;
@@ -266,15 +269,36 @@ export default {
   }
 }
 
+#chartLoadWrapper {
+  height: 100%;
+
+  #treeChartWrapper {
+    width: 100%;
+    // height: 100%;
+    position: relative;
+    text-align: center;
+
+    #resourceTree {
+      width: 100%;
+      // height: 100%;
+      height: 100%;
+      background-color: #f8f3f2;
+      // border: 1px solid black;
+    }
+  }
+}
+
 .legend {
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  // display: inline-block;
+  position: absolute;
+  bottom: 30px;
+  z-index: 9999;
+  width: 100%;
 
   .legend-card {
     padding: 10px 10px;
+    display: inline-block;
 
     .legend-entry {
       display: inline-block;
@@ -311,7 +335,7 @@ export default {
 }
 
 .resourceView {
-  margin: 30px;
+  margin: 0 30px;
   padding-bottom: 30px;
 }
 </style>
