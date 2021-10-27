@@ -25,9 +25,10 @@
             <template v-slot:default="{ hover }">
               <v-card
                 class="node mx-auto transition-swing"
-                :elevation="hover ? 8  : 4"
+                :elevation="hover ? 6 : 3"
                 :style="{ 
-                'background-color': legend[node.provider].color, 
+                  'background-color': legend[node.provider].color, 
+                // 'background-color': legend[node.provider][hover ? 'hoverColor' : 'color'], 
                 border: collapsed ? '' : '',
               }"
                 v-on:click="selectNode(node)"
@@ -169,26 +170,32 @@ export default {
         bootstrap: {
           name: "Bootstrap Provider (Kubeadm)",
           color: colors.amber.darken2,
+          hoverColor: colors.amber.darken3,
         },
         controlplane: {
           name: "Control Plane (Kubeadm)",
           color: colors.purple.darken1,
+          hoverColor: colors.purple.darken2,
         },
         infrastructure: {
           name: "Infrastructure (Azure)",
           color: colors.green.base,
+          hoverColor: colors.green.darken1,
         },
         cluster: {
           name: "Cluster API",
           color: colors.blue.darken1,
+          hoverColor: colors.blue.darken2,
         },
         addons: {
           name: "Addons",
           color: colors.red.darken1,
+          hoverColor: colors.red.darken2,
         },
         "": {
           name: "None",
           color: colors.grey.darken1,
+          hoverColor: colors.grey.darken2,
         },
       },
       treeData: {},

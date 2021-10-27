@@ -8,32 +8,42 @@
       v-if="treeIsReady"
     >
       <template v-slot:node="{ node, collapsed }">
-        <router-link
-          :to="'/target-cluster/' + node.name"
-          class="node-router-link"
-        >
-          <v-card
-            class="node"
-            :style="{ 
-            'background-color': '#fff', 
-            border: collapsed ? '2px solid grey' : '',
-          }"
-          >
-            <v-card-title>{{ node.name }}
-              <v-spacer></v-spacer>
-              <v-icon color="blue">
-                mdi-{{node.icon}}
-              </v-icon>
-            </v-card-title>
-            <v-card-actions v-if="!node.isRoot">
-              <v-card-text class="card-bottom-text">Resources</v-card-text>
-              <v-spacer></v-spacer>
-              <v-icon>mdi-arrow-top-right</v-icon>
+        <v-hover>
+          <template v-slot:default="{ hover }">
+            <router-link
+              :to="'/target-cluster/' + node.name"
+              class="node-router-link"
+            >
+              <v-card
+                class="node mx-auto transition-swing"
+                :elevation="hover ? 6 : 3"
+                :style="{ 
+                  border: collapsed ? '2px solid grey' : '',
+                  // 'background-color': hover ? '#f0f0f0' : '#fff'
+                }"
+              >
+                <v-card-title class="cardTitle">{{ node.name }}
+                  <v-spacer></v-spacer>
+                  <v-icon color="blue">
+                    mdi-{{node.icon}}
+                  </v-icon>
+                </v-card-title>
+                <v-card-subtitle class="cardSubtitle">{{ (node.children.length) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle>
+                <v-card-actions
+                  class="cardActions"
+                  v-if="!node.isRoot"
+                >
+                  <v-card-text class="card-bottom-text">Resources</v-card-text>
+                  <v-spacer></v-spacer>
+                  <v-icon>mdi-arrow-top-right</v-icon>
 
-            </v-card-actions>
+                </v-card-actions>
 
-          </v-card>
-        </router-link>
+              </v-card>
+            </router-link>
+          </template>
+        </v-hover>
+
       </template>
     </vue-tree>
     <div
@@ -115,7 +125,7 @@ export default {
   // flex-direction: column;
   // align-items: center;
   // justify-content: center;
-  background-color: #a8c8ff;
+  background-color: #fff;
 
   p {
     font-size: 12px;
@@ -123,8 +133,17 @@ export default {
     // color: #2c3e50;
   }
 
-  .card-bottom-text {
-    padding-left: 8px;
+  .cardSubtitle {
+    padding-bottom: 0;
+  }
+
+  .cardActions {
+    padding-top: 0;
+    padding-right: 12px;
+
+    .card-bottom-text {
+      padding-left: 8px;
+    }
   }
 }
 

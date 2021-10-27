@@ -29,6 +29,7 @@
         hide-details
         clearable
         clear-icon="mdi-close-circle-outline"
+        :color="color"
       ></v-text-field>
       <v-checkbox
         v-model="caseSensitive"
