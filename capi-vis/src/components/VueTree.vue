@@ -72,7 +72,7 @@ const DEFAULT_LEVEL_HEIGHT = 200;
  * This is only a hotfix caused by the addition of '__invisible_root' node
  * for multi root purposes.
  */
-const DEFAULT_HEIGHT_DECREMENT = 200;
+const DEFAULT_HEIGHT_DECREMENT = 100;
 
 const ANIMATION_DURATION = 800;
 
@@ -135,6 +135,9 @@ export default {
     },
     _dataset() {
       return this.updatedInternalData(this.dataset);
+    },
+    _linkStyle() {
+      return this.updatedInternalData(this.linkStyle);
     },
   },
   mounted() {
@@ -496,6 +499,13 @@ export default {
   },
   watch: {
     _dataset: {
+      deep: true,
+      handler: function () {
+        this.draw();
+        this.initTransform();
+      },
+    },
+    _linkStyle: {
       deep: true,
       handler: function () {
         this.draw();

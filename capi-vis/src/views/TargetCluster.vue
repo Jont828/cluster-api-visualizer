@@ -3,6 +3,8 @@
     <AppBar
       :title="'Cluster Resources: ' + this.$route.params.id"
       :showBack="true"
+      :isStraight="this.isStraight"
+      @togglePathStyle="linkHandler"
     />
     <div
       id="chartLoadWrapper"
@@ -11,7 +13,7 @@
       <div
         id="treeChartWrapper"
         :style="{
-          height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 142px)' 
+          height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 84px)' 
         }"
       >
         <vue-tree
@@ -19,6 +21,7 @@
           :dataset="treeData"
           :config="treeConfig"
           :collapse-enabled="true"
+          :linkStyle="(isStraight) ? 'straight' : 'curve'"
         >
           <template v-slot:node="{ node, collapsed }">
             <div
@@ -92,7 +95,7 @@
           :title="'Resource: ' + selected.kind + '/' + selected.name"
           :color="legend[selected.provider].color"
           :selectedNode="this.selected.name"
-          @unselectNode="() => { this.selected={}; }"
+          @unselectNode="(val) => { this.selected=val; }"
         />
 
       </div>
@@ -103,6 +106,8 @@
       v-else
     >
       <v-progress-circular
+        :size="50"
+        :width="5"
         indeterminate
         color="primary"
       ></v-progress-circular>
@@ -131,6 +136,9 @@ export default {
     AlertError,
   },
   methods: {
+    linkHandler(val) {
+      this.isStraight = val;
+    },
     async selectNode(node) {
       if (node.provider == "") return;
       this.selected = node;
@@ -177,6 +185,7 @@ export default {
       resourceIsReady: false,
       resource: [],
       selected: {},
+      isStraight: false,
       legend: {
         bootstrap: {
           name: "Bootstrap Provider (Kubeadm)",
@@ -346,5 +355,6 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100%;
 }
 </style>

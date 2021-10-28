@@ -1,8 +1,8 @@
 <template>
-  <v-card class="mx-auto">
+  <v-card class="resourceCard mx-auto">
     <v-sheet
       :color="color"
-      class="pa-4"
+      class="resourceSheet pa-4"
       dark
     >
       <v-card-title class="text-h5">
@@ -82,3 +82,9 @@ export default {
   },
 };
 </script>
+
+<style lang="less" scoped>
+.resourceSheet {
+  // padding: 0 16px 16px 16px;
+}
+</style>

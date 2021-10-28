@@ -5,6 +5,7 @@
       :dataset="treeData"
       :config="treeConfig"
       :collapse-enabled="false"
+      :linkStyle="(isStraight) ? 'straight' : 'curve'"
       v-if="treeIsReady"
     >
       <template v-slot:node="{ node, collapsed }">
@@ -70,6 +71,9 @@ export default {
   components: {
     VueTree,
     AlertError,
+  },
+  props: {
+    isStraight: Boolean,
   },
   methods: {
     async fetchOverview() {

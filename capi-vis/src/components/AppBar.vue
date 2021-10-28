@@ -2,7 +2,6 @@
   <v-app-bar
     color="blue darken-2"
     app
-    dense
     dark
   >
     <router-link
@@ -20,13 +19,24 @@
         </v-icon>
       </v-btn>
     </router-link>
-    <v-app-bar-nav-icon v-else></v-app-bar-nav-icon>
+    <v-app-bar-nav-icon
+      class="ma-2"
+      v-else
+    ></v-app-bar-nav-icon>
 
-    <!-- <v-spacer></v-spacer> -->
+    <v-toolbar-title class="text-no-wrap pa-0">{{ title }}</v-toolbar-title>
 
-    <v-toolbar-title class="text-no-wrap">{{ title }}</v-toolbar-title>
-
-    <!-- <v-spacer></v-spacer> -->
+    <v-spacer></v-spacer>
+    <v-btn
+      icon
+      text
+      class="ma-2"
+      @click="linkHandler"
+    >
+      <v-icon color="white">
+        {{ isStraight ? 'mdi-sine-wave' : 'mdi-square-wave' }}
+      </v-icon>
+    </v-btn>
 
   </v-app-bar>
 </template>
@@ -37,6 +47,13 @@ export default {
   props: {
     title: String,
     showBack: Boolean,
+    isStraight: Boolean,
+  },
+  methods: {
+    linkHandler(value) {
+      console.log(this.isStraight);
+      this.$emit("togglePathStyle", !this.isStraight);
+    },
   },
 };
 </script>
