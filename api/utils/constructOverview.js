@@ -9,6 +9,8 @@ const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
 module.exports = async function constructOverview() {
   const context = kc.currentContext;
   const cluster = kc.clusters.find(ctx => ctx.name == context);
+  if (cluster === undefined)
+    return null;
 
   let root = {
     name: cluster.name,

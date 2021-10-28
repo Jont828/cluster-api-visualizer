@@ -83,6 +83,10 @@ export default {
       try {
         const response = await getClusterOverview();
         this.treeData = response;
+        if (this.treeData == null) {
+          this.errorMessage = "Could not find a management cluster from default kubeconfig";
+          return;
+        }
         this.treeIsReady = true;
       } catch (error) {
         this.errorMessage = "Failed to construct cluster overview";
@@ -119,25 +123,14 @@ export default {
   height: 100%;
 }
 
-.node-slot {
-  // cursor: default !important;
-}
-
 .node {
-  // cursor: default !important;
   width: 250px;
   height: 120px;
-  /* padding: 8px; */
-  // display: flex;
-  // flex-direction: column;
-  // align-items: center;
-  // justify-content: center;
   background-color: #fff;
 
   p {
     font-size: 12px;
     margin: 2px;
-    // color: #2c3e50;
   }
 
   .cardTitle {
