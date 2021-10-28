@@ -219,7 +219,7 @@ export default {
         },
       },
       treeData: {},
-      treeConfig: { nodeWidth: 170, nodeHeight: 50, levelHeight: 120 },
+      treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
       // treeConfig: { nodeWidth: 250, nodeHeight: 150, levelHeight: 250 }
     };
   },
@@ -239,7 +239,7 @@ export default {
 }
 
 .node {
-  width: 160px;
+  width: 170px;
   height: 50px;
   display: flex;
   flex-direction: column;
