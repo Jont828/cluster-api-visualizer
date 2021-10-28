@@ -264,15 +264,15 @@ export default {
   }
 
   .kind {
-    font-size: 13px;
+    font-size: 12.5px;
   }
 
-  .name {
-    width: 150px;
+  .name,
+  .kind {
+    max-width: 160px;
     text-align: center;
     white-space: nowrap;
     display: inline-block;
-    // word-break: normal;
     overflow: hidden;
     text-overflow: ellipsis;
   }

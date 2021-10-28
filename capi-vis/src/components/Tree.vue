@@ -23,7 +23,10 @@
                   // 'background-color': hover ? '#f0f0f0' : '#fff'
                 }"
               >
-                <v-card-title class="cardTitle">{{ node.name }}
+                <v-card-title>
+                  <span class="cardTitle">
+                    {{ node.name }}
+                  </span>
                   <v-spacer></v-spacer>
                   <v-icon color="blue">
                     mdi-{{node.icon}}
@@ -135,6 +138,14 @@ export default {
     font-size: 12px;
     margin: 2px;
     // color: #2c3e50;
+  }
+
+  .cardTitle {
+    max-width: 194px;
+    white-space: nowrap;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .cardSubtitle {
