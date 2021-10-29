@@ -70,7 +70,7 @@ import AlertError from "./AlertError.vue";
 import { getClusterOverview } from "../services/Service.js";
 
 export default {
-  name: "Tree",
+  name: "OverviewTree",
   components: {
     VueTree,
     AlertError,
@@ -84,7 +84,8 @@ export default {
         const response = await getClusterOverview();
         this.treeData = response;
         if (this.treeData == null) {
-          this.errorMessage = "Could not find a management cluster from default kubeconfig";
+          this.errorMessage =
+            "Could not find a management cluster from default kubeconfig";
           return;
         }
         this.treeIsReady = true;

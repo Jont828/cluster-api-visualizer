@@ -77,7 +77,12 @@ export default {
             console.log(item, search, textKey);
             return item["name"].indexOf(search) > -1;
           }
-        : undefined;
+        : (item, search, textKey) => {
+            console.log(item, search, textKey);
+            return (
+              item["name"].toLowerCase().indexOf(search.toLowerCase()) > -1
+            );
+          };
     },
   },
 };

@@ -1,22 +1,22 @@
 <template>
-  <div id="home">
+  <div id="overview">
     <AppBar
       title="Cluster Management Overview"
       :isStraight="this.isStraight"
       @togglePathStyle="linkHandler"
     />
-    <Tree :isStraight="this.isStraight" />
+    <OverviewTree :isStraight="this.isStraight" />
   </div>
 </template>
 
 <script>
-import Tree from "../components/Tree.vue";
+import OverviewTree from "../components/OverviewTree.vue";
 import AppBar from "../components/AppBar.vue";
 
 export default {
-  name: "Home",
+  name: "Overview",
   components: {
-    Tree,
+    OverviewTree,
     AppBar,
   },
   data() {
@@ -33,7 +33,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-#home {
+#overview {
   height: 100%;
 }
 </style>

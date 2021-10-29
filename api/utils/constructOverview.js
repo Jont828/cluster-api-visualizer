@@ -1,12 +1,11 @@
 const k8s = require('@kubernetes/client-node');
-const { default: cluster } = require('cluster');
-const { assert } = require('console');
-
-const kc = new k8s.KubeConfig();
-kc.loadFromDefault();
-const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
 
 module.exports = async function constructOverview() {
+
+  const kc = new k8s.KubeConfig();
+  kc.loadFromDefault();
+  const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
+
   const context = kc.currentContext;
   const cluster = kc.clusters.find(ctx => ctx.name == context);
   if (cluster === undefined)
@@ -33,8 +32,8 @@ module.exports = async function constructOverview() {
       })
     });
   } catch (error) {
-    console.log('Error fetching cluster overview');
     console.log(error);
+    throw 'Error fetching target clusters';
   }
 
   return root;
