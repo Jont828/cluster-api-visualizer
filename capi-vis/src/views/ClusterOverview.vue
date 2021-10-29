@@ -19,6 +19,9 @@ export default {
     OverviewTree,
     AppBar,
   },
+  mounted() {
+    document.title = "Cluster Management Overview";
+  },
   data() {
     return {
       isStraight: false,

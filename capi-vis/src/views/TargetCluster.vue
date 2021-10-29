@@ -69,6 +69,9 @@ export default {
     CustomResourceTree,
     AlertError,
   },
+  mounted() {
+    document.title = "Cluster Resources: " + this.$route.params.id;
+  },
   methods: {
     linkHandler(val) {
       this.isStraight = val;
