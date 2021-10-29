@@ -10,18 +10,18 @@ const resourceMap = {
   clusterresourcesetbindings: { group: "addons.cluster.x-k8s.io", category: "clusterInfra" },
   clusterresourcesets: { group: "addons.cluster.x-k8s.io", category: "clusterInfra" },
   // clusterclasses: { group: "cluster.x-k8s.io", category: "clusterInfra" },
-  clusters: { group: "cluster.x-k8s.io", category: "" },
+  clusters: { group: "cluster.x-k8s.io", category: null },
   machinedeployments: { group: "cluster.x-k8s.io", category: "workers" },
   // machinehealthchecks: { group: "cluster.x-k8s.io", category: "clusterInfra" },
   machinepools: { group: "cluster.x-k8s.io", category: "workers" },
   machinesets: { group: "cluster.x-k8s.io", category: "workers" },
-  machines: { group: "cluster.x-k8s.io", category: "" },
+  machines: { group: "cluster.x-k8s.io", category: null },
   azureclusteridentities: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   azureclusters: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   azuremachinepoolmachines: { group: "infrastructure.cluster.x-k8s.io", category: "workers" },
   azuremachinepools: { group: "infrastructure.cluster.x-k8s.io", category: "workers" },
-  azuremachines: { group: "infrastructure.cluster.x-k8s.io", category: "" },
-  azuremachinetemplates: { group: "infrastructure.cluster.x-k8s.io", category: "" },
+  azuremachines: { group: "infrastructure.cluster.x-k8s.io", category: null },
+  azuremachinetemplates: { group: "infrastructure.cluster.x-k8s.io", category: null },
   // azuremanagedclusters: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   // azuremanagedcontrolplanes: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   // azuremanagedmachinepools: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
@@ -33,6 +33,61 @@ const resourceMap = {
   kubeadmcontrolplanes: { group: "controlplane.cluster.x-k8s.io", category: "controlPlane" },
   // kubeadmcontrolplanetemplates: { group: "controlplane.cluster.x-k8s.io", category: "controlPlane" },
 };
+
+function resolveCategory(crd, clusterName) {
+  if (crd.name.indexOf(clusterName + '-control-plane') == 0) {
+    return 'controlPlane'
+  } else if (crd.name.indexOf(clusterName + '-md') == 0) {
+    return 'workers'
+  }
+  console.log('Category is null for CRD');
+  console.log(crd);
+}
+
+const multipleOwners = {
+  // Kind: { ExpectedOwner, RedundantOwners }
+  'AzureMachine': { expectedOwner: 'Machine', redundantOwners: ['KubeadmControlPlane'] },
+  'KubeadmConfig': { expectedOwner: 'Machine', redundantOwners: ['KubeadmControlPlane'] },
+  'ClusterResourceSetBinding': { expectedOwner: 'ClusterResourceSet', redundantOwners: ['Cluster'] },
+}
+
+function resolveOwners(crd) {
+  let owners = crd.ownerRefs;
+
+  // if (owners.length > 1)
+  //   owners = owners.filter(elt => elt.kind != 'Cluster'); // If multiple owners, being owned by root is redundant 
+
+  if (owners.length > 1) { // If multiple owners 
+
+    // If kind in lookup table
+    if (crd.kind in multipleOwners) {
+      let expectedOwner = multipleOwners[crd.kind].expectedOwner;
+      let allOwners = new Set(multipleOwners[crd.kind].redundantOwners);
+      allOwners.add(expectedOwner);
+
+      // If owners match owners in lookup table for kind
+      if (owners.length == allOwners.size) {
+        let match = true;
+        owners.forEach((o, i) => {
+          match = match && allOwners.has(o.kind);
+        });
+
+        if (match)
+          return owners.filter(o => o.kind == expectedOwner)[0].uid; // Return ID of expected owner type in owner refs if matched
+      }
+      console.log('Cannot resolve multiple owners for', crd.kind);
+      console.log(owners);
+      throw 'Failed to resolve multiple owners!';
+    }
+
+    // assert(owners.length == 1);
+    // if (owners.length > 1)
+    //   console.log('Kind is', crd.kind, crd.name);
+    // owner = owners[0].uid;
+  } else { // If only one owner, easy case
+    return owners[0].uid;
+  }
+}
 
 async function getCRDInstances(group, plural, initCategory, clusterName, clusterUid) {
 
@@ -47,65 +102,26 @@ async function getCRDInstances(group, plural, initCategory, clusterName, cluster
       group: group,
       plural: plural,
       provider: group.substr(0, group.indexOf('.')),
+      ownerRefs: e.metadata.ownerReferences
     }
 
     // 2. If the category depends on context, i.e. Machine, then resolve it now
-    if (!initCategory) {
-      if (crd.name.indexOf(clusterName + '-control-plane') == 0) {
-        crd.category = 'controlPlane'
-      } else if (crd.name.indexOf(clusterName + '-md') == 0) {
-        crd.category = 'workers'
-      }
-    } else {
-      crd.category = initCategory
-    }
+    crd.category = initCategory ? initCategory : resolveCategory(crd, clusterName)
 
     // 3. If there are resources left without owners, bind them to the root
-    let owners = e.metadata.ownerReferences;
-    if (crd.kind == 'AzureMachineTemplate') {
-      console.log('Template owned by');
-      console.log(crd);
-      console.log(owners);
-    }
     let owner;
-    if (crd.kind == 'Cluster') {
-      console.log('Found root cluster');
+    if (crd.kind == 'Cluster') { // Root node has no owner
       owner = null;
+    } if (e.metadata.ownerReferences === undefined) { // If no owners and not the root, i.e. bucket/category nodes
+      owner = clusterUid;
     } else {
-      if (owners === undefined) { // If no owners and not the root
-        console.log('Iffed');
-        owner = clusterUid;
-      } else if (owners.length > 1) { // If two owners 
-        console.log('Elifed');
-        if (owners.find(elt => elt.kind == 'Cluster')) // And one is a cluster (which is redundant)
-          owners = owners.filter(elt => elt.kind != 'Cluster');
-        else if (crd.kind == 'AzureMachine' && owners.find(elt => elt.kind == 'KubeadmControlPlane')) // Implied ownership of AzureMachine can be dropped
-          owners = owners.filter(elt => elt.kind != 'KubeadmControlPlane');
-        else if (crd.kind == 'KubeadmConfig' && owners.find(elt => elt.kind == 'KubeadmControlPlane')) // Implied ownership of AzureMachine can be dropped
-          owners = owners.filter(elt => elt.kind != 'KubeadmControlPlane');
-
-        assert(owners.length == 1);
-        if (owners.length > 1)
-          console.log('Kind is', crd.kind, crd.name);
-        owner = owners[0].uid;
-      } else { // If only one owner, easy case
-        console.log('Elsed');
-        owner = owners[0].uid;
-      }
+      owner = resolveOwners(crd);
     }
 
-    if (crd.kind == 'AzureMachineTemplate') {
-      console.log('Template owned by');
-      console.log(owner);
-    }
     // Lastly, take all the parents that point to the root and bind them to their respective category node
     if (owner == clusterUid)
       owner = crd.category;
 
-    if (crd.kind == 'AzureMachineTemplate') {
-      console.log('Template finally owned by');
-      console.log(owner);
-    }
     crd.parent = owner;
     crds.push(crd)
   })
@@ -129,15 +145,15 @@ module.exports = async function constructTargetClusterTree(clusterName) {
     allCrds = allCrds.concat(instances);
   }
 
-  const whitelist = ['crs-calico', 'crs-calico-ipv6', 'flannel-windows', 'cluster-identity'];
+  const whitelist = ['crs-calico', 'crs-calico-ipv6', 'flannel-windows', 'crs-calico-windows', 'cluster-identity'];
 
   let crds = allCrds.filter((crd) => (crd.name.indexOf(clusterName) == 0 || whitelist.includes(crd.name)));
 
-  console.log('Printing categories', crds.length);
-  crds.forEach((e, i) => {
-    console.log(e);
-  })
-  console.log('Started tree for', clusterName);
+  // console.log('Printing categories', crds.length);
+  // crds.forEach((e, i) => {
+  //   console.log(e);
+  // })
+  // console.log('Started tree for', clusterName);
 
   // Add dummy nodes with CRDs
   let dummyNodes = [
@@ -178,6 +194,7 @@ module.exports = async function constructTargetClusterTree(clusterName) {
   console.log(idMapping);
 
   let root;
+  // console.log(crds);
   crds.forEach(e => {
     // Handle the root element
     if (e.parent == null) {
@@ -187,9 +204,11 @@ module.exports = async function constructTargetClusterTree(clusterName) {
     }
     // Use our mapping to locate the parent element in our data array
     let parentNode = crds[idMapping[e.parent]];
-    console.log(parentNode);
-    console.log(e);
+    console.log('Parent', parentNode);
+    console.log('Node', e);
     console.log('Parent is', parentNode.kind, parentNode.name, 'and child is ', e.kind, e.name);
+    console.log('\n');
+
     // Add our current e to its parent's `children` array
     if (!('children' in parentNode))
       parentNode.children = [];
