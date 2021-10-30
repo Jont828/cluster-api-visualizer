@@ -102,7 +102,9 @@ async function getCRDInstances(group, plural, initCategory, clusterName, cluster
       group: group,
       plural: plural,
       provider: group.substr(0, group.indexOf('.')),
-      ownerRefs: e.metadata.ownerReferences
+      ownerRefs: e.metadata.ownerReferences,
+      labels: e.metadata.labels,
+      spec: e.spec
     }
 
     // 2. If the category depends on context, i.e. Machine, then resolve it now
@@ -136,6 +138,7 @@ module.exports = async function constructTargetClusterTree(clusterName) {
   let clusters = response.body.items.filter(e => e.metadata.name == clusterName);
   assert(clusters.length == 1);
   let clusterUid = clusters[0].metadata.uid;
+  let clusterLabels = clusters[0].metadata.labels;
   // End hack
 
   let allCrds = [];
@@ -145,39 +148,57 @@ module.exports = async function constructTargetClusterTree(clusterName) {
     allCrds = allCrds.concat(instances);
   }
 
-  const whitelist = ['crs-calico', 'crs-calico-ipv6', 'flannel-windows', 'crs-calico-windows', 'cluster-identity'];
+  const whitelistKinds = ['ClusterResourceSet', 'ClusterResourceSetBinding'];
 
-  let crds = allCrds.filter((crd) => (crd.name.indexOf(clusterName) == 0 || whitelist.includes(crd.name)));
+  // First filter for resources where the name starts with cluster name 
+  let crds = allCrds.filter(crd => (crd.name.indexOf(clusterName) == 0 || whitelistKinds.includes(crd.kind)));
 
-  // console.log('Printing categories', crds.length);
-  // crds.forEach((e, i) => {
-  //   console.log(e);
-  // })
-  // console.log('Started tree for', clusterName);
+  // TODO: Filter types with cluster-name label instead
+  // let crds = allCrds.filter(crd => (crd.labels['cluster.x-k8s.io/cluster-name'] == clusterName || whitelistKinds.includes(crd.kind)));
+
+  let binding = allCrds.find(crd => (
+    crd.kind == 'ClusterResourceSetBinding' &&
+    crd.ownerRefs.find(e => e.kind == 'Cluster').name == clusterName
+  ));
+
+  if (binding) {
+    let resourceSetNames = new Set();
+    binding.spec.bindings.forEach(e => {
+      resourceSetNames.add(e.clusterResourceSetName);
+    });
+    crds = crds.filter(crd => (
+      !whitelistKinds.includes(crd.kind) || // Keep non binding or resource set
+      (crd.kind == 'ClusterResourceSet' && resourceSetNames.has(crd.name)) ||
+      (crd.kind == 'ClusterResourceSetBinding' && crd.name == binding.name)
+    ));
+  } else {
+    crds = crds.filter(crd => (!whitelistKinds.includes(crd.kind)));
+  }
+
 
   // Add dummy nodes with CRDs
   let dummyNodes = [
     {
-      name: "",
-      kind: "ClusterInfrastructure",
-      id: "clusterInfra",
-      provider: "",
+      name: '',
+      kind: 'ClusterInfrastructure',
+      id: 'clusterInfra',
+      provider: '',
       collapsable: true,
       parent: clusterUid,
     },
     {
-      name: "",
-      kind: "ControlPlane",
-      id: "controlPlane",
-      provider: "",
+      name: '',
+      kind: 'ControlPlane',
+      id: 'controlPlane',
+      provider: '',
       collapsable: true,
       parent: clusterUid,
     },
     {
-      name: "",
-      kind: "Workers",
-      id: "workers",
-      provider: "",
+      name: '',
+      kind: 'Workers',
+      id: 'workers',
+      provider: '',
       collapsable: true,
       parent: clusterUid,
     },
@@ -199,15 +220,14 @@ module.exports = async function constructTargetClusterTree(clusterName) {
     // Handle the root element
     if (e.parent == null) {
       root = e;
-      console.log('Found root');
       return;
     }
     // Use our mapping to locate the parent element in our data array
     let parentNode = crds[idMapping[e.parent]];
-    console.log('Parent', parentNode);
-    console.log('Node', e);
-    console.log('Parent is', parentNode.kind, parentNode.name, 'and child is ', e.kind, e.name);
-    console.log('\n');
+
+    // console.log('Parent', parentNode);
+    // console.log('Child', e);
+    // console.log('\n');
 
     // Add our current e to its parent's `children` array
     if (!('children' in parentNode))
