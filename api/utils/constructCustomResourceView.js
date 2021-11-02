@@ -2,11 +2,16 @@ const k8s = require('@kubernetes/client-node');
 const { default: cluster } = require('cluster');
 const { assert } = require('console');
 
-const kc = new k8s.KubeConfig();
-kc.loadFromDefault();
-const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
-
 module.exports = async function constructCustomResourceView(group, plural, name) {
+  const kc = new k8s.KubeConfig();
+  let k8sCrd;
+  try {
+    kc.loadFromDefault();
+    k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
+  } catch (error) {
+    return null;
+  }
+
   // Hack since getClusterCustomObject is getting a 404
   const response = await k8sCrd.listClusterCustomObject(group, 'v1beta1', plural);
   let items = response.body.items.filter(e => e.metadata.name == name);

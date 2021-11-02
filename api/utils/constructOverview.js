@@ -1,10 +1,16 @@
 const k8s = require('@kubernetes/client-node');
+const HttpStatus = require('http-status-codes')
 
 module.exports = async function constructOverview() {
 
   const kc = new k8s.KubeConfig();
-  kc.loadFromDefault();
-  const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
+  let k8sCrd;
+  try {
+    kc.loadFromDefault();
+    k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
+  } catch (error) {
+    return null;
+  }
 
   const context = kc.currentContext;
   const cluster = kc.clusters.find(ctx => ctx.name == context);
@@ -20,6 +26,7 @@ module.exports = async function constructOverview() {
 
   // TODO: Make this work recursively, i.e. if a child is another management cluster
   try {
+    console.log('Looking for target clusters');
     const response = await k8sCrd.listClusterCustomObject('cluster.x-k8s.io', 'v1beta1', 'clusters');
     // console.log(response.body);
     response.body.items.forEach((e, i) => {
@@ -32,8 +39,9 @@ module.exports = async function constructOverview() {
       })
     });
   } catch (error) {
-    console.log(error);
-    throw 'Error fetching target clusters';
+    console.log('Error is');
+    console.log(error.message);
+    // if (error.statusCode == HttpStatus.NOT_FOUND)
   }
 
   return root;

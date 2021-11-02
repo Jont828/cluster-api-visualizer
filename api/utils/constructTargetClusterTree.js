@@ -2,9 +2,7 @@ const k8s = require('@kubernetes/client-node');
 const { default: cluster } = require('cluster');
 const { assert } = require('console');
 
-const kc = new k8s.KubeConfig();
-kc.loadFromDefault();
-const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
+const HttpStatus = require('http-status-codes')
 
 const resourceMap = {
   clusterresourcesetbindings: { group: "addons.cluster.x-k8s.io", category: "clusterInfra" },
@@ -18,10 +16,14 @@ const resourceMap = {
   machines: { group: "cluster.x-k8s.io", category: null },
   azureclusteridentities: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   azureclusters: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
+  dockerclusters: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   azuremachinepoolmachines: { group: "infrastructure.cluster.x-k8s.io", category: "workers" },
   azuremachinepools: { group: "infrastructure.cluster.x-k8s.io", category: "workers" },
+  dockermachinepools: { group: "infrastructure.cluster.x-k8s.io", category: "workers" },
   azuremachines: { group: "infrastructure.cluster.x-k8s.io", category: null },
+  dockermachines: { group: "infrastructure.cluster.x-k8s.io", category: null },
   azuremachinetemplates: { group: "infrastructure.cluster.x-k8s.io", category: null },
+  dockermachinetemplates: { group: "infrastructure.cluster.x-k8s.io", category: null },
   // azuremanagedclusters: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   // azuremanagedcontrolplanes: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   // azuremanagedmachinepools: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
@@ -30,32 +32,31 @@ const resourceMap = {
   // azureuserassignedidentites: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   kubeadmconfigs: { group: "bootstrap.cluster.x-k8s.io", category: "clusterInfra" },
   kubeadmconfigtemplates: { group: "bootstrap.cluster.x-k8s.io", category: "clusterInfra" },
+  // kubeadmconfigs: { group: "bootstrap.cluster.x-k8s.io", category: null },
+  // kubeadmconfigtemplates: { group: "bootstrap.cluster.x-k8s.io", category: null },
   kubeadmcontrolplanes: { group: "controlplane.cluster.x-k8s.io", category: "controlPlane" },
   // kubeadmcontrolplanetemplates: { group: "controlplane.cluster.x-k8s.io", category: "controlPlane" },
 };
 
-function resolveCategory(crd, clusterName) {
-  if (crd.name.indexOf(clusterName + '-control-plane') == 0) {
-    return 'controlPlane'
-  } else if (crd.name.indexOf(clusterName + '-md') == 0) {
-    return 'workers'
-  }
-  console.log('Category is null for CRD');
-  console.log(crd);
+function resolveCategory(crd) {
+  if (crd.kind == 'Cluster')
+    return null
+  else if (crd.labels !== undefined)
+    return ('cluster.x-k8s.io/control-plane' in crd.labels) ? 'controlPlane' : 'workers'
+  else // TODO: Don't rely on names of CRDs
+    return ((crd.name.indexOf('control-plane') > -1) || (crd.name.indexOf('controlplane') > -1)) ? 'controlPlane' : 'workers'
 }
 
 const multipleOwners = {
-  // Kind: { ExpectedOwner, RedundantOwners }
+  // Format = Kind: { ExpectedOwner, RedundantOwners }
   'AzureMachine': { expectedOwner: 'Machine', redundantOwners: ['KubeadmControlPlane'] },
+  'DockerMachine': { expectedOwner: 'Machine', redundantOwners: ['KubeadmControlPlane'] },
   'KubeadmConfig': { expectedOwner: 'Machine', redundantOwners: ['KubeadmControlPlane'] },
   'ClusterResourceSetBinding': { expectedOwner: 'ClusterResourceSet', redundantOwners: ['Cluster'] },
 }
 
 function resolveOwners(crd) {
   let owners = crd.ownerRefs;
-
-  // if (owners.length > 1)
-  //   owners = owners.filter(elt => elt.kind != 'Cluster'); // If multiple owners, being owned by root is redundant 
 
   if (owners.length > 1) { // If multiple owners 
 
@@ -90,50 +91,79 @@ function resolveOwners(crd) {
 }
 
 async function getCRDInstances(group, plural, initCategory, clusterName, clusterUid) {
+  const kc = new k8s.KubeConfig();
+  kc.loadFromDefault();
+  const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
 
-  const res = await k8sCrd.listClusterCustomObject(group, 'v1beta1', plural);
-  let crds = [];
-  res.body.items.forEach((e, i) => {
-    // 1. Init easy fields
-    let crd = {
-      id: e.metadata.uid,
-      name: e.metadata.name,
-      kind: e.kind,
-      group: group,
-      plural: plural,
-      provider: group.substr(0, group.indexOf('.')),
-      ownerRefs: e.metadata.ownerReferences,
-      labels: e.metadata.labels,
-      spec: e.spec
-    }
+  try {
+    const res = await k8sCrd.listClusterCustomObject(group, 'v1beta1', plural);
+    let crds = [];
+    res.body.items.forEach((e, i) => {
+      // 1. Init easy fields
+      let crd = {
+        id: e.metadata.uid,
+        name: e.metadata.name,
+        kind: e.kind,
+        group: group,
+        plural: plural,
+        provider: group.substr(0, group.indexOf('.')),
+        ownerRefs: e.metadata.ownerReferences,
+        labels: e.metadata.labels,
+        spec: e.spec
+      }
 
-    // 2. If the category depends on context, i.e. Machine, then resolve it now
-    crd.category = initCategory ? initCategory : resolveCategory(crd, clusterName)
+      // 2. If the category depends on context, i.e. Machine, then resolve it now
+      crd.category = initCategory ? initCategory : resolveCategory(crd)
 
-    // 3. If there are resources left without owners, bind them to the root
-    let owner;
-    if (crd.kind == 'Cluster') { // Root node has no owner
-      owner = null;
-    } if (e.metadata.ownerReferences === undefined) { // If no owners and not the root, i.e. bucket/category nodes
-      owner = clusterUid;
-    } else {
-      owner = resolveOwners(crd);
-    }
+      // 3. If there are resources left without owners, bind them to the root
+      let owner;
+      if (crd.kind == 'Cluster') { // Root node has no owner
+        owner = null;
+      } if (e.metadata.ownerReferences === undefined) { // If no owners and not the root, i.e. bucket/category nodes
+        owner = clusterUid;
+      } else {
+        owner = resolveOwners(crd);
+      }
 
-    // Lastly, take all the parents that point to the root and bind them to their respective category node
-    if (owner == clusterUid)
-      owner = crd.category;
+      // Lastly, take all the parents that point to the root and bind them to their respective category node
+      if (owner == clusterUid)
+        owner = crd.category;
 
-    crd.parent = owner;
-    crds.push(crd)
-  })
+      crd.parent = owner;
+      crds.push(crd)
+    })
 
-
-  return crds;
+    return crds;
+  } catch (error) {
+    if (error.statusCode == HttpStatus.NOT_FOUND)
+      return [];
+    console.log(error);
+    throw 'Error fetching for ' + plural + ' in ' + clusterName
+  }
 }
+
+// TODO: Find a good way to discover CRDs belonging to a given cluster
+// function belongsToCluster(crd, clusterName, clusterUid) {
+//   console.log('CRD:', crd.kind, crd.name);
+//   if (crd.labels !== undefined) {
+//     if (crd.labels['cluster.x-k8s.io/cluster-name'] == clusterName)
+//       return true;
+//   } else if (crd.ownerRefs !== undefined) {
+//     if (crd.ownerRefs.find(o => o.uid == clusterUid))
+//       return true;
+//   } else if (crd.name.indexOf(clusterName) == 0) {
+//     return true;
+//   }
+
+//   return false;
+// }
 
 module.exports = async function constructTargetClusterTree(clusterName) {
   // Hack since getClusterCustomObject is getting a 404
+  const kc = new k8s.KubeConfig();
+  kc.loadFromDefault();
+  const k8sCrd = kc.makeApiClient(k8s.CustomObjectsApi);
+
   const response = await k8sCrd.listClusterCustomObject('cluster.x-k8s.io', 'v1beta1', 'clusters');
   let clusters = response.body.items.filter(e => e.metadata.name == clusterName);
   assert(clusters.length == 1);
@@ -150,8 +180,14 @@ module.exports = async function constructTargetClusterTree(clusterName) {
 
   const whitelistKinds = ['ClusterResourceSet', 'ClusterResourceSetBinding'];
 
-  // First filter for resources where the name starts with cluster name 
-  let crds = allCrds.filter(crd => (crd.name.indexOf(clusterName) == 0 || whitelistKinds.includes(crd.kind)));
+  // let crds = allCrds.filter(crd => (belongsToCluster(crd, clusterName, clusterUid) || whitelistKinds.includes(crd.kind)));
+  let crds = allCrds.filter(crd => (
+    (crd.labels !== undefined && crd.labels['cluster.x-k8s.io/cluster-name'] == clusterName) ||
+    (crd.ownerRefs !== undefined && crd.ownerRefs.find(o => o.uid == clusterUid)) ||
+    crd.name.indexOf(clusterName) == 0 ||
+    whitelistKinds.includes(crd.kind)
+  ));
+  // console.log(crds);
 
   // TODO: Filter types with cluster-name label instead
   // let crds = allCrds.filter(crd => (crd.labels['cluster.x-k8s.io/cluster-name'] == clusterName || whitelistKinds.includes(crd.kind)));
@@ -230,7 +266,7 @@ module.exports = async function constructTargetClusterTree(clusterName) {
     // console.log('\n');
 
     // Add our current e to its parent's `children` array
-    if (!('children' in parentNode))
+    if (parentNode.children === undefined)
       parentNode.children = [];
 
     parentNode.children.push(e)

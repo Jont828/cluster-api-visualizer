@@ -85,7 +85,7 @@ export default {
         this.treeData = response;
         if (this.treeData == null) {
           this.errorMessage =
-            "Could not find a management cluster from default kubeconfig";
+            "Couldn't find a management cluster from default kubeconfig";
           return;
         }
         this.treeIsReady = true;
