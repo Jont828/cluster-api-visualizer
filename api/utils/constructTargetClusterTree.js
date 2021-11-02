@@ -81,10 +81,6 @@ function resolveOwners(crd) {
       throw 'Failed to resolve multiple owners!';
     }
 
-    // assert(owners.length == 1);
-    // if (owners.length > 1)
-    //   console.log('Kind is', crd.kind, crd.name);
-    // owner = owners[0].uid;
   } else { // If only one owner, easy case
     return owners[0].uid;
   }
@@ -142,22 +138,6 @@ async function getCRDInstances(group, plural, initCategory, clusterName, cluster
   }
 }
 
-// TODO: Find a good way to discover CRDs belonging to a given cluster
-// function belongsToCluster(crd, clusterName, clusterUid) {
-//   console.log('CRD:', crd.kind, crd.name);
-//   if (crd.labels !== undefined) {
-//     if (crd.labels['cluster.x-k8s.io/cluster-name'] == clusterName)
-//       return true;
-//   } else if (crd.ownerRefs !== undefined) {
-//     if (crd.ownerRefs.find(o => o.uid == clusterUid))
-//       return true;
-//   } else if (crd.name.indexOf(clusterName) == 0) {
-//     return true;
-//   }
-
-//   return false;
-// }
-
 module.exports = async function constructTargetClusterTree(clusterName) {
   // Hack since getClusterCustomObject is getting a 404
   const kc = new k8s.KubeConfig();
@@ -180,7 +160,6 @@ module.exports = async function constructTargetClusterTree(clusterName) {
 
   const whitelistKinds = ['ClusterResourceSet', 'ClusterResourceSetBinding'];
 
-  // let crds = allCrds.filter(crd => (belongsToCluster(crd, clusterName, clusterUid) || whitelistKinds.includes(crd.kind)));
   let crds = allCrds.filter(crd => (
     (crd.labels !== undefined && crd.labels['cluster.x-k8s.io/cluster-name'] == clusterName) ||
     (crd.ownerRefs !== undefined && crd.ownerRefs.find(o => o.uid == clusterUid)) ||

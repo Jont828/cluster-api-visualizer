@@ -1,6 +1,22 @@
 const k8s = require('@kubernetes/client-node');
 const HttpStatus = require('http-status-codes')
 
+function getIcon(cluster) {
+  let clusterType = cluster.spec.infrastructureRef.kind;
+  switch (clusterType) {
+    case 'AzureCluster':
+      return 'microsoft-azure'
+    case 'DockerCluster':
+      return 'docker'
+    case 'GCPCluster':
+      return 'google-cloud'
+    case 'AWSCluster':
+      return 'aws'
+    default:
+      return 'kubernetes'
+  }
+}
+
 module.exports = async function constructOverview() {
 
   const kc = new k8s.KubeConfig();
@@ -34,7 +50,7 @@ module.exports = async function constructOverview() {
       console.log('Found cluster', clusterName);
       root.children.push({
         name: clusterName,
-        icon: 'microsoft-azure',
+        icon: getIcon(e),
         children: []
       })
     });
