@@ -85,7 +85,6 @@ export default {
           this.selected.plural.toLowerCase(),
           this.selected.name
         );
-        // console.log(JSON.stringify(response));
         this.resource = response;
         this.resourceIsReady = true;
       } catch (error) {
@@ -127,34 +126,28 @@ export default {
       treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
       legend: {
         bootstrap: {
-          name: "Bootstrap Provider (Kubeadm)",
+          name: "Bootstrap Provider",
           color: colors.amber.darken2,
-          hoverColor: colors.amber.darken3,
         },
         controlplane: {
-          name: "Control Plane (Kubeadm)",
+          name: "Control Plane Provider",
           color: colors.purple.darken1,
-          hoverColor: colors.purple.darken2,
         },
         infrastructure: {
-          name: "Infrastructure (Azure)",
+          name: "Infrastructure Provider",
           color: colors.green.base,
-          hoverColor: colors.green.darken1,
         },
         cluster: {
           name: "Cluster API",
           color: colors.blue.darken1,
-          hoverColor: colors.blue.darken2,
         },
         addons: {
           name: "Addons",
           color: colors.red.darken1,
-          hoverColor: colors.red.darken2,
         },
         "": {
           name: "None",
           color: colors.grey.darken1,
-          hoverColor: colors.grey.darken2,
         },
       },
     };

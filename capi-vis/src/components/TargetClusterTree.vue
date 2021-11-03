@@ -157,7 +157,7 @@ export default {
   // display: inline-block;
   position: absolute;
   bottom: 30px;
-  z-index: 9999;
+  z-index: 1000;
   width: 100%;
 
   .legend-card {

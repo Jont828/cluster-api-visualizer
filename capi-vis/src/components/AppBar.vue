@@ -1,5 +1,6 @@
 <template>
   <v-app-bar
+    id="appBar"
     color="blue darken-2"
     app
     dark
@@ -59,6 +60,10 @@ export default {
 </script>
 
 <style lang="less" scoped>
+#appBar {
+  z-index: 2000;
+}
+
 .router-link {
   text-decoration: none;
 }

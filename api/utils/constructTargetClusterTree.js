@@ -30,16 +30,17 @@ const resourceMap = {
   // azureserviceprincipals: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   // azuresystemassignedidentites: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
   // azureuserassignedidentites: { group: "infrastructure.cluster.x-k8s.io", category: "clusterInfra" },
-  kubeadmconfigs: { group: "bootstrap.cluster.x-k8s.io", category: "clusterInfra" },
-  kubeadmconfigtemplates: { group: "bootstrap.cluster.x-k8s.io", category: "clusterInfra" },
+  kubeadmconfigs: { group: "bootstrap.cluster.x-k8s.io", category: null },
+  kubeadmconfigtemplates: { group: "bootstrap.cluster.x-k8s.io", category: "workers" },
+  // TODO: remove category for kubeadmconfigtemplates
   // kubeadmconfigs: { group: "bootstrap.cluster.x-k8s.io", category: null },
   // kubeadmconfigtemplates: { group: "bootstrap.cluster.x-k8s.io", category: null },
   kubeadmcontrolplanes: { group: "controlplane.cluster.x-k8s.io", category: "controlPlane" },
   // kubeadmcontrolplanetemplates: { group: "controlplane.cluster.x-k8s.io", category: "controlPlane" },
 };
 
-function resolveCategory(crd) {
-  if (crd.kind == 'Cluster')
+function resolveCategory(crd, clusterUid) {
+  if (crd.owner == clusterUid || crd.kind == 'Cluster')
     return null
   else if (crd.labels !== undefined)
     return ('cluster.x-k8s.io/control-plane' in crd.labels) ? 'controlPlane' : 'workers'
@@ -108,10 +109,7 @@ async function getCRDInstances(group, plural, initCategory, clusterName, cluster
         spec: e.spec
       }
 
-      // 2. If the category depends on context, i.e. Machine, then resolve it now
-      crd.category = initCategory ? initCategory : resolveCategory(crd)
-
-      // 3. If there are resources left without owners, bind them to the root
+      // 2. If there are resources left without owners, bind them to the root
       let owner;
       if (crd.kind == 'Cluster') { // Root node has no owner
         owner = null;
@@ -120,6 +118,9 @@ async function getCRDInstances(group, plural, initCategory, clusterName, cluster
       } else {
         owner = resolveOwners(crd);
       }
+
+      // 3. If the category depends on context, i.e. Machine, then resolve it now
+      crd.category = initCategory ? initCategory : resolveCategory(crd, clusterUid)
 
       // Lastly, take all the parents that point to the root and bind them to their respective category node
       if (owner == clusterUid)
