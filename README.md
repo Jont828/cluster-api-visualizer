@@ -6,6 +6,10 @@ Cluster API developers and operators often need to quickly get insight multiclus
 
 ### Quick start
 
+##### Prerequisites
+
+This app requires both [Node.js](https://nodejs.org/en/) and the [Vue CLI](https://cli.vuejs.org/guide/installation.html).
+
 ##### 1. Clone the repository
 
 ``` 
@@ -26,7 +30,7 @@ npm install
 From `capi-vis/`, start the Vue app with
 
 ```
-npm run serve -- --port 8081
+npm run serve
 ```
 
 And from `api/`, start the Node server with
