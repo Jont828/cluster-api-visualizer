@@ -4,6 +4,8 @@ Cluster API developers and operators often need to quickly get insight multiclus
 
 **Note:** This app is a prototype meant to serve as a proof of concept for a Cluster API GUI. The back-end logic is still a work in progress. Currently, only Docker and Azure are supported as infrastructure providers until more can be added.
 
+![Demo Recording](demo/demo.gif)
+
 ### Quick start
 
 ##### Prerequisites
