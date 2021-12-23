@@ -33,10 +33,8 @@
                   </v-icon>
                 </v-card-title>
                 <v-card-subtitle class="cardSubtitle">{{ (node.children.length) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle>
-                <v-card-actions
-                  class="cardActions"
-                  v-if="!node.isRoot"
-                >
+                <v-card-actions class="cardActions">
+                  <!-- v-if="!node.isRoot" -->
                   <v-card-text class="card-bottom-text">Resources</v-card-text>
                   <v-spacer></v-spacer>
                   <v-icon>mdi-arrow-top-right</v-icon>
@@ -65,9 +63,10 @@
 </template>
 
 <script>
+import Vue from "vue";
 import VueTree from "./VueTree.vue";
 import AlertError from "./AlertError.vue";
-import { getClusterOverview } from "../services/Service.js";
+// import { getClusterOverview } from "../services/Service.js";
 
 export default {
   name: "OverviewTree",
@@ -81,8 +80,9 @@ export default {
   methods: {
     async fetchOverview() {
       try {
-        const response = await getClusterOverview();
-        this.treeData = response;
+        const response = await Vue.axios.get("/multicluster");
+        this.treeData = response.data;
+        console.log(this.treeData);
         if (this.treeData == null) {
           this.errorMessage =
             "Couldn't find a management cluster from default kubeconfig";

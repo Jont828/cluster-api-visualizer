@@ -18,6 +18,7 @@
     "sass-loader": "^10.1.1",
     "vnodes": "^1.1.9",
     "vue": "^2.6.11",
+    "vue-axios": "^3.4.0",
     "vue-router": "^3.5.2",
     "vuetify": "^2.5.10"
   },

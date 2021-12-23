@@ -52,6 +52,7 @@
 
 <script>
 /* eslint-disable */
+import Vue from "vue";
 import TargetClusterTree from "../components/TargetClusterTree.vue";
 import AppBar from "../components/AppBar.vue";
 import CustomResourceTree from "../components/CustomResourceTree.vue";
@@ -99,8 +100,12 @@ export default {
     },
     async fetchCluster() {
       try {
-        const response = await getCluster(this.$route.params.id);
-        this.treeData = response;
+        // const response = await getCluster(this.$route.params.id);
+        const response = await Vue.axios.get(
+          "/cluster/" + this.$route.params.id
+        );
+        this.treeData = response.data;
+        console.log(this.treeData);
         this.treeIsReady = true;
       } catch (error) {
         this.errorMessage =
@@ -145,7 +150,7 @@ export default {
           name: "Addons",
           color: colors.red.darken1,
         },
-        "": {
+        virtual: {
           name: "None",
           color: colors.grey.darken1,
         },
