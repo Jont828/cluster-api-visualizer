@@ -81,12 +81,25 @@ export default {
       if (node.provider == "") return;
       this.selected = node;
       try {
-        const response = await getClusterResource(
-          this.selected.group,
-          this.selected.plural.toLowerCase(),
-          this.selected.name
+        const params = new URLSearchParams();
+        params.append("kind", this.selected.kind);
+        params.append(
+          "apiVersion",
+          this.selected.group + "/" + this.selected.version
         );
-        this.resource = response;
+        params.append("name", this.selected.name);
+
+        const response = await Vue.axios.get("/custom-resource", {
+          params: params,
+        });
+        // const response = await getClusterResource(
+        //   this.selected.group,
+        //   this.selected.plural.toLowerCase(),
+        //   this.selected.name
+        // );
+        console.log("CRD is");
+        console.log(response.data);
+        this.resource = this.formatToTreeview(response.data);
         this.resourceIsReady = true;
       } catch (error) {
         this.errorMessage =
@@ -102,7 +115,7 @@ export default {
       try {
         // const response = await getCluster(this.$route.params.id);
         const response = await Vue.axios.get(
-          "/cluster/" + this.$route.params.id
+          "/cluster-resources/" + this.$route.params.id
         );
         this.treeData = response.data;
         console.log(this.treeData);
@@ -114,6 +127,40 @@ export default {
           "`";
         console.log(error);
       }
+    },
+    formatToTreeview(resource, id = 0) {
+      let result = [];
+      if (typeof resource == "string") {
+        return [{ name: resource }];
+      } else if (Array.isArray(resource)) {
+        let children = [];
+        resource.forEach((e, i) => {
+          result.push({
+            id: id++,
+            name: i.toString(),
+            children: this.formatToTreeview(e, id),
+          });
+        });
+      } else {
+        // isObject
+        Object.entries(resource).forEach(([key, value]) => {
+          let name = "";
+          let children = [];
+          if (typeof value == "string") {
+            name = key + ": " + value;
+          } else {
+            name = key;
+            children = this.formatToTreeview(value, id);
+          }
+          result.push({
+            id: id++,
+            name: name,
+            children: children,
+          });
+        });
+      }
+
+      return result;
     },
   },
   async beforeMount() {
