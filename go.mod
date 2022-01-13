@@ -1,9 +1,11 @@
-module capi-visualiztion
+module github.com/Jont828/capi-visualization
 
 go 1.17
 
 require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0
+	k8s.io/api v0.23.0
+	k8s.io/apimachinery v0.23.0
 	sigs.k8s.io/cluster-api v1.0.2
 	sigs.k8s.io/controller-runtime v0.11.0
 )
@@ -66,9 +68,7 @@ require (
 	gopkg.in/ini.v1 v1.63.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/api v0.23.0 // indirect
 	k8s.io/apiextensions-apiserver v0.23.0 // indirect
-	k8s.io/apimachinery v0.23.0 // indirect
 	k8s.io/apiserver v0.23.0 // indirect
 	k8s.io/client-go v0.23.0 // indirect
 	k8s.io/cluster-bootstrap v0.23.0 // indirect
