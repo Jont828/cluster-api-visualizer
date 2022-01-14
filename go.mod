@@ -3,7 +3,6 @@ module github.com/Jont828/capi-visualization
 go 1.17
 
 require (
-	github.com/Azure/go-autorest/autorest/to v0.4.0
 	k8s.io/api v0.23.0
 	k8s.io/apimachinery v0.23.0
 	sigs.k8s.io/cluster-api v1.0.2
@@ -11,7 +10,6 @@ require (
 )
 
 require (
-	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect

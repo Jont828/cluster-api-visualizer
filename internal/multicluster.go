@@ -3,8 +3,6 @@ package internal
 import (
 	"context"
 
-	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
-
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,10 +39,10 @@ func ConstructMultiClusterTree(clusterClient cluster.Client) (*MultiClusterTreeN
 		Kubeconfig:             "",
 	}
 
-	pkgClient, err := client.New("")
-	if err != nil {
-		return nil, err
-	}
+	// pkgClient, err := client.New("")
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	workloadClusters, err := clusterClient.Proxy().GetResourceNames("cluster.x-k8s.io/v1beta1", "Cluster", []ctrlclient.ListOption{}, "")
 	if err != nil {
@@ -58,20 +56,21 @@ func ConstructMultiClusterTree(clusterClient cluster.Client) (*MultiClusterTreeN
 	for _, clusterName := range workloadClusters {
 		cluster := &clusterv1.Cluster{}
 		clusterKey := ctrlclient.ObjectKey{
-			Namespace: "default",
+			Namespace: namespace,
 			Name:      clusterName,
 		}
 
 		if err := ctrlClient.Get(context.TODO(), clusterKey, cluster); err != nil {
 			return nil, err
 		}
-		kubeconfig, err := pkgClient.GetKubeconfig(client.GetKubeconfigOptions{
-			WorkloadClusterName: clusterName,
-		})
-		if err != nil {
-			// Don't return an error if we can't get the kubeconfig since it won't be found until the cluster is ready.
-			kubeconfig = ""
-		}
+		// Don't get the kubeconfig for now until we use it to find additional clusters.
+		// kubeconfig, err := pkgClient.GetKubeconfig(client.GetKubeconfigOptions{
+		// 	WorkloadClusterName: clusterName,
+		// })
+		// if err != nil {
+		// 	// Don't return an error if we can't get the kubeconfig since it won't be found until the cluster is ready.
+		// 	kubeconfig = ""
+		// }
 		infraProvider := cluster.Spec.InfrastructureRef.Kind
 
 		workloadCluster := MultiClusterTreeNode{
@@ -81,7 +80,7 @@ func ConstructMultiClusterTree(clusterClient cluster.Client) (*MultiClusterTreeN
 			Icon:                   getIcon(infraProvider),
 			Children:               []*MultiClusterTreeNode{},
 			IsManagement:           false,
-			Kubeconfig:             kubeconfig,
+			// Kubeconfig:             kubeconfig,
 		}
 
 		root.Children = append(root.Children, &workloadCluster)

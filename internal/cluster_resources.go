@@ -40,6 +40,8 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	kind := object.GetObjectKind().GroupVersionKind().Kind
 	version := object.GetObjectKind().GroupVersionKind().Version
 
+	// fmt.Printf("%s %s %s %s\n", group, kind, version, object.GetObjectKind().GroupVersionKind().String())
+
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),
 		Kind:        kind,
@@ -54,10 +56,6 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 
 	for _, child := range objTree.GetObjectsByParent(object.GetUID()) {
 		node.Children = append(node.Children, objectTreeToResourceTree(objTree, child))
-	}
-
-	if len(node.Children) == 0 && tree.IsVirtualObject(object) {
-		return nil
 	}
 
 	return node
