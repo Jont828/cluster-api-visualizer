@@ -12,7 +12,7 @@
         <v-hover>
           <template v-slot:default="{ hover }">
             <router-link
-              :to="'/target-cluster/' + node.name"
+              :to="node.isManagement ? '#' : ('/target-cluster/' + node.name)"
               class="node-router-link"
             >
               <v-card
@@ -32,7 +32,7 @@
                     mdi-{{node.icon}}
                   </v-icon>
                 </v-card-title>
-                <v-card-subtitle class="cardSubtitle">{{ (node.children.length) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle>
+                <v-card-subtitle class="cardSubtitle">{{ (node.isManagement) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle>
                 <v-card-actions class="cardActions">
                   <!-- v-if="!node.isRoot" -->
                   <v-card-text class="card-bottom-text">Resources</v-card-text>

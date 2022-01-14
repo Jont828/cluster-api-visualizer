@@ -30,10 +30,18 @@
           :to="'/'"
           class="node-router-link"
         > -->
-              <p class="kind font-weight-medium">{{ node.kind }}</p>
+              <p
+                class="kind font-weight-medium"
+                v-if="!node.isVirtual"
+              >{{ node.kind }}</p>
+              <p
+                class="kind font-weight-medium"
+                v-else
+              >{{ node.name }}</p>
+
               <p
                 class="name font-italic"
-                v-if="node.name"
+                v-if="!node.isVirtual"
               >{{ node.name }}</p>
               <v-icon
                 class="chevron"
@@ -88,7 +96,9 @@ export default {
   },
   methods: {
     selectNode(node) {
-      this.$emit("selectNode", node);
+      if (!node.isVirtual) {
+        this.$emit("selectNode", node);
+      }
     },
   },
 };

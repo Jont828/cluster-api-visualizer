@@ -78,7 +78,6 @@ export default {
       this.isStraight = val;
     },
     async selectNodeHandler(node) {
-      if (node.provider == "") return;
       this.selected = node;
       try {
         const params = new URLSearchParams();

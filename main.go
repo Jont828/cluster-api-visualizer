@@ -12,14 +12,47 @@ import (
 	"net/http"
 
 	"github.com/Jont828/capi-visualization/internal"
-
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
+	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
+	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/config"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 //go:embed web/dist
 var frontend embed.FS
 
-var kubeconfig string = ""
+var kubeconfigPath = ""
+var kubeContext = ""
+var namespace string
+
+var defaultClient client.Client
+var clusterClient cluster.Client
+var runtimeClient ctrlClient.Client
+
+func init() {
+	var err error
+	defaultClient, err = client.New("")
+	if err != nil {
+		panic(err)
+	}
+
+	configClient, err := config.New("")
+	if err != nil {
+		panic(err)
+	}
+
+	clusterClient = cluster.New(cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}, configClient)
+
+	namespace, err = clusterClient.Proxy().CurrentNamespace()
+	if err != nil {
+		panic(err)
+	}
+
+	runtimeClient, err = clusterClient.Proxy().NewClient()
+	if err != nil {
+		panic(err)
+	}
+}
 
 func main() {
 	var port int
@@ -42,17 +75,17 @@ func main() {
 }
 
 func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("Getting multicluster tree\n")
-	tree, err := client.MultiDiscovery(kubeconfig)
+	// fmt.Printf("Getting multicluster tree\n")
+	tree, err := internal.ConstructMultiClusterTree(clusterClient)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	exportTree := internal.ConstructMultiClusterTree(tree)
-	if exportTree != nil {
-		marshalled, err := json.MarshalIndent(*exportTree, "", "  ")
+
+	if tree != nil {
+		marshalled, err := json.MarshalIndent(*tree, "", "  ")
 		if err != nil {
-			http.Error(w, "couldn't retrieve multi cluster", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -63,9 +96,18 @@ func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 
 func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 	clusterName := r.URL.Path[len("/api/v1/cluster-resources/"):]
-	fmt.Printf("Getting object tree for %s\n", clusterName)
+	// fmt.Printf("Getting object tree for %s\n", clusterName)
 
-	tree, err := internal.ConstructClusterResourceTree(clusterName)
+	dcOptions := client.DescribeClusterOptions{
+		Kubeconfig:          client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
+		Namespace:           "",
+		ClusterName:         clusterName,
+		ShowOtherConditions: "",
+		ShowAllResources:    true,
+		ShowMachineSets:     false,
+	}
+
+	tree, err := internal.ConstructClusterResourceTree(defaultClient, dcOptions)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -84,13 +126,13 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCustomResourceTree(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("Getting custom resource tree\n")
-	fmt.Println("GET params were:", r.URL.Query())
+	// fmt.Printf("Getting custom resource tree\n")
+	// fmt.Println("GET params were:", r.URL.Query())
 	kind := r.URL.Query().Get("kind")
 	apiVersion := r.URL.Query().Get("apiVersion")
 	name := r.URL.Query().Get("name")
 
-	object, err := internal.GetCustomResource(kind, apiVersion, "default", name)
+	object, err := internal.GetCustomResource(runtimeClient, kind, apiVersion, namespace, name)
 	if err != nil {
 		fmt.Println("Failed to get CRD:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
