@@ -12,6 +12,8 @@ import (
 	"net/http"
 
 	"github.com/Jont828/capi-visualization/internal"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/config"
@@ -28,6 +30,7 @@ var namespace string
 var defaultClient client.Client
 var clusterClient cluster.Client
 var runtimeClient ctrlClient.Client
+var k8sConfigClient *api.Config
 
 func init() {
 	var err error
@@ -35,6 +38,14 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	k8sConfigClient, err = clientcmd.NewDefaultClientConfigLoadingRules().Load()
+	if err != nil {
+		panic(err)
+	} else if k8sConfigClient == nil {
+		panic("api config client is nil")
+	}
+	kubeContext = k8sConfigClient.CurrentContext
 
 	configClient, err := config.New("")
 	if err != nil {
@@ -76,7 +87,7 @@ func main() {
 
 func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("Getting multicluster tree\n")
-	tree, err := internal.ConstructMultiClusterTree(clusterClient)
+	tree, err := internal.ConstructMultiClusterTree(clusterClient, k8sConfigClient)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
