@@ -109,15 +109,16 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 	clusterName := r.URL.Path[len("/api/v1/cluster-resources/"):]
 	// fmt.Printf("Getting object tree for %s\n", clusterName)
 
+	// Uncomment these fields when changes merge to CAPI main
 	dcOptions := client.DescribeClusterOptions{
-		Kubeconfig:              client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
-		Namespace:               "",
-		ClusterName:             clusterName,
-		ShowOtherConditions:     "",
-		ShowMachineSets:         true,
-		ShowClusterResourceSets: true,
-		ShowTemplates:           true,
-		Echo:                    true,
+		Kubeconfig:          client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
+		Namespace:           "",
+		ClusterName:         clusterName,
+		ShowOtherConditions: "",
+		ShowMachineSets:     true,
+		// ShowClusterResourceSets: true,
+		// ShowTemplates:           true,
+		Echo: true,
 	}
 
 	tree, err := internal.ConstructClusterResourceTree(defaultClient, dcOptions)
