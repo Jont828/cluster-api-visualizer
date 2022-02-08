@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
@@ -27,6 +28,13 @@ func ConstructMultiClusterTree(clusterClient cluster.Client) (*MultiClusterTreeN
 	namespace, err := clusterClient.Proxy().CurrentNamespace()
 	if err != nil {
 		return nil, err
+	}
+
+	contexts, err := clusterClient.Proxy().GetContexts("")
+	if err != nil {
+		fmt.Printf("Error is %s\n", err)
+	} else {
+		fmt.Printf("Contexts are %+v\n", contexts)
 	}
 
 	root := &MultiClusterTreeNode{

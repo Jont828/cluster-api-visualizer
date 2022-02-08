@@ -1,8 +1,10 @@
 package internal
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,13 +43,16 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	version := object.GetObjectKind().GroupVersionKind().Version
 
 	// fmt.Printf("%s %s %s %s\n", group, kind, version, object.GetObjectKind().GroupVersionKind().String())
-
+	provider, err := getProvider(object, group)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+	}
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),
 		Kind:        kind,
 		Group:       group,
 		Version:     version,
-		Provider:    group[:strings.IndexByte(group, '.')],
+		Provider:    provider,
 		IsVirtual:   tree.IsVirtualObject(object),
 		Collapsable: tree.IsVirtualObject(object),
 		Children:    []*ClusterResourceNode{},
@@ -59,4 +64,15 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	}
 
 	return node
+}
+
+func getProvider(object ctrlclient.Object, group string) (string, error) {
+	providerIndex := strings.IndexByte(group, '.')
+	if tree.IsVirtualObject(object) {
+		return "virtual", nil
+	} else if providerIndex > -1 {
+		return group[:providerIndex], nil
+	} else {
+		return "", errors.Errorf("No provider found for object %s of %s \n", object.GetName(), object.GetObjectKind().GroupVersionKind().String())
+	}
 }

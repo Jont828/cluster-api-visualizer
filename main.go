@@ -99,12 +99,14 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("Getting object tree for %s\n", clusterName)
 
 	dcOptions := client.DescribeClusterOptions{
-		Kubeconfig:          client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
-		Namespace:           "",
-		ClusterName:         clusterName,
-		ShowOtherConditions: "",
-		ShowAllResources:    true,
-		ShowMachineSets:     false,
+		Kubeconfig:              client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
+		Namespace:               "",
+		ClusterName:             clusterName,
+		ShowOtherConditions:     "",
+		ShowMachineSets:         true,
+		ShowClusterResourceSets: true,
+		ShowTemplates:           true,
+		Echo:                    true,
 	}
 
 	tree, err := internal.ConstructClusterResourceTree(defaultClient, dcOptions)
