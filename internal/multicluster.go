@@ -17,7 +17,6 @@ type MultiClusterTreeNode struct {
 	InfrastructureProvider string                  `json:"infrastructureProvider"`
 	IsManagement           bool                    `json:"isManagement"`
 	Children               []*MultiClusterTreeNode `json:"children"`
-	Kubeconfig             string                  `json:"kubeconfig"`
 }
 
 // ConstructMultiClusterTree returns a tree representing the workload cluster discovered in the management cluster.
@@ -40,13 +39,7 @@ func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *ap
 		Icon:                   getIcon(""),
 		Children:               []*MultiClusterTreeNode{},
 		IsManagement:           true,
-		Kubeconfig:             "",
 	}
-
-	// pkgClient, err := client.New("")
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	workloadClusters, err := clusterClient.Proxy().GetResourceNames("cluster.x-k8s.io/v1beta1", "Cluster", []ctrlclient.ListOption{}, "")
 	if err != nil {
@@ -71,10 +64,6 @@ func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *ap
 		// kubeconfig, err := pkgClient.GetKubeconfig(client.GetKubeconfigOptions{
 		// 	WorkloadClusterName: clusterName,
 		// })
-		// if err != nil {
-		// 	// Don't return an error if we can't get the kubeconfig since it won't be found until the cluster is ready.
-		// 	kubeconfig = ""
-		// }
 		infraProvider := cluster.Spec.InfrastructureRef.Kind
 
 		workloadCluster := MultiClusterTreeNode{
@@ -84,7 +73,6 @@ func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *ap
 			Icon:                   getIcon(infraProvider),
 			Children:               []*MultiClusterTreeNode{},
 			IsManagement:           false,
-			// Kubeconfig:             kubeconfig,
 		}
 
 		root.Children = append(root.Children, &workloadCluster)
