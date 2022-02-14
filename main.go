@@ -82,14 +82,15 @@ func main() {
 	frontendFS := http.FileServer(http.FS(stripped))
 	http.Handle("/", frontendFS)
 
+	log.Printf("Listening on port %d\n", port)
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
-	// fmt.Printf("Getting multicluster tree\n")
+	log.Println("GET call to " + r.URL.Path)
 	tree, err := internal.ConstructMultiClusterTree(clusterClient, k8sConfigClient)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -106,8 +107,8 @@ func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET call to " + r.URL.Path)
 	clusterName := r.URL.Path[len("/api/v1/cluster-resources/"):]
-	// fmt.Printf("Getting object tree for %s\n", clusterName)
 
 	// Uncomment these fields when changes merge to CAPI main
 	dcOptions := client.DescribeClusterOptions{
@@ -116,14 +117,15 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 		ClusterName:         clusterName,
 		ShowOtherConditions: "",
 		ShowMachineSets:     true,
+		Echo:                true,
+		Grouping:            false,
 		// ShowClusterResourceSets: true,
 		// ShowTemplates:           true,
-		Echo: true,
 	}
 
 	tree, err := internal.ConstructClusterResourceTree(defaultClient, dcOptions)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -140,15 +142,15 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCustomResourceTree(w http.ResponseWriter, r *http.Request) {
-	// fmt.Printf("Getting custom resource tree\n")
-	// fmt.Println("GET params were:", r.URL.Query())
+	log.Println("GET call to " + r.URL.Path)
+	log.Println("GET params are: ", r.URL.Query())
 	kind := r.URL.Query().Get("kind")
 	apiVersion := r.URL.Query().Get("apiVersion")
 	name := r.URL.Query().Get("name")
 
 	object, err := internal.GetCustomResource(runtimeClient, kind, apiVersion, namespace, name)
 	if err != nil {
-		fmt.Println("Failed to get CRD:", err)
+		log.Println("Failed to get CRD:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 

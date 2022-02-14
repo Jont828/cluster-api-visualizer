@@ -10,7 +10,7 @@ Cluster API developers and operators often need to quickly get insight multiclus
 
 #### 1. Prerequisites
 
-This app requires [Go 1.17](https://go.dev/doc/install), [Node.js](https://nodejs.org/en/), [npm](https://www.npmjs.com/),[Vue CLI](https://cli.vuejs.org/guide/installation.html), [Cluster API](https://github.com/kubernetes-sigs/cluster-api), and its [prerequisites](https://cluster-api.sigs.k8s.io/user/quick-start.html#common-prerequisites).
+This app requires [Go 1.17](https://go.dev/doc/install), [Node.js](https://nodejs.org/en/), [npm](https://www.npmjs.com/), [Vue CLI](https://cli.vuejs.org/guide/installation.html), [Cluster API](https://github.com/kubernetes-sigs/cluster-api), and its [prerequisites](https://cluster-api.sigs.k8s.io/user/quick-start.html#common-prerequisites).
 
 #### 2. Clone the repository
 
