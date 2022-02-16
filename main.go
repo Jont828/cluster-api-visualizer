@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -49,27 +50,34 @@ func initClients() error {
 		}
 	}
 
-	if k8sConfigClient == nil {
-		k8sConfigClient, err = clientcmd.NewDefaultClientConfigLoadingRules().Load()
+	if clusterClient == nil {
+		configClient, err := config.New("")
 		if err != nil {
 			return err
 		} else if k8sConfigClient == nil {
 			return err
 		}
-	}
-	kubeContext = k8sConfigClient.CurrentContext
-	if kubeContext == "" && len(k8sConfigClient.Contexts) == 0 {
-		k8sConfigClient = nil // Reset k8sConfigClient to nil so it will be re-initialized
-		return fmt.Errorf("no kubeconfig context found, is the management cluster running?")
+
+		clusterClient = cluster.New(cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}, configClient)
+		// log.Println("Using kubeconfig context:", clusterClient.Kubeconfig().Context)
+		// log.Println("Using kubeconfig path:", clusterClient.Kubeconfig().Path)
+
+		contexts, err := clusterClient.Proxy().GetContexts("")
+		if err != nil {
+			log.Println("Error fetching contexts:", err)
+			return errors.New("unable to find kubecontexts, is the management cluster running?")
+		}
+		log.Println("Contexts:", contexts)
+		if len(contexts) == 0 {
+			return errors.New("no kubecontexts available, is the management cluster running?")
+		}
 	}
 
-	if clusterClient == nil {
-		configClient, err := config.New("")
+	if runtimeClient == nil {
+		runtimeClient, err = clusterClient.Proxy().NewClient()
 		if err != nil {
 			return err
 		}
-
-		clusterClient = cluster.New(cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}, configClient)
 	}
 
 	namespace, err = clusterClient.Proxy().CurrentNamespace()
@@ -77,9 +85,13 @@ func initClients() error {
 		return err
 	}
 
-	if runtimeClient == nil {
-		runtimeClient, err = clusterClient.Proxy().NewClient()
+	if k8sConfigClient == nil {
+		rules := clientcmd.NewDefaultClientConfigLoadingRules()
+		rules.ExplicitPath = clusterClient.Kubeconfig().Path
+		k8sConfigClient, err = rules.Load()
 		if err != nil {
+			return err
+		} else if k8sConfigClient == nil {
 			return err
 		}
 	}
