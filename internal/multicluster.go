@@ -43,7 +43,7 @@ func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *ap
 
 	workloadClusters, err := clusterClient.Proxy().GetResourceNames("cluster.x-k8s.io/v1beta1", "Cluster", []ctrlclient.ListOption{}, "")
 	if err != nil {
-		return nil, err
+		return root, nil
 	}
 	ctrlClient, err := clusterClient.Proxy().NewClient()
 	if err != nil {
