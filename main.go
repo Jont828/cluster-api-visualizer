@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -13,6 +12,7 @@ import (
 	"net/http"
 
 	"github.com/Jont828/capi-visualization/internal"
+	"github.com/pkg/errors"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
@@ -24,79 +24,70 @@ import (
 //go:embed web/dist
 var frontend embed.FS
 
-var kubeconfigPath = ""
-var kubeContext = ""
-var namespace string
-
-var defaultClient client.Client
-var clusterClient cluster.Client
-var runtimeClient ctrlClient.Client
-var k8sConfigClient *api.Config
-
-func init() {
-	err := initClients()
-	if err != nil {
-		log.Println(err) // Allow app to start even if initClients return an error
-	}
+type Client struct {
+	DefaultClient    client.Client
+	ClusterClient    cluster.Client
+	RuntimeClient    ctrlClient.Client
+	K8sConfigClient  *api.Config
+	CurrentNamespace string
 }
 
-func initClients() error {
+var c *Client
+
+var kubeconfigPath = ""
+var kubeContext = ""
+
+// func init() {
+// 	c, err := newClient()
+// 	if err != nil {
+// 		log.Println(err) // Allow app to start even if initClients return an error
+// 	}
+// }
+
+func newClient() (*Client, error) {
+	c := &Client{}
 	var err error
 
-	if defaultClient == nil {
-		defaultClient, err = client.New("")
-		if err != nil {
-			return err
-		}
-	}
-
-	if clusterClient == nil {
-		configClient, err := config.New("")
-		if err != nil {
-			return err
-		} else if k8sConfigClient == nil {
-			return err
-		}
-
-		clusterClient = cluster.New(cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}, configClient)
-		// log.Println("Using kubeconfig context:", clusterClient.Kubeconfig().Context)
-		// log.Println("Using kubeconfig path:", clusterClient.Kubeconfig().Path)
-
-		contexts, err := clusterClient.Proxy().GetContexts("")
-		if err != nil {
-			log.Println("Error fetching contexts:", err)
-			return errors.New("unable to find kubecontexts, is the management cluster running?")
-		}
-		log.Println("Contexts:", contexts)
-		if len(contexts) == 0 {
-			return errors.New("no kubecontexts available, is the management cluster running?")
-		}
-	}
-
-	if runtimeClient == nil {
-		runtimeClient, err = clusterClient.Proxy().NewClient()
-		if err != nil {
-			return err
-		}
-	}
-
-	namespace, err = clusterClient.Proxy().CurrentNamespace()
+	c.DefaultClient, err = client.New("")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if k8sConfigClient == nil {
-		rules := clientcmd.NewDefaultClientConfigLoadingRules()
-		rules.ExplicitPath = clusterClient.Kubeconfig().Path
-		k8sConfigClient, err = rules.Load()
-		if err != nil {
-			return err
-		} else if k8sConfigClient == nil {
-			return err
-		}
+	configClient, err := config.New("")
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	c.ClusterClient = cluster.New(cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}, configClient)
+	log.Println("Using kubeconfig context:", c.ClusterClient.Kubeconfig().Context)
+	log.Println("Using kubeconfig path:", c.ClusterClient.Kubeconfig().Path)
+
+	err = c.ClusterClient.Proxy().CheckClusterAvailable()
+	if err != nil {
+		log.Println("Cluster unavailable:", err)
+		return nil, errors.Errorf("unable to find management cluster, does it exist?")
+	}
+
+	c.RuntimeClient, err = c.ClusterClient.Proxy().NewClient()
+	if err != nil {
+		return nil, err
+	}
+
+	c.CurrentNamespace, err = c.ClusterClient.Proxy().CurrentNamespace()
+	if err != nil {
+		return nil, err
+	}
+
+	rules := clientcmd.NewDefaultClientConfigLoadingRules()
+	rules.ExplicitPath = c.ClusterClient.Kubeconfig().Path
+	c.K8sConfigClient, err = rules.Load()
+	if err != nil {
+		return nil, err
+	} else if c.K8sConfigClient == nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
 func main() {
@@ -123,15 +114,15 @@ func main() {
 func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET call to " + r.URL.Path)
 
-	// Attempt to initialize any clients that are nil
-	err := initClients()
+	// Attempt to initialize clients
+	c, err := newClient()
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	tree, err := internal.ConstructMultiClusterTree(clusterClient, k8sConfigClient)
+	tree, err := internal.ConstructMultiClusterTree(c.ClusterClient, c.K8sConfigClient)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -167,7 +158,7 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 		// ShowTemplates:           true,
 	}
 
-	tree, err := internal.ConstructClusterResourceTree(defaultClient, dcOptions)
+	tree, err := internal.ConstructClusterResourceTree(c.DefaultClient, dcOptions)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -193,7 +184,7 @@ func handleCustomResourceTree(w http.ResponseWriter, r *http.Request) {
 	apiVersion := r.URL.Query().Get("apiVersion")
 	name := r.URL.Query().Get("name")
 
-	object, err := internal.GetCustomResource(runtimeClient, kind, apiVersion, namespace, name)
+	object, err := internal.GetCustomResource(c.RuntimeClient, kind, apiVersion, c.CurrentNamespace, name)
 	if err != nil {
 		log.Println("Failed to get CRD:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
