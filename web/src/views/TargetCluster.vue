@@ -120,11 +120,22 @@ export default {
         console.log(this.treeData);
         this.treeIsReady = true;
       } catch (error) {
-        this.errorMessage =
-          "Failed to fetch resources for cluster `" +
-          this.$route.params.id +
-          "`";
-        console.log(error);
+        console.log("Error:", error.toJSON());
+        if (error.response) {
+          if (error.response.status == 404) {
+            this.errorMessage =
+              "Cluster `" + this.$route.params.id + "` not found";
+          } else {
+            this.errorMessage =
+              "Failed to construct object tree for cluster `" +
+              this.$route.params.id +
+              "`";
+          }
+        } else if (error.request) {
+          this.errorMessage = "No server response received";
+        } else {
+          this.errorMessage = "Unable to create request";
+        }
       }
     },
     formatToTreeview(resource, id = 0) {

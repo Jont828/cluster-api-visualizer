@@ -2,8 +2,9 @@ package internal
 
 import (
 	"context"
+	"log"
+	"strings"
 
-	"github.com/pkg/errors"
 	"k8s.io/client-go/tools/clientcmd/api"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
@@ -20,16 +21,16 @@ type MultiClusterTreeNode struct {
 }
 
 // ConstructMultiClusterTree returns a tree representing the workload cluster discovered in the management cluster.
-func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *api.Config) (*MultiClusterTreeNode, error) {
+func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *api.Config) (*MultiClusterTreeNode, *HTTPError) {
 	currentContextName := k8sConfigClient.CurrentContext
 	currentContext, ok := k8sConfigClient.Contexts[currentContextName]
 	if !ok {
-		return nil, errors.Errorf("Failed to get context '%s'", currentContextName)
+		return nil, &HTTPError{Status: 404, Message: "current context not found"}
 	}
 	name := currentContext.Cluster
 	namespace, err := clusterClient.Proxy().CurrentNamespace()
 	if err != nil {
-		return nil, err
+		return nil, NewInternalError(err)
 	}
 
 	root := &MultiClusterTreeNode{
@@ -43,11 +44,16 @@ func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *ap
 
 	workloadClusters, err := clusterClient.Proxy().GetResourceNames("cluster.x-k8s.io/v1beta1", "Cluster", []ctrlclient.ListOption{}, "")
 	if err != nil {
-		return root, nil
+		if strings.Contains(err.Error(), "no matches for kind") {
+			log.Println(err)
+			return root, nil
+		}
+		return nil, NewInternalError(err)
 	}
+
 	ctrlClient, err := clusterClient.Proxy().NewClient()
 	if err != nil {
-		return nil, err
+		return nil, NewInternalError(err)
 	}
 
 	for _, clusterName := range workloadClusters {
@@ -58,7 +64,8 @@ func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *ap
 		}
 
 		if err := ctrlClient.Get(context.TODO(), clusterKey, cluster); err != nil {
-			return nil, err
+			// TODO: do we want to return a 404 if a workload cluster is not found?
+			return nil, NewInternalError(err)
 		}
 		// Don't get the kubeconfig for now until we use it to find additional clusters.
 		// kubeconfig, err := pkgClient.GetKubeconfig(client.GetKubeconfigOptions{

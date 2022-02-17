@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -22,10 +22,15 @@ type ClusterResourceNode struct {
 	Children    []*ClusterResourceNode `json:"children"`
 }
 
-func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, error) {
+func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
 	objTree, err := defaultClient.DescribeCluster(dcOptions)
 	if err != nil {
-		return nil, err
+		if strings.HasSuffix(err.Error(), "not found") {
+			log.Printf("Has suffix")
+			return nil, &HTTPError{Status: 404, Message: err.Error()}
+		}
+
+		return nil, NewInternalError(err)
 	}
 
 	resourceTree := objectTreeToResourceTree(objTree, objTree.GetRoot())
@@ -45,7 +50,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	// fmt.Printf("%s %s %s %s\n", group, kind, version, object.GetObjectKind().GroupVersionKind().String())
 	provider, err := getProvider(object, group)
 	if err != nil {
-		fmt.Printf("%s\n", err)
+		log.Println(err)
 	}
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),
