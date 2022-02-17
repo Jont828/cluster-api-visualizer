@@ -3,9 +3,11 @@ module github.com/Jont828/capi-visualization
 go 1.17
 
 require (
+	github.com/pkg/errors v0.9.1
 	k8s.io/api v0.23.3
 	k8s.io/apimachinery v0.23.3
-	sigs.k8s.io/cluster-api v1.0.2
+	k8s.io/client-go v0.23.3
+	sigs.k8s.io/cluster-api v1.1.2
 	sigs.k8s.io/controller-runtime v0.11.0
 )
 
@@ -52,7 +54,6 @@ require (
 	github.com/onsi/gomega v1.17.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.28.0 // indirect
@@ -82,7 +83,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/apiextensions-apiserver v0.23.0 // indirect
 	k8s.io/apiserver v0.23.0 // indirect
-	k8s.io/client-go v0.23.3 // indirect
 	k8s.io/cluster-bootstrap v0.23.0 // indirect
 	k8s.io/component-base v0.23.0 // indirect
 	k8s.io/klog/v2 v2.30.0 // indirect
@@ -93,4 +93,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace sigs.k8s.io/cluster-api v1.0.2 => ../sigs.k8s.io/cluster-api
+replace sigs.k8s.io/cluster-api v1.1.2 => sigs.k8s.io/cluster-api v1.1.1
