@@ -39,10 +39,10 @@ var kubeContext = ""
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	var err error
-	c, err = newClient()
-	if err != nil {
-		log.Println(err) // Allow app to start even if initClients return an error
+	var httpErr *internal.HTTPError
+	c, httpErr = newClient()
+	if httpErr != nil {
+		log.Println(httpErr) // Try to initialize client but allow GUI to start anyway even if it fails
 	}
 }
 
@@ -124,6 +124,7 @@ func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: should we pass in the runtimeClient here or regenerate it in the function?
 	tree, httpErr := internal.ConstructMultiClusterTree(c.ClusterClient, c.K8sConfigClient)
 	if httpErr != nil {
 		log.Println(httpErr)
