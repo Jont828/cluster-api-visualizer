@@ -21,7 +21,7 @@ import (
 )
 
 //go:embed web/dist
-var frontend embed.FS
+var web embed.FS
 
 type Client struct {
 	DefaultClient    client.Client
@@ -101,7 +101,7 @@ func main() {
 	http.Handle("/api/v1/custom-resource/", http.HandlerFunc(handleCustomResourceTree))
 	http.Handle("/api/v1/cluster-resources/", http.HandlerFunc(handleClusterResourceTree))
 
-	stripped, err := fs.Sub(frontend, "frontend/dist")
+	stripped, err := fs.Sub(web, "web/dist")
 	if err != nil {
 		log.Fatalln(err)
 	}
