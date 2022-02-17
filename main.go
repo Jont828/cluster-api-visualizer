@@ -186,10 +186,11 @@ func handleCustomResourceTree(w http.ResponseWriter, r *http.Request) {
 	apiVersion := r.URL.Query().Get("apiVersion")
 	name := r.URL.Query().Get("name")
 
-	object, err := internal.GetCustomResource(c.RuntimeClient, kind, apiVersion, c.CurrentNamespace, name)
-	if err != nil {
-		log.Println("Failed to get CRD:", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// TODO: should the runtimeClient be regenerated here?
+	object, httpErr := internal.GetCustomResource(c.RuntimeClient, kind, apiVersion, c.CurrentNamespace, name)
+	if httpErr != nil {
+		log.Println(httpErr)
+		http.Error(w, httpErr.Error(), httpErr.Status)
 		return
 	}
 

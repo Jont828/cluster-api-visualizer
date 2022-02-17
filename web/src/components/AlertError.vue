@@ -1,13 +1,14 @@
 <template>
   <div class="alertWrapper">
     <v-alert
+      :value="value"
+      @input="update"
       class="alertError"
       type="error"
       dismissible
       border="left"
       elevation="2"
       colored-border
-      v-if="message"
     >
       {{ message }}
     </v-alert>
@@ -19,7 +20,14 @@
 export default {
   name: "AlertError",
   props: {
+    value: Boolean, // v-model
     message: String,
+  },
+  methods: {
+    update(val) {
+      // console.log("Emitting 'input' as ", val);
+      this.$emit("input", val);
+    },
   },
 };
 </script>

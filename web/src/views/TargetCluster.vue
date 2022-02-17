@@ -46,7 +46,10 @@
         color="primary"
       ></v-progress-circular>
     </div>
-    <AlertError :message="errorMessage" />
+    <AlertError
+      v-model="alert"
+      :message="errorMessage"
+    />
   </div>
 </template>
 
@@ -78,36 +81,44 @@ export default {
       this.isStraight = val;
     },
     async selectNodeHandler(node) {
-      this.selected = node;
       try {
         const params = new URLSearchParams();
-        params.append("kind", this.selected.kind);
-        params.append(
-          "apiVersion",
-          this.selected.group + "/" + this.selected.version
-        );
-        params.append("name", this.selected.name);
+        params.append("kind", node.kind);
+        params.append("apiVersion", node.group + "/" + node.version);
+        // params.append("name", node.name);
+        params.append("name", "FAKE_NAME");
 
         const response = await Vue.axios.get("/custom-resource", {
           params: params,
         });
-        // const response = await getClusterResource(
-        //   this.selected.group,
-        //   this.selected.plural.toLowerCase(),
-        //   this.selected.name
-        // );
-        console.log("CRD is");
         console.log(response.data);
         this.resource = this.formatToTreeview(response.data);
+        this.selected = node; // Don't select until an error won't pop up
         this.resourceIsReady = true;
       } catch (error) {
-        this.errorMessage =
-          "Failed to fetch CRD for `" +
-          this.selected.kind +
-          this.selected.name +
-          "`";
-        console.log("Error fetching CRD");
-        console.log(error);
+        console.log("Error:", error.toJSON());
+        this.alert = true;
+        if (error.response) {
+          if (error.response.status == 404) {
+            this.errorMessage =
+              "Custom Resource Definition `" +
+              node.kind +
+              "/" +
+              node.name +
+              "` not found";
+          } else {
+            this.errorMessage =
+              "Unable to load Custom Resource Definition `" +
+              node.kind +
+              "/" +
+              node.name +
+              "`";
+          }
+        } else if (error.request) {
+          this.errorMessage = "No server response received";
+        } else {
+          this.errorMessage = "Unable to create request";
+        }
       }
     },
     async fetchCluster() {
@@ -121,6 +132,7 @@ export default {
         this.treeIsReady = true;
       } catch (error) {
         console.log("Error:", error.toJSON());
+        this.alert = true;
         if (error.response) {
           if (error.response.status == 404) {
             this.errorMessage =
@@ -178,6 +190,7 @@ export default {
   },
   data() {
     return {
+      alert: false,
       errorMessage: "",
       treeIsReady: false,
       resourceIsReady: false,

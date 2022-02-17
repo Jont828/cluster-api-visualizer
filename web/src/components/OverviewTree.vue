@@ -33,8 +33,10 @@
                   </v-icon>
                 </v-card-title>
                 <v-card-subtitle class="cardSubtitle">{{ (node.isManagement) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle>
-                <v-card-actions class="cardActions">
-                  <!-- v-if="!node.isRoot" -->
+                <v-card-actions
+                  class="cardActions"
+                  v-if="!node.isManagement"
+                >
                   <v-card-text class="card-bottom-text">Resources</v-card-text>
                   <v-spacer></v-spacer>
                   <v-icon>mdi-arrow-top-right</v-icon>
@@ -58,7 +60,10 @@
         color="primary"
       ></v-progress-circular>
     </div>
-    <AlertError :message="errorMessage" />
+    <AlertError
+      v-model=alert
+      :message="errorMessage"
+    />
   </div>
 </template>
 
@@ -90,26 +95,21 @@ export default {
         }
         this.treeIsReady = true;
       } catch (error) {
-        console.log(error);
+        console.log("Error:", error.toJSON());
+        this.alert = true;
         if (error.response) {
-          // The request was made and the server responded with a status code that falls out of the range of 2xx
-          // this.errorMessage = error.response.data;
-          console.log("Error Status:", error.response.status);
-          console.log("Error Data:", error.response.data);
-          console.log("Error Headers:", error.response.headers);
-          this.errorMessage = error.response.data;
+          if (error.response.status == 404) {
+            this.errorMessage =
+              "Management cluster not found, is the kubeconfig set?";
+          } else {
+            this.errorMessage =
+              "Unable to load management cluster and workload clusters";
+          }
         } else if (error.request) {
-          // The request was made but no response was received
-          // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-          // http.ClientRequest in node.js
-          console.log("Error Request:", error.request);
           this.errorMessage = "No server response received";
         } else {
-          // Something happened in setting up the request that triggered an Error
-          console.log("Error message:", error.message);
-          this.errorMessage = error.message;
+          this.errorMessage = "Unable to create request";
         }
-        console.log("Error Config:", error.config);
       }
     },
   },
@@ -118,6 +118,7 @@ export default {
   },
   data() {
     return {
+      alert: false,
       errorMessage: "",
       treeIsReady: false,
       treeData: {},
