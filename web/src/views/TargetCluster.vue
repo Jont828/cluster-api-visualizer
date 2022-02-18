@@ -85,8 +85,7 @@ export default {
         const params = new URLSearchParams();
         params.append("kind", node.kind);
         params.append("apiVersion", node.group + "/" + node.version);
-        // params.append("name", node.name);
-        params.append("name", "FAKE_NAME");
+        params.append("name", node.name);
 
         const response = await Vue.axios.get("/custom-resource", {
           params: params,
