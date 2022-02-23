@@ -1,7 +1,7 @@
 .DS_Store
-node_modules
-/dist
-/tmp
+node_modules/
+web/dist/
+tmp/
 
 # local env files
 .env.local
@@ -22,5 +22,3 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
-
-api/temp-assets
