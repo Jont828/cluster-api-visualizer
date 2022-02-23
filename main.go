@@ -21,8 +21,6 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// var web embed.FS
-
 type Client struct {
 	DefaultClient    client.Client
 	ClusterClient    cluster.Client
@@ -101,14 +99,6 @@ func main() {
 	http.Handle("/api/v1/custom-resource/", http.HandlerFunc(handleCustomResourceTree))
 	http.Handle("/api/v1/cluster-resources/", http.HandlerFunc(handleClusterResourceTree))
 
-	// stripped, err := fs.Sub(web, "web/dist")
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	// frontendFS := http.FileServer(http.FS(stripped))
-	// http.Handle("/", frontendFS)
-
 	var frontend fs.FS = os.DirFS("web/dist")
 	httpFS := http.FS(frontend)
 	fileServer := http.FileServer(httpFS)
@@ -116,8 +106,9 @@ func main() {
 
 	http.Handle("/", intercept404(fileServer, serveIndex))
 
-	log.Printf("Listening on port %d\n", port)
-	log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	uri := fmt.Sprintf("localhost:%d", port)
+	log.Printf("Listening at http://%s\n", uri)
+	log.Fatalln(http.ListenAndServe(uri, nil))
 }
 
 type hookedResponseWriter struct {
