@@ -38,7 +38,7 @@ npm-serve: $(VUE_DIR)/package.json
 .PHONY: clean-dist
 clean-dist:
 	rm -rf $(VUE_DIR)/dist
-	
+
 ## --------------------------------------
 ## Go
 ## --------------------------------------
@@ -48,7 +48,7 @@ build-go:
 	go build -o $(GO_BIN_OUT)
 
 .PHONY: run
-run: build
+run: $(GO_BIN_OUT)
 	./$(GO_BIN_OUT)
 
 .PHONY: air
