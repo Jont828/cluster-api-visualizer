@@ -35,18 +35,11 @@ git clone https://github.com/kubernetes-sigs/cluster-api.git
 cd cluster-api
 go get ./...
 ```
-**Optional:** Install [Air](https://github.com/cosmtrek/air) to run the Go server with hot reloading for development. It can be installed using the instructions on the repo or your preferred package manager. Once it's it's installed, set it up with the following commands.
-
-```
-cd ${GOPATH}/src/capi-visualization/
-air init
-```
 
 #### 4. Install node packages
 
 ```
-cd ${GOPATH}/src/capi-visualization/web
-npm install
+make npm-install
 ```
 
 
@@ -56,7 +49,16 @@ Create a local management cluster with kind and a workload cluster by following 
 
 #### 6. Start the app
 
-From `${GOPATH}/src/capi-visualization/`, start the Go server with
+From `${GOPATH}/src/capi-visualization/`, build the application and start it with
+
+```
+make build
+make run
+```
+
+### Development:
+
+For development and testing, the app can be run with hot reloading. After completing step 5 above, start the Go server from `${GOPATH}/src/capi-visualization/` with
 
 ```
 go run main.go
@@ -68,10 +70,14 @@ In a separate terminal, enter `${GOPATH}/src/capi-visualization/web` and start t
 npm run serve
 ```
 
-**Optional:** If you are using Air, you can start the Go server instead using
+**Optional:** Install [Air](https://github.com/cosmtrek/air) to run the Go server with hot reloading for development. It can be installed using the instructions on the repo or your preferred package manager. Once it's it's installed, set it up with the following commands.
+
 ```
-air
+cd ${GOPATH}/src/capi-visualization/
+air init
 ```
+
+Instead of `go run main.go`, run `air` to start the Go server.
 
 ### Contributing:
 

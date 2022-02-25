@@ -35,6 +35,10 @@ build-web:
 npm-serve: $(VUE_DIR)/package.json
 	npm install --prefix ./$(VUE_DIR)
 
+.PHONY: clean-dist
+clean-dist:
+	rm -rf $(VUE_DIR)/dist
+	
 ## --------------------------------------
 ## Go
 ## --------------------------------------
