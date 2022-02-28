@@ -86,6 +86,6 @@ All contributions are welcome. If you'd like to help out, feel free fork the rep
 ### Acknowledgements:
 
 - The cluster trees are drawn in D3 using a modified version of [ssthouse/vue-tree-chart](https://github.com/ssthouse/vue-tree-chart)
-- The method for building the tree is inspired by [this article](https://typeofnan.dev/an-easy-way-to-build-a-tree-with-object-references/)
 - The tree is generated using the clusterctl client from [Cluster API](https://github.com/kubernetes-sigs/cluster-api)
+- The Go server was developed from Trevor Taubitz's [tutorial](https://hackandsla.sh/posts/2021-06-18-embed-vuejs-in-go/) on embedding VueJS in Go and [tutorial](https://hackandsla.sh/posts/2021-11-06-serve-spa-from-go/) on serving single page apps from Go 
 - Thanks to [Vuetify](https://vuetifyjs.com/en/) for providing a great UI component toolkit
