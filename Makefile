@@ -3,21 +3,24 @@
 ## --------------------------------------
 
 VUE_DIR := web
+NODE_MODULES := ./$(VUE_DIR)/node_modules
+DIST_FOLDER := ./$(VUE_DIR)/dist
 GO_BIN_OUT := main
 
 ## --------------------------------------
 ## All
 ## --------------------------------------
 
+# Default target is to build and run the app
 .PHONY: all
-all: npm-install build
+all: npm-install build run
 
 .PHONY: build
 build: build-web build-go
 
 .PHONY: clean
 clean:
-	rm -rf $(VUE_DIR)/build $(VUE_DIR)/node_modules $(GO_BIN_OUT) tmp
+	rm -rf $(DIST_FOLDER) $(NODE_MODULES) $(GO_BIN_OUT) tmp
 
 ## --------------------------------------
 ## Vue and Node
@@ -28,16 +31,16 @@ npm-install: $(VUE_DIR)/package.json
 	npm install --prefix ./$(VUE_DIR)
 
 .PHONY: build-web
-build-web:
+build-web: $(NODE_MODULES)
 	npm run --prefix ./$(VUE_DIR) build
 
 .PHONY: npm-serve
-npm-serve: $(VUE_DIR)/package.json
-	npm install --prefix ./$(VUE_DIR)
+npm-serve: $(VUE_DIR)/package.json $(NODE_MODULES)
+	npm run --prefix ./$(VUE_DIR) serve
 
 .PHONY: clean-dist
 clean-dist:
-	rm -rf $(VUE_DIR)/dist
+	rm -rf $(DIST_FOLDER)
 
 ## --------------------------------------
 ## Go
@@ -48,7 +51,7 @@ build-go:
 	go build -o $(GO_BIN_OUT)
 
 .PHONY: run
-run: $(GO_BIN_OUT)
+run: $(GO_BIN_OUT) $(DIST_FOLDER)
 	./$(GO_BIN_OUT)
 
 .PHONY: air
