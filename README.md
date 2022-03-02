@@ -36,35 +36,43 @@ cd cluster-api
 go get ./...
 ```
 
-#### 4. Install node packages
+#### 4. Run make
+
+This will install node packages, build the web app, build the Go backend, and start the app.
 
 ```
-make npm-install
+make
 ```
+Alternatively, you can run the steps individually if `node_modules` are already installed or the web app assets are already built.
 
+
+```
+make npm-install    # Install node packages
+make build          # Build the web app into `web/dist` and the Go binary
+make run            # Run the Go binary if the binary is built
+```
 
 #### 5. Create a management cluster and workload cluster with Cluster API
 
 Create a local management cluster with kind and a workload cluster by following the [Cluster API Quickstart](https://cluster-api.sigs.k8s.io/user/quick-start.html).
 
-#### 6. Start the app
-
-From `${GOPATH}/src/capi-visualization/`, build the application and start it with
-
-```
-make build
-make run
-```
 
 ### Development:
 
-For development and testing, the app can be run with hot reloading. After completing step 5 above, start the Go server from `${GOPATH}/src/capi-visualization/` with
+For development and testing, the app can be run with hot reloading. After completing step 3 above, skip step 4 and start the Go server from `${GOPATH}/src/capi-visualization/` with
 
 ```
 go run main.go
 ```
 
-In a separate terminal, enter `${GOPATH}/src/capi-visualization/web` and start the Vue app with
+In a separate terminal, enter `${GOPATH}/src/capi-visualization/web` and install node packages if you haven't done so with
+
+
+```
+npm install
+```
+
+Then start the Vue app with
 
 ```
 npm run serve
@@ -85,6 +93,7 @@ All contributions are welcome. If you'd like to help out, feel free fork the rep
 
 ### Acknowledgements:
 
+- Thanks to [@fabriziopandini](https://github.com/fabriziopandini) for helping guide the backend development.
 - The cluster trees are drawn in D3 using a modified version of [ssthouse/vue-tree-chart](https://github.com/ssthouse/vue-tree-chart)
 - The tree is generated using the clusterctl client from [Cluster API](https://github.com/kubernetes-sigs/cluster-api)
 - The Go server was developed from Trevor Taubitz's [tutorial](https://hackandsla.sh/posts/2021-06-18-embed-vuejs-in-go/) on embedding VueJS in Go and [tutorial](https://hackandsla.sh/posts/2021-11-06-serve-spa-from-go/) on serving single page apps from Go 
