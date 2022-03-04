@@ -91,7 +91,9 @@ func newClient() (*Client, *internal.HTTPError) {
 }
 
 func main() {
+	var host string
 	var port int
+	flag.StringVar(&host, "host", "localhost", "Host to listen on")
 	flag.IntVar(&port, "port", 8081, "The port to listen on")
 	flag.Parse()
 
@@ -106,7 +108,7 @@ func main() {
 
 	http.Handle("/", intercept404(fileServer, serveIndex))
 
-	uri := fmt.Sprintf("0.0.0.0:%d", port)
+	uri := fmt.Sprintf("%s:%d", host, port)
 	log.Printf("Listening at http://%s\n", uri)
 	log.Fatalln(http.ListenAndServe(uri, nil))
 }
