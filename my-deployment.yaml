@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+  labels:
+    app: capi-viz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: capi-viz
+  template:
+    metadata:
+      labels:
+        app: capi-viz
+    spec:
+      containers:
+      - name: capi-viz
+        image: jont828/capi-viz:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: KUBECONFIG
+          value: "/app/kind-kc"
+        volumeMounts:
+          - mountPath: "/app"
+            name: kind-kubeconfig
+            readOnly: true
+      volumes:
+      - name: kind-kubeconfig
+        secret:
+          secretName: kind-kubeconfig
