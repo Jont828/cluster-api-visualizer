@@ -121,6 +121,7 @@ type hookedResponseWriter struct {
 func (hrw *hookedResponseWriter) WriteHeader(status int) {
 	log.Println("Writing header:", status)
 	if status == http.StatusNotFound {
+		log.Println("Setting 404 flag")
 		// Don't actually write the 404 header, just set a flag.
 		hrw.got404 = true
 	} else {
@@ -131,6 +132,7 @@ func (hrw *hookedResponseWriter) WriteHeader(status int) {
 func (hrw *hookedResponseWriter) Write(p []byte) (int, error) {
 	log.Println("Writing", string(p))
 	if hrw.got404 {
+		log.Println("Got 404, no-op")
 		// No-op, but pretend that we wrote len(p) bytes to the writer.
 		return len(p), nil
 	}
@@ -155,16 +157,18 @@ func serveFileContents(file string, files http.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Restrict only to instances where the browser is looking for an HTML file
 		if !strings.Contains(r.Header.Get("Accept"), "text/html") {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "404 not found")
 			log.Printf("404 `%s` not found\n", file)
 
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404 not found")
 			return
 		}
 
 		// Open the file and return its contents using http.ServeContent
 		index, err := files.Open(file)
 		if err != nil {
+			log.Println("Open file error:", err)
+
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, "`%s` not found", file)
 
@@ -173,6 +177,8 @@ func serveFileContents(file string, files http.FileSystem) http.HandlerFunc {
 
 		fi, err := index.Stat()
 		if err != nil {
+			log.Println("Stat file error:", err)
+
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, "`%s` not found", file)
 

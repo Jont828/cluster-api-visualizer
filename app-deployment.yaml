@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: test-deployment
+  name: visualize-cluster
   labels:
     app: capi-viz
 spec:
@@ -16,14 +16,14 @@ spec:
     spec:
       containers:
       - name: capi-viz
-        image: jont828/capi-viz:latest
+        image: jont828/capi-viz:v0.0.4
         ports:
         - containerPort: 8081
         env:
         - name: KUBECONFIG
-          value: "/app/kind-kc"
+          value: "/mnt/kind-kc"
         volumeMounts:
-          - mountPath: "/app"
+          - mountPath: "/mnt"
             name: kind-kubeconfig
             readOnly: true
       volumes:
