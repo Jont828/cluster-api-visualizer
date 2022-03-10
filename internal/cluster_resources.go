@@ -2,6 +2,7 @@ package internal
 
 import (
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -64,7 +65,12 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		UID:         string(object.GetUID()),
 	}
 
-	for _, child := range objTree.GetObjectsByParent(object.GetUID()) {
+	children := objTree.GetObjectsByParent(object.GetUID())
+	sort.Slice(children, func(i, j int) bool {
+		return children[i].GetObjectKind().GroupVersionKind().Kind < children[j].GetObjectKind().GroupVersionKind().Kind
+	})
+
+	for _, child := range children {
 		node.Children = append(node.Children, objectTreeToResourceTree(objTree, child))
 	}
 
