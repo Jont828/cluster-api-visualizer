@@ -30,3 +30,17 @@ spec:
       - name: kind-kubeconfig
         secret:
           secretName: kind-kubeconfig
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: visualize-cluster
+  labels:
+    app: capi-viz
+spec:
+  ports:
+  - port: 8081
+    targetPort: 8081
+    protocol: TCP
+  selector:
+    app: capi-viz

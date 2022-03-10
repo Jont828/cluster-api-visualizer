@@ -59,8 +59,6 @@ func newClient() (*Client, *internal.HTTPError) {
 	}
 
 	c.ClusterClient = cluster.New(cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}, configClient)
-	log.Println("Using kubeconfig context:", c.ClusterClient.Kubeconfig().Context)
-	log.Println("Using kubeconfig path:", c.ClusterClient.Kubeconfig().Path)
 
 	err = c.ClusterClient.Proxy().CheckClusterAvailable()
 	if err != nil {
@@ -110,6 +108,9 @@ func main() {
 
 	uri := fmt.Sprintf("%s:%d", host, port)
 	log.Printf("Listening at http://%s\n", uri)
+	if host == "0.0.0.0" {
+		log.Printf("View at http://localhost:%d in browser\n,", port)
+	}
 	log.Fatalln(http.ListenAndServe(uri, nil))
 }
 
@@ -121,7 +122,6 @@ type hookedResponseWriter struct {
 func (hrw *hookedResponseWriter) WriteHeader(status int) {
 	log.Println("Writing header:", status)
 	if status == http.StatusNotFound {
-		log.Println("Setting 404 flag")
 		// Don't actually write the 404 header, just set a flag.
 		hrw.got404 = true
 	} else {
@@ -132,7 +132,6 @@ func (hrw *hookedResponseWriter) WriteHeader(status int) {
 func (hrw *hookedResponseWriter) Write(p []byte) (int, error) {
 	log.Println("Writing", string(p))
 	if hrw.got404 {
-		log.Println("Got 404, no-op")
 		// No-op, but pretend that we wrote len(p) bytes to the writer.
 		return len(p), nil
 	}
@@ -141,7 +140,6 @@ func (hrw *hookedResponseWriter) Write(p []byte) (int, error) {
 }
 
 func intercept404(handler, on404 http.Handler) http.Handler {
-	log.Println("Intercepting 404s")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hookedWriter := &hookedResponseWriter{ResponseWriter: w}
 		handler.ServeHTTP(hookedWriter, r)
