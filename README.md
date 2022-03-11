@@ -6,7 +6,18 @@ Cluster API developers and operators often need to quickly get insight multiclus
 
 ![Demo Recording](demo/demo.gif)
 
-### Quick start
+### Quick start with kind
+
+Create a local management cluster with [kind](https://kind.sigs.k8s.io/) and a workload cluster by following the [Cluster API Quickstart](https://cluster-api.sigs.k8s.io/user/quick-start.html).
+
+Then, run the following command to start the app:
+```
+./hack/deploy-to-kind.sh
+```
+
+This will run the app as a deployment on management clusters built with kind.
+
+### Running locally
 
 #### 1. Prerequisites
 
@@ -57,7 +68,7 @@ make run            # Run the Go binary if the binary is built
 Create a local management cluster with kind and a workload cluster by following the [Cluster API Quickstart](https://cluster-api.sigs.k8s.io/user/quick-start.html).
 
 
-### Development:
+### Development
 
 For development and testing, the app can be run with hot reloading. After completing step 3 above, skip step 4 and start the Go server from `${GOPATH}/src/capi-visualization/` with
 

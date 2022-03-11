@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: capi-viz
-        image: jont828/capi-viz:v0.0.4
+        image: jont828/capi-viz:v0.0.5
         ports:
         - containerPort: 8081
         env:
