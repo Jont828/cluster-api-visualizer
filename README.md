@@ -12,7 +12,7 @@ Create a local management cluster with [kind](https://kind.sigs.k8s.io/) and a w
 
 Then, run the following command to start the app:
 ```
-./hack/deploy-to-kind.sh
+./hack/deploy-to-kind.sh <name-of-management-cluster>
 ```
 
 This will run the app as a deployment on management clusters built with kind.

@@ -11,4 +11,7 @@ kubectl create secret generic kind-kubeconfig --from-file=kind-kc
 rm kind-kc
 
 kubectl apply -f ./hack/deployments/visualize.yaml
+kubectl rollout status deployment visualize-cluster
+
+echo "Running at http://localhost:8081"
 kubectl port-forward service/visualize-cluster 8081:8081
