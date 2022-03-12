@@ -6,14 +6,21 @@
       dark
     >
       <v-card-title class="text-h5">
-        {{ title }}
+        Resource: {{ name }}
         <v-spacer></v-spacer>
+        <v-btn
+          icon
+          color="white"
+          @click="this.downloadYaml"
+        >
+          <v-icon>mdi-download</v-icon>
+        </v-btn>
         <v-btn
           icon
           color="white"
           @click="() => { this.$emit('unselectNode', {}); }"
         >
-          <v-icon>mdi-close-circle</v-icon>
+          <v-icon>mdi-window-close</v-icon>
         </v-btn>
 
       </v-card-title>
@@ -56,11 +63,14 @@
 </template>
 
 <script>
+import yaml from "js-yaml";
+
 export default {
   name: "CustomResourceTree",
   props: {
     items: Array,
-    title: String,
+    jsonItems: Object,
+    name: String,
     color: String,
   },
   data() {
@@ -70,15 +80,24 @@ export default {
       caseSensitive: false,
     };
   },
+  methods: {
+    downloadYaml() {
+      const yamlCRD = yaml.dump(this.jsonItems);
+      const link = document.createElement("a");
+      link.href = `data:text/plain;charset=utf-8,${yamlCRD}`;
+      link.download = this.name + ".yaml";
+      link.click();
+    },
+  },
   computed: {
     filter() {
       return this.caseSensitive
         ? (item, search, textKey) => {
-            console.log(item, search, textKey);
+            // console.log(item, search, textKey);
             return item["name"].indexOf(search) > -1;
           }
         : (item, search, textKey) => {
-            console.log(item, search, textKey);
+            // console.log(item, search, textKey);
             return (
               item["name"].toLowerCase().indexOf(search.toLowerCase()) > -1
             );

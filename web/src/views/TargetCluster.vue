@@ -27,8 +27,9 @@
         v-if="resourceIsReady && this.selected.name"
       >
         <CustomResourceTree
-          :items="resource"
-          :title="'Resource: ' + selected.kind + '/' + selected.name"
+          :items="treeviewResource"
+          :jsonItems="resource"
+          :name="selected.kind + '/' + selected.name"
           :color="legend[selected.provider].color"
           @unselectNode="(val) => { this.selected=val; }"
         />
@@ -91,7 +92,8 @@ export default {
           params: params,
         });
         console.log(response.data);
-        this.resource = this.formatToTreeview(response.data);
+        this.resource = response.data;
+        this.treeviewResource = this.formatToTreeview(response.data);
         this.selected = node; // Don't select until an error won't pop up
         this.resourceIsReady = true;
       } catch (error) {
