@@ -21,12 +21,12 @@ spec:
         - containerPort: 8081
         env:
         - name: KUBECONFIG
-          value: "/mnt/kind-kc"
+          value: "/mnt/kubeconfig"
         volumeMounts:
           - mountPath: "/mnt"
-            name: kind-kubeconfig
+            name: management-kubeconfig
             readOnly: true
       volumes:
-      - name: kind-kubeconfig
+      - name: management-kubeconfig
         secret:
-          secretName: kind-kubeconfig
+          secretName: management-kubeconfig
