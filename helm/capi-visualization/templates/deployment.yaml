@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: visualize-cluster
+  labels:
+    {{ .Values.label.key }}: {{ .Values.label.value }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{ .Values.label.key }}: {{ .Values.label.value }}
+  template:
+    metadata:
+      labels:
+        {{ .Values.label.key }}: {{ .Values.label.value }}
+    spec:
+      containers:
+      - name: capi-viz
+        image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: 8081
+        env:
+        - name: KUBECONFIG
+          value: "/mnt/kind-kc"
+        volumeMounts:
+          - mountPath: "/mnt"
+            name: kind-kubeconfig
+            readOnly: true
+      volumes:
+      - name: kind-kubeconfig
+        secret:
+          secretName: kind-kubeconfig

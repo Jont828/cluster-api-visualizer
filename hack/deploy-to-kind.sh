@@ -5,12 +5,9 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-kind get kubeconfig --name "$1" --internal > kind-kc
-kubectl delete secret kind-kubeconfig --ignore-not-found
-kubectl create secret generic kind-kubeconfig --from-file=kind-kc
-rm kind-kc
+KUBECONFIG_DATA=$(kind get kubeconfig --name ${1} --internal)
 
-kubectl apply -f ./hack/deployments/visualize.yaml
+helm install --generate-name ./helm/capi-visualization --set kubeconfig="$KUBECONFIG_DATA"  || exit 1
 kubectl rollout status deployment visualize-cluster
 
 echo "Running at http://localhost:8081"
