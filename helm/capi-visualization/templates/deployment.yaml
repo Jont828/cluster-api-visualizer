@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: visualize-cluster
+  namespace: {{ .Values.namespace }}
   labels:
     {{ .Values.label.key }}: {{ .Values.label.value }}
 spec:

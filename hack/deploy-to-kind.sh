@@ -2,6 +2,7 @@
 
 if [ -z "$1" ]; then
   echo "Usage: $0 <name-of-kind-management-cluster>"
+  echo "Note: existing kind clusters are [ $(kind get clusters) ]"
   exit 1
 fi
 
