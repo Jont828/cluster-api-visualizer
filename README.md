@@ -2,13 +2,18 @@
 
 Cluster API developers and operators often need to quickly get insight multicluster configuration. This app provides that insight by making Cluster API significantly more accessible and easier to understand for both new and experienced users. It gives a bird’s eye view of a multicluster architecture, visualizes all the Cluster API custom resources for each cluster, and provides quick access to the specs of any resource.
 
-**Note:** This app is a prototype for Cluster API GUI. It's built using the Go and VueJS.
-
 ![Demo Recording](demo/demo.gif)
 
-### Quick start with kind
+### Quick start
 
-Create a local management cluster with [kind](https://kind.sigs.k8s.io/) and a workload cluster by following the [Cluster API Quickstart](https://cluster-api.sigs.k8s.io/user/quick-start.html).
+#### 1. Prerequisites
+
+Install and set up [kind](https://kind.sigs.k8s.io/), [Docker](https://www.docker.com/), [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/), and [helm](https://helm.sh/). In addition, install any additional prerequisites needed for [Cluster API](https://cluster-api.sigs.k8s.io/).
+#### 2. Create a Cluster API management cluster
+
+Create a local management cluster with [kind](https://kind.sigs.k8s.io/) and a workload cluster by following the [Cluster API quick start guide](https://cluster-api.sigs.k8s.io/user/quick-start.html).
+
+#### 3. Deploy with Helm
 
 Then, run the following command to start the app:
 ```
@@ -16,87 +21,6 @@ Then, run the following command to start the app:
 ```
 
 This will run the app as a deployment on management clusters built with kind.
-
-### Running locally
-
-#### 1. Prerequisites
-
-This app requires [Go 1.17](https://go.dev/doc/install), [Node.js](https://nodejs.org/en/), [npm](https://www.npmjs.com/), [Vue CLI](https://cli.vuejs.org/guide/installation.html), [Cluster API](https://github.com/kubernetes-sigs/cluster-api), and its [prerequisites](https://cluster-api.sigs.k8s.io/user/quick-start.html#common-prerequisites).
-
-#### 2. Clone the repository
-
-```
-cd ${GOPATH}/src # Or your go directory if GOPATH is not set
-git clone https://github.com/Jont828/capi-visualization.git
-```
-
-#### 3. Install Go packages
-
-```
-cd ${GOPATH}/src/capi-visualization/
-go get ./...
-```
-
-Clone a copy of [Cluster API](https://github.com/kubernetes-sigs/cluster-api), with the following commands. This will allow the app to access local changes to the repo.
-
-```
-mkdir ${GOPATH}/src/sigs.k8s.io
-cd ${GOPATH}/src/sigs.k8s.io
-git clone https://github.com/kubernetes-sigs/cluster-api.git
-cd cluster-api
-go get ./...
-```
-
-#### 4. Run make
-
-This will install node packages, build the web app, build the Go backend, and start the app.
-
-```
-make
-```
-Alternatively, you can run the steps individually if `node_modules` are already installed or the web app assets are already built.
-
-
-```
-make npm-install    # Install node packages
-make build          # Build the web app into `web/dist` and the Go binary
-make run            # Run the Go binary if the binary is built
-```
-
-#### 5. Create a management cluster and workload cluster with Cluster API
-
-Create a local management cluster with kind and a workload cluster by following the [Cluster API Quickstart](https://cluster-api.sigs.k8s.io/user/quick-start.html).
-
-
-### Development
-
-For development and testing, the app can be run with hot reloading. After completing step 3 above, skip step 4 and start the Go server from `${GOPATH}/src/capi-visualization/` with
-
-```
-go run main.go
-```
-
-In a separate terminal, enter `${GOPATH}/src/capi-visualization/web` and install node packages if you haven't done so with
-
-
-```
-npm install
-```
-
-Then start the Vue app with
-
-```
-npm run serve
-```
-
-**Optional:** Install [Air](https://github.com/cosmtrek/air) to run the Go server with hot reloading for development. It can be installed using the instructions on the repo or your preferred package manager. Once it's it's installed, set it up with the following commands.
-
-```
-cd ${GOPATH}/src/capi-visualization/
-air init
-```
-
-Instead of `go run main.go`, run `air` to start the Go server.
 
 ### Contributing:
 
