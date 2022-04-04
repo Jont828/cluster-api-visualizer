@@ -7,6 +7,11 @@ NODE_MODULES := ./$(VUE_DIR)/node_modules
 DIST_FOLDER := ./$(VUE_DIR)/dist
 GO_BIN_OUT := main
 
+TAG ?= latest
+REGISTRY ?= jont828
+IMAGE_NAME ?= cluster-api-visualizer
+DOCKER_IMAGE ?= $(REGISTRY)/$(IMAGE_NAME)
+
 ## --------------------------------------
 ## All
 ## --------------------------------------
@@ -69,3 +74,15 @@ go-vet:
 .PHONY: go-fmt
 go-fmt:
 	go fmt ./...
+
+## --------------------------------------
+## Docker
+## --------------------------------------
+
+.PHONY: docker-build
+docker-build: 
+	docker build --no-cache -t $(DOCKER_IMAGE):$(TAG) .
+
+.PHONY: docker-push
+docker-push: 
+	docker push $(DOCKER_IMAGE):$(TAG)

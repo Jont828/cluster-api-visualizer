@@ -1,4 +1,4 @@
-# Cluster API Visualization App
+# Cluster API Visualizer
 
 Cluster API developers and operators often need to quickly get insight multicluster configuration. This app provides that insight by making Cluster API significantly more accessible and easier to understand for both new and experienced users. It gives a bird’s eye view of a multicluster architecture, visualizes all the Cluster API custom resources for each cluster, and provides quick access to the specs of any resource.
 

@@ -11,7 +11,7 @@ ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 KUBECONFIG_DATA=$(kind get kubeconfig --name ${1} --internal)
 
 helm install --generate-name ${ROOT}/helm/capi-visualization --set kubeconfig="$KUBECONFIG_DATA" || exit 1
-kubectl rollout status deployment visualize-cluster
+kubectl rollout status deployment capi-visualizer
 
 echo "Running at http://localhost:8081"
-kubectl port-forward service/visualize-cluster 8081:8081
+kubectl port-forward service/capi-visualizer 8081:8081

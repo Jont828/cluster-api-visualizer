@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: visualize-cluster
+  name: capi-visualizer
   namespace: {{ .Values.namespace }}
   labels:
     {{ .Values.label.key }}: {{ .Values.label.value }}
@@ -16,7 +16,7 @@ spec:
         {{ .Values.label.key }}: {{ .Values.label.value }}
     spec:
       containers:
-      - name: capi-viz
+      - name: capi-visualizer
         image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
         ports:
         - containerPort: 8081
