@@ -3,6 +3,9 @@ node_modules/
 web/dist/
 tmp/
 
+# Local binaries
+main
+
 # local env files
 .env.local
 .env.*.local
