@@ -1,11 +1,11 @@
 package internal
 
 import (
-	"log"
 	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
+	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,7 +27,6 @@ func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.
 	objTree, err := defaultClient.DescribeCluster(dcOptions)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "not found") {
-			log.Printf("Has suffix")
 			return nil, &HTTPError{Status: 404, Message: err.Error()}
 		}
 
@@ -40,6 +39,8 @@ func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.
 }
 
 func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object) *ClusterResourceNode {
+	log := klogr.New()
+
 	if object == nil {
 		return nil
 	}
@@ -51,7 +52,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	// fmt.Printf("%s %s %s %s\n", group, kind, version, object.GetObjectKind().GroupVersionKind().String())
 	provider, err := getProvider(object, group)
 	if err != nil {
-		log.Println(err)
+		log.Error(err, "failed to get provider for object", "kind", kind, "name", object.GetName())
 	}
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),

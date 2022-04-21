@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
+
+	// "log"
 	"net/http"
 	"os"
 	"strings"
@@ -15,6 +16,8 @@ import (
 	"github.com/Jont828/cluster-api-visualizer/internal"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/klog/v2"
+	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/config"
@@ -35,18 +38,18 @@ var kubeconfigPath = ""
 var kubeContext = ""
 
 func init() {
-	// TODO: refactor logger to use klog
-	// TODO: refactor helm chart to not need namespace as a values field
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log := klogr.New()
 
 	var httpErr *internal.HTTPError
 	c, httpErr = newClient()
 	if httpErr != nil {
-		log.Println(httpErr) // Try to initialize client but allow GUI to start anyway even if it fails
+		log.Error(httpErr, "failed to initialize client, will allow frontend to start") // Try to initialize client but allow GUI to start anyway even if it fails
 	}
 }
 
 func newClient() (*Client, *internal.HTTPError) {
+	log := klogr.New()
+
 	c := &Client{}
 	var err error
 
@@ -64,7 +67,7 @@ func newClient() (*Client, *internal.HTTPError) {
 
 	err = c.ClusterClient.Proxy().CheckClusterAvailable()
 	if err != nil {
-		log.Println("Cluster unavailable:", err)
+		log.Error(err, "failed to check cluster availability for cluster client")
 		return nil, &internal.HTTPError{Status: http.StatusNotFound, Message: err.Error()}
 	}
 
@@ -93,9 +96,16 @@ func newClient() (*Client, *internal.HTTPError) {
 func main() {
 	var host string
 	var port int
+
 	flag.StringVar(&host, "host", "localhost", "Host to listen on")
 	flag.IntVar(&port, "port", 8081, "The port to listen on")
+
+	klog.InitFlags(nil)
+	flag.Set("v", "3")
+
 	flag.Parse()
+
+	log := klogr.New()
 
 	http.Handle("/api/v1/multicluster/", http.HandlerFunc(handleMultiClusterTree))
 	http.Handle("/api/v1/custom-resource/", http.HandlerFunc(handleCustomResourceTree))
@@ -109,11 +119,12 @@ func main() {
 	http.Handle("/", intercept404(fileServer, serveIndex))
 
 	uri := fmt.Sprintf("%s:%d", host, port)
-	log.Printf("Listening at http://%s\n", uri)
+	log.V(0).Info(fmt.Sprintf("Listening at http://%s\n", uri))
 	if host == "0.0.0.0" {
-		log.Printf("View at http://localhost:%d in browser\n,", port)
+		log.V(0).Info(fmt.Sprintf("View at http://localhost:%d in browser\n,", port))
 	}
-	log.Fatalln(http.ListenAndServe(uri, nil))
+
+	http.ListenAndServe(uri, nil)
 }
 
 type hookedResponseWriter struct {
@@ -122,7 +133,9 @@ type hookedResponseWriter struct {
 }
 
 func (hrw *hookedResponseWriter) WriteHeader(status int) {
-	log.Println("Writing header:", status)
+	log := klogr.New()
+
+	log.V(4).Info("Writing header", "status", status)
 	if status == http.StatusNotFound {
 		// Don't actually write the 404 header, just set a flag.
 		hrw.got404 = true
@@ -132,7 +145,9 @@ func (hrw *hookedResponseWriter) WriteHeader(status int) {
 }
 
 func (hrw *hookedResponseWriter) Write(p []byte) (int, error) {
-	log.Println("Writing", string(p))
+	log := klogr.New()
+
+	log.V(4).Info("Writing content", "content", string(p))
 	if hrw.got404 {
 		// No-op, but pretend that we wrote len(p) bytes to the writer.
 		return len(p), nil
@@ -153,11 +168,13 @@ func intercept404(handler, on404 http.Handler) http.Handler {
 }
 
 func serveFileContents(file string, files http.FileSystem) http.HandlerFunc {
-	log.Println("Serving file:", file)
+	log := klogr.New()
+
+	log.V(4).Info("Serving file", "filename", file)
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Restrict only to instances where the browser is looking for an HTML file
 		if !strings.Contains(r.Header.Get("Accept"), "text/html") {
-			log.Printf("404 `%s` not found\n", file)
+			log.V(4).Info("404 file not found", "filename", file)
 
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404 not found")
@@ -167,7 +184,7 @@ func serveFileContents(file string, files http.FileSystem) http.HandlerFunc {
 		// Open the file and return its contents using http.ServeContent
 		index, err := files.Open(file)
 		if err != nil {
-			log.Println("Open file error:", err)
+			log.Error(err, "open file error")
 
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, "`%s` not found", file)
@@ -177,7 +194,7 @@ func serveFileContents(file string, files http.FileSystem) http.HandlerFunc {
 
 		fi, err := index.Stat()
 		if err != nil {
-			log.Println("Stat file error:", err)
+			log.Error(err, "stat file error")
 
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, "`%s` not found", file)
@@ -191,12 +208,14 @@ func serveFileContents(file string, files http.FileSystem) http.HandlerFunc {
 }
 
 func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET call to " + r.URL.Path)
+	log := klogr.New()
+
+	log.V(2).Info("GET call to url", "url", r.URL.Path)
 
 	// Attempt to initialize clients
 	c, httpErr := newClient()
 	if httpErr != nil {
-		log.Println(httpErr)
+		log.Error(httpErr, "failed to initialize clients")
 		http.Error(w, httpErr.Error(), httpErr.Status)
 		return
 	}
@@ -204,7 +223,7 @@ func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 	// TODO: should we pass in the runtimeClient here or regenerate it in the function?
 	tree, httpErr := internal.ConstructMultiClusterTree(c.ClusterClient, c.K8sConfigClient)
 	if httpErr != nil {
-		log.Println(httpErr)
+		log.Error(httpErr, "failed to construct management cluster tree view")
 		http.Error(w, httpErr.Error(), httpErr.Status)
 		return
 	}
@@ -222,7 +241,9 @@ func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET call to " + r.URL.Path)
+	log := klogr.New()
+
+	log.V(2).Info("GET call to url", "url", r.URL.Path)
 	clusterName := r.URL.Path[len("/api/v1/cluster-resources/"):]
 
 	// Uncomment these fields when changes merge to CAPI main
@@ -240,7 +261,7 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 
 	tree, httpErr := internal.ConstructClusterResourceTree(c.DefaultClient, dcOptions)
 	if httpErr != nil {
-		log.Println(httpErr)
+		log.Error(httpErr, "failed to construct resource tree for target cluster", "clusterName", clusterName)
 		http.Error(w, httpErr.Error(), httpErr.Status)
 		return
 	}
@@ -258,8 +279,11 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCustomResourceTree(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET call to " + r.URL.Path)
-	log.Println("GET params are: ", r.URL.Query())
+	log := klogr.New()
+
+	log.V(2).Info("GET call to url", "url", r.URL.Path)
+	log.V(2).Info("GET call params are", "params", r.URL.Query())
+
 	kind := r.URL.Query().Get("kind")
 	apiVersion := r.URL.Query().Get("apiVersion")
 	name := r.URL.Query().Get("name")
@@ -267,7 +291,7 @@ func handleCustomResourceTree(w http.ResponseWriter, r *http.Request) {
 	// TODO: should the runtimeClient be regenerated here?
 	object, httpErr := internal.GetCustomResource(c.RuntimeClient, kind, apiVersion, c.CurrentNamespace, name)
 	if httpErr != nil {
-		log.Println(httpErr)
+		log.Error(httpErr, "failed to construct tree for custom resource", "kind", kind, "name", name)
 		http.Error(w, httpErr.Error(), httpErr.Status)
 		return
 	}

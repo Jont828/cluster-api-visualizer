@@ -2,10 +2,10 @@ package internal
 
 import (
 	"context"
-	"log"
 	"strings"
 
 	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/klog/v2/klogr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -22,6 +22,8 @@ type MultiClusterTreeNode struct {
 
 // ConstructMultiClusterTree returns a tree representing the workload cluster discovered in the management cluster.
 func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *api.Config) (*MultiClusterTreeNode, *HTTPError) {
+	log := klogr.New()
+
 	currentContextName := k8sConfigClient.CurrentContext
 	currentContext, ok := k8sConfigClient.Contexts[currentContextName]
 	if !ok {
@@ -45,7 +47,7 @@ func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *ap
 	workloadClusters, err := clusterClient.Proxy().GetResourceNames("cluster.x-k8s.io/v1beta1", "Cluster", []ctrlclient.ListOption{}, "")
 	if err != nil {
 		if strings.Contains(err.Error(), "no matches for kind") {
-			log.Println(err)
+			log.Error(err, "cluster type does not exist")
 			return root, nil
 		}
 		return nil, NewInternalError(err)
