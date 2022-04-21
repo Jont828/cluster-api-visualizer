@@ -59,6 +59,10 @@ build-go:
 run: $(GO_BIN_OUT) $(DIST_FOLDER)
 	./$(GO_BIN_OUT)
 
+.PHONY: go-run
+go-run: $(DIST_FOLDER)
+	go run main.go
+
 .PHONY: air
 air: .air.toml
 	air
@@ -86,3 +90,11 @@ docker-build:
 .PHONY: docker-push
 docker-push: 
 	docker push $(DOCKER_IMAGE):$(TAG)
+
+## --------------------------------------
+## Helm
+## --------------------------------------
+
+.PHONY: update-helm
+update-helm:
+	./hack/update-helm-repo.sh

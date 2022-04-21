@@ -101,7 +101,7 @@ func main() {
 	flag.IntVar(&port, "port", 8081, "The port to listen on")
 
 	klog.InitFlags(nil)
-	flag.Set("v", "3")
+	flag.Set("v", "2")
 
 	flag.Parse()
 
