@@ -35,6 +35,8 @@ var kubeconfigPath = ""
 var kubeContext = ""
 
 func init() {
+	// TODO: refactor logger to use klog
+	// TODO: refactor helm chart to not need namespace as a values field
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var httpErr *internal.HTTPError

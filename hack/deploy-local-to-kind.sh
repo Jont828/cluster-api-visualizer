@@ -7,11 +7,13 @@ if [ -z "$1" ]; then
 fi
 
 ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+NAMESPACE=${NAMESPACE:-default}
 
 KUBECONFIG_DATA=$(kind get kubeconfig --name ${1} --internal)
 
-helm install --generate-name ${ROOT}/helm/cluster-api-visualizer --set kubeconfig="$KUBECONFIG_DATA" || exit 1
-kubectl rollout status deployment capi-visualizer
+kubectl delete secret -n ${NAMESPACE} management-kubeconfig --ignore-not-found
+helm install --generate-name ${ROOT}/helm/cluster-api-visualizer --set kubeconfig="$KUBECONFIG_DATA" -n ${NAMESPACE} || exit 1
+kubectl rollout status deployment -n ${NAMESPACE} capi-visualizer
 
 echo "Running at http://localhost:8081"
-kubectl port-forward service/capi-visualizer 8081:8081
+kubectl port-forward -n ${NAMESPACE} service/capi-visualizer 8081:8081
