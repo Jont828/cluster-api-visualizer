@@ -1,4 +1,4 @@
-module github.com/Jont828/capi-visualization
+module github.com/Jont828/cluster-api-visualizer
 
 go 1.17
 

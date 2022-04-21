@@ -12,7 +12,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Jont828/capi-visualization/internal"
+	"github.com/Jont828/cluster-api-visualizer/internal"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
