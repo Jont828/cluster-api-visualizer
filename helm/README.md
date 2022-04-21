@@ -4,7 +4,10 @@ This Helm chart allows you to deploy the Cluster API Visualizer app to a Kuberne
 
 ### Install using the Helm repo
 
-A Helm repo for this project is maintained at `https://raw.githubusercontent.com/Jont828/cluster-api-visualizer/main/helm/repo cluster-api-visualizer`. 
+A Helm repo for this project is maintained at 
+```
+https://raw.githubusercontent.com/Jont828/cluster-api-visualizer/main/helm/repo
+``` 
 
 To deploy using the repo, run the following script from the root directory:
 
