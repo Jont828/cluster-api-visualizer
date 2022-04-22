@@ -119,9 +119,9 @@ func main() {
 	http.Handle("/", intercept404(fileServer, serveIndex))
 
 	uri := fmt.Sprintf("%s:%d", host, port)
-	log.V(0).Info(fmt.Sprintf("Listening at http://%s\n", uri))
+	log.V(2).Info(fmt.Sprintf("Listening at http://%s", uri))
 	if host == "0.0.0.0" {
-		log.V(0).Info(fmt.Sprintf("View at http://localhost:%d in browser\n,", port))
+		log.V(2).Info(fmt.Sprintf("View at http://localhost:%d in browser", port))
 	}
 
 	http.ListenAndServe(uri, nil)
