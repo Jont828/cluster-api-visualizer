@@ -1,5 +1,5 @@
 {
-  "name": "capi-vis",
+  "name": "cluster-api-visualizer",
   "version": "0.1.0",
   "private": true,
   "scripts": {

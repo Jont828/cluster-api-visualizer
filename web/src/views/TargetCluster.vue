@@ -64,8 +64,6 @@ import AlertError from "../components/AlertError.vue";
 
 import colors from "vuetify/lib/util/colors";
 
-import { getCluster, getClusterResource } from "../services/Service.js";
-
 export default {
   name: "TargetCluster",
   components: {
@@ -204,26 +202,32 @@ export default {
         bootstrap: {
           name: "Bootstrap Provider",
           color: colors.amber.darken2,
+          // altColor: colors.amber.darken1,
         },
         controlplane: {
           name: "Control Plane Provider",
           color: colors.purple.darken1,
+          // altColor: colors.purple.lighten1,
         },
         infrastructure: {
           name: "Infrastructure Provider",
           color: colors.green.base,
+          // altColor: colors.green.lighten1,
         },
         cluster: {
           name: "Cluster API",
           color: colors.blue.darken1,
+          // altColor: colors.blue.lighten1,
         },
         addons: {
           name: "Addons",
           color: colors.red.darken1,
+          // altColor: colors.red.lighten2,
         },
         virtual: {
           name: "None",
           color: colors.grey.darken1,
+          // altColor: colors.grey.base,
         },
       },
     };

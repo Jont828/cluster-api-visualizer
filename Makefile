@@ -40,7 +40,7 @@ build-web: $(NODE_MODULES)
 	npm run --prefix ./$(VUE_DIR) build
 
 .PHONY: npm-serve
-npm-serve: $(VUE_DIR)/package.json $(NODE_MODULES)
+serve: $(VUE_DIR)/package.json $(NODE_MODULES)
 	npm run --prefix ./$(VUE_DIR) serve
 
 .PHONY: clean-dist

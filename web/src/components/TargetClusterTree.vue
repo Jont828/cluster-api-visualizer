@@ -17,11 +17,10 @@
         <v-hover>
           <template v-slot:default="{ hover }">
             <v-card
-              class="node mx-auto transition-swing"
+              :class="[ 'node', 'mx-auto', 'transition-swing', { animated: (node.hasReady && !node.ready) } ]"
               :elevation="hover ? 6 : 3"
               :style="{ 
-                  'background-color': legend[node.provider].color, 
-                // 'background-color': legend[node.provider][hover ? 'hoverColor' : 'color'], 
+                background: (node.hasReady && !node.ready) ? computeNotReadyGradient(legend[node.provider].color, 20) : legend[node.provider].color,
                 border: collapsed ? '' : '',
               }"
               v-on:click="selectNode(node)"
@@ -37,12 +36,12 @@
               <p
                 class="kind font-weight-medium"
                 v-else
-              >{{ node.name }}</p>
+              >{{ node.displayName }}</p>
 
               <p
                 class="name font-italic"
                 v-if="!node.isVirtual"
-              >{{ node.name }}</p>
+              >{{ node.displayName }}</p>
               <v-icon
                 class="chevron"
                 size="18"
@@ -69,11 +68,35 @@
           v-for="(entry, provider) in legend"
           :key="provider"
         >
-          <div :style="{
-            'background-color': entry.color
-          }" />
-          <span>{{ entry.name }}</span>
+          <div class="legend-entry-content">
+            <div
+              class="legend-entry-icon"
+              :style="{
+                'background-color': entry.color
+              }"
+            />
+            <span class="legend-entry-text">{{ entry.name }}</span>
+          </div>
+
         </div>
+
+        <div class="legend-entry">
+          <div class="legend-entry-content">
+            <div class="overlapping-icon-wrapper">
+              <div
+                :key="i"
+                v-for="(entry, i) in Object.values(this.legend)"
+                class="legend-entry-icon animated overlapping-icon"
+                :style="{
+                    background: computeNotReadyGradient(entry.color, 3),
+                    opacity: (i == index) ? 1 : 0,
+                  }"
+              />
+            </div>
+            <span class="legend-entry-text">Not Ready</span>
+          </div>
+        </div>
+
       </v-card>
     </div>
   </div>
@@ -86,6 +109,12 @@ export default {
   name: "TargetClusterTree",
   components: {
     VueTree,
+  },
+  data() {
+    return {
+      legendGradient: "",
+      index: 0,
+    };
   },
   props: {
     treeConfig: Object,
@@ -100,6 +129,37 @@ export default {
         this.$emit("selectNode", node);
       }
     },
+    computeNotReadyGradient(color, width) {
+      return this.computeLinearGradient(
+        [color, this.adjustColor(color, 20)],
+        width
+      );
+    },
+    computeLinearGradient(colors, width) {
+      // console.log("colors", colors);
+      let result = "repeating-linear-gradient(135deg";
+      colors.forEach((color, i) => {
+        result += ", " + color + " " + width * (2 * i) + "px,";
+        result += color + "  " + width * (2 * i + 1) + "px";
+        // Alternate effect is (i) and (i+1)
+      });
+      result += ")";
+
+      return result;
+    },
+    iterateGradientColors() {
+      let legendColors = Object.values(this.legend);
+      // console.log("Color:", legendColors[this.index].color);
+      this.legendGradient = this.computeNotReadyGradient(
+        legendColors[this.index++].color,
+        4
+      );
+      this.index = this.index % legendColors.length;
+      // console.log("Gradient is", this.legendGradient);
+    },
+  },
+  mounted() {
+    setInterval(this.iterateGradientColors, 2000);
   },
 };
 </script>
@@ -116,6 +176,46 @@ export default {
     background-color: #f8f3f2;
     // border: 1px solid black;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
+
+@-webkit-keyframes SlideRight {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+@-moz-keyframes SlideRight {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+@keyframes SlideRight {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated {
+  background-size: 500% 100% !important;
+  -webkit-animation: SlideRight 5s linear infinite !important;
+  -moz-animation: SlideRight 5s linear infinite !important;
+  animation: SlideRight 5s linear infinite !important;
 }
 
 .node-slot {
@@ -153,6 +253,7 @@ export default {
 
   .name,
   .kind {
+    // text-shadow: rgba(0, 0, 0, 1) 3px 0 5px;
     max-width: 160px;
     text-align: center;
     white-space: nowrap;
@@ -178,13 +279,41 @@ export default {
       display: inline-block;
       margin-right: 10px;
 
-      div {
-        display: inline-block;
-        border-radius: 3px;
-        // border: 1px solid black;
-        margin: 0 5px;
-        width: 12px;
-        height: 12px;
+      .legend-entry-content {
+        display: flex;
+        position: relative;
+        align-items: center;
+        justify-content: center;
+
+        .overlapping-icon-wrapper {
+          position: relative;
+          height: 18px;
+          width: 18px;
+          margin: 0 8px;
+          display: inline-block;
+
+          .overlapping-icon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 18px;
+            margin: 0 !important;
+            transition: opacity 1s linear;
+          }
+          .overlapping-icon + .overlapping-icon {
+            opacity: 0;
+          }
+        }
+        .legend-entry-icon {
+          display: inline-block;
+          border-radius: 3px;
+          margin: 0 8px;
+          width: 18px;
+          height: 18px;
+        }
+        .legend-entry-text {
+          display: inline-block;
+        }
       }
     }
   }

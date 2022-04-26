@@ -137,7 +137,7 @@ export default {
       return this.updatedInternalData(this.dataset);
     },
     _linkStyle() {
-      return this.updatedInternalData(this.linkStyle);
+      return this.linkStyle;
     },
   },
   mounted() {
@@ -212,14 +212,18 @@ export default {
      **/
     updatedInternalData(externalData) {
       var data = { name: "__invisible_root", children: [] };
+      // console.log("External data: ", externalData);
       if (!externalData) return data;
       if (Array.isArray(externalData)) {
         for (var i = externalData.length - 1; i >= 0; i--) {
           data.children.push(this.deepCopy(externalData[i]));
+          // console.log("Array child", data.children[i]);
         }
       } else {
         data.children.push(this.deepCopy(externalData));
+        // console.log("Normal child", data.children);
       }
+      // console.log("Data is ", data);
       return data;
     },
     /**
@@ -239,6 +243,12 @@ export default {
           obj[key] = node[key];
         }
       }
+      if ("collapsed" in node && node["collapsable"] && node["collapsed"]) {
+        obj["_children"] = obj["children"];
+        obj["children"] = null;
+        obj["_collapsed"] = true;
+      }
+      // console.log("Object is", obj);
       return obj;
     },
     initTransform() {
@@ -469,7 +479,6 @@ export default {
       if (this.collapseEnabled) {
         const curNode = this.nodeDataList[index];
         if (!curNode.data.collapsable) return;
-
         if (curNode.data.children) {
           curNode.data._children = curNode.data.children;
           curNode.data.children = null;
@@ -479,6 +488,7 @@ export default {
           curNode.data._children = null;
           curNode.data._collapsed = false;
         }
+
         this.draw();
       }
     },
