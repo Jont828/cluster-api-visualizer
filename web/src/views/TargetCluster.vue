@@ -5,6 +5,7 @@
       :showBack="true"
       :isStraight="this.isStraight"
       @togglePathStyle="linkHandler"
+      @reload="() => { this.selected={}; this.fetchCluster(); }"
     />
     <div
       id="chartLoadWrapper"

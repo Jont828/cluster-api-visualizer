@@ -28,16 +28,40 @@
     <v-toolbar-title class="text-no-wrap pa-0">{{ title }}</v-toolbar-title>
 
     <v-spacer></v-spacer>
-    <v-btn
-      icon
-      text
-      class="ma-2"
-      @click="linkHandler"
-    >
-      <v-icon color="white">
-        {{ isStraight ? 'mdi-sine-wave' : 'mdi-square-wave' }}
-      </v-icon>
-    </v-btn>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+          icon
+          text
+          class="ma-2"
+          @click="reloadHandler"
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-icon color="white">
+            {{"mdi-refresh"}}
+          </v-icon>
+        </v-btn>
+      </template>
+      <span>Reload resources</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+          icon
+          text
+          class="ma-2"
+          @click="linkHandler"
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-icon color="white">
+            {{ isStraight ? 'mdi-sine-wave' : 'mdi-square-wave' }}
+          </v-icon>
+        </v-btn>
+      </template>
+      <span>Toggle link style</span>
+    </v-tooltip>
 
   </v-app-bar>
 </template>
@@ -54,6 +78,9 @@ export default {
     linkHandler(value) {
       console.log(this.isStraight);
       this.$emit("togglePathStyle", !this.isStraight);
+    },
+    reloadHandler(value) {
+      this.$emit("reload", true);
     },
   },
 };
