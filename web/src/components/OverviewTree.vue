@@ -29,10 +29,18 @@
                   </span>
                   <v-spacer></v-spacer>
                   <v-icon color="blue">
-                    mdi-{{node.icon}}
+                    mdi-{{ getIcon(node.infrastructureProvider) }}
                   </v-icon>
                 </v-card-title>
-                <v-card-subtitle class="cardSubtitle">{{ (node.isManagement) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle>
+                <!-- <v-card-subtitle class="cardSubtitle">{{ (node.isManagement) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle> -->
+                <v-card-subtitle
+                  v-if="node.isManagement"
+                  class="cardSubtitle"
+                >Management Cluster</v-card-subtitle>
+                <Phase
+                  v-else
+                  :phase="node.phase"
+                />
                 <v-card-actions
                   class="cardActions"
                   v-if="!node.isManagement"
@@ -70,6 +78,7 @@
 <script>
 import VueTree from "./VueTree.vue";
 import AlertError from "./AlertError.vue";
+import Phase from "./Phase.vue";
 // import { getClusterOverview } from "../services/Service.js";
 
 export default {
@@ -77,6 +86,7 @@ export default {
   components: {
     VueTree,
     AlertError,
+    Phase,
   },
   props: {
     isStraight: Boolean,
@@ -89,6 +99,22 @@ export default {
       alert: false,
       errorMessage: "",
     };
+  },
+  methods: {
+    getIcon(provider) {
+      switch (provider) {
+        case "AzureCluster":
+          return "microsoft-azure";
+        case "DockerCluster":
+          return "docker";
+        case "GCPCluster":
+          return "google-cloud";
+        case "AWSCluster":
+          return "aws";
+        default:
+          return "kubernetes";
+      }
+    },
   },
 };
 </script>

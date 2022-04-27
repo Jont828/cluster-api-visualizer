@@ -221,7 +221,7 @@ func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: should we pass in the runtimeClient here or regenerate it in the function?
-	tree, httpErr := internal.ConstructMultiClusterTree(c.ClusterClient, c.K8sConfigClient)
+	tree, httpErr := internal.ConstructMultiClusterTree(c.RuntimeClient, c.K8sConfigClient)
 	if httpErr != nil {
 		log.Error(httpErr, "failed to construct management cluster tree view")
 		http.Error(w, httpErr.Error(), httpErr.Status)

@@ -2,26 +2,27 @@ package internal
 
 import (
 	"context"
-	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2/klogr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type MultiClusterTreeNode struct {
 	Name                   string                  `json:"name"`
 	Namespace              string                  `json:"namespace"`
-	Icon                   string                  `json:"icon"`
 	InfrastructureProvider string                  `json:"infrastructureProvider"`
 	IsManagement           bool                    `json:"isManagement"`
+	Phase                  string                  `json:"phase"`
+	Ready                  bool                    `json:"ready"`
 	Children               []*MultiClusterTreeNode `json:"children"`
 }
 
 // ConstructMultiClusterTree returns a tree representing the workload cluster discovered in the management cluster.
-func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *api.Config) (*MultiClusterTreeNode, *HTTPError) {
+func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *api.Config) (*MultiClusterTreeNode, *HTTPError) {
 	log := klogr.New()
 
 	currentContextName := k8sConfigClient.CurrentContext
@@ -30,77 +31,52 @@ func ConstructMultiClusterTree(clusterClient cluster.Client, k8sConfigClient *ap
 		return nil, &HTTPError{Status: 404, Message: "current context not found"}
 	}
 	name := currentContext.Cluster
-	namespace, err := clusterClient.Proxy().CurrentNamespace()
-	if err != nil {
-		return nil, NewInternalError(err)
-	}
+	// namespace, err := clusterClient.Proxy().CurrentNamespace()
+	// if err != nil {
+	// 	return nil, NewInternalError(err)
+	// }
 
 	root := &MultiClusterTreeNode{
 		Name:                   name,
-		Namespace:              namespace,
+		Namespace:              "",
 		InfrastructureProvider: "",
-		Icon:                   getIcon(""),
 		Children:               []*MultiClusterTreeNode{},
 		IsManagement:           true,
 	}
 
-	workloadClusters, err := clusterClient.Proxy().GetResourceNames("cluster.x-k8s.io/v1beta1", "Cluster", []ctrlclient.ListOption{}, "")
-	if err != nil {
-		if strings.Contains(err.Error(), "no matches for kind") {
-			log.Error(err, "cluster type does not exist")
-			return root, nil
-		}
+	clusterList := &clusterv1.ClusterList{}
+
+	// TODO: should we use ctrlClient.MatchingLabels or try to use the labelSelector itself?
+	if err := ctrlClient.List(context.TODO(), clusterList); err != nil {
 		return nil, NewInternalError(err)
 	}
 
-	ctrlClient, err := clusterClient.Proxy().NewClient()
-	if err != nil {
-		return nil, NewInternalError(err)
+	if clusterList == nil || len(clusterList.Items) == 0 {
+		log.V(3).Info("No workload clusters found")
+		return root, nil
 	}
 
-	for _, clusterName := range workloadClusters {
-		cluster := &clusterv1.Cluster{}
-		clusterKey := ctrlclient.ObjectKey{
-			Namespace: namespace,
-			Name:      clusterName,
-		}
-
-		if err := ctrlClient.Get(context.TODO(), clusterKey, cluster); err != nil {
-			// TODO: do we want to return a 404 if a workload cluster is not found?
-			return nil, NewInternalError(err)
-		}
+	for _, cluster := range clusterList.Items {
 		// Don't get the kubeconfig for now until we use it to find additional clusters.
 		// kubeconfig, err := pkgClient.GetKubeconfig(client.GetKubeconfigOptions{
 		// 	WorkloadClusterName: clusterName,
 		// })
 		infraProvider := cluster.Spec.InfrastructureRef.Kind
 
+		readyCondition := conditions.Get(&cluster, clusterv1.ReadyCondition)
+
 		workloadCluster := MultiClusterTreeNode{
-			Name:                   clusterName,
-			Namespace:              namespace,
+			Name:                   cluster.GetName(),
+			Namespace:              cluster.GetNamespace(),
 			InfrastructureProvider: infraProvider,
-			Icon:                   getIcon(infraProvider),
-			Children:               []*MultiClusterTreeNode{},
 			IsManagement:           false,
+			Phase:                  cluster.Status.Phase,
+			Ready:                  readyCondition != nil && readyCondition.Status == corev1.ConditionTrue,
+			Children:               []*MultiClusterTreeNode{},
 		}
 
 		root.Children = append(root.Children, &workloadCluster)
 	}
 
 	return root, nil
-}
-
-func getIcon(provider string) string {
-	switch provider {
-	case "AzureCluster":
-		return "microsoft-azure"
-	case "DockerCluster":
-		return "docker"
-	case "GCPCluster":
-		return "google-cloud"
-	case "AWSCluster":
-		return "aws"
-	default:
-		return "kubernetes"
-	}
 }
