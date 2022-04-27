@@ -20,7 +20,7 @@
               :class="[ 'node', 'mx-auto', 'transition-swing', { animated: (node.hasReady && !node.ready) } ]"
               :elevation="hover ? 6 : 3"
               :style="{ 
-                background: (node.hasReady && !node.ready) ? computeNotReadyGradient(legend[node.provider].color, 20) : legend[node.provider].color,
+                background: (node.hasReady && !node.ready) ? computeNotReadyGradient(legend[node.provider].color, 40) : legend[node.provider].color,
                 border: collapsed ? '' : '',
               }"
               v-on:click="selectNode(node)"
@@ -54,6 +54,11 @@
                 color="white"
                 v-else
               >mdi-chevron-up</v-icon>
+              <!-- <v-progress-linear
+                v-if="node.hasReady && !node.ready"
+                indeterminate
+                color="white"
+              ></v-progress-linear> -->
               <!-- </router-link> -->
             </v-card>
           </template>
@@ -139,9 +144,10 @@ export default {
       // console.log("colors", colors);
       let result = "repeating-linear-gradient(135deg";
       colors.forEach((color, i) => {
-        result += ", " + color + " " + width * (2 * i) + "px,";
-        result += color + "  " + width * (2 * i + 1) + "px";
+        result += ", " + color + " " + width * i + "px,";
+        result += color + "  " + width * (i + 1) + "px";
         // Alternate effect is (i) and (i+1)
+        // Alternate effect is (2*i) and (2*i+1)
       });
       result += ")";
 
@@ -213,9 +219,9 @@ export default {
 
 .animated {
   background-size: 500% 100% !important;
-  -webkit-animation: SlideRight 5s linear infinite !important;
-  -moz-animation: SlideRight 5s linear infinite !important;
-  animation: SlideRight 5s linear infinite !important;
+  -webkit-animation: SlideRight 7.5s linear infinite !important;
+  -moz-animation: SlideRight 7.5s linear infinite !important;
+  animation: SlideRight 7.5s linear infinite !important;
 }
 
 .node-slot {

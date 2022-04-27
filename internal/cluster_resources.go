@@ -120,7 +120,7 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 		Collapsed:   true,
 		Children:    []*ClusterResourceNode{},
 		HasReady:    false,
-		Ready:       false,
+		Ready:       true,
 		UID:         kind + ": ",
 	}
 
