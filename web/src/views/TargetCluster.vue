@@ -3,9 +3,12 @@
     <AppBar
       :title="'Cluster Resources: ' + this.$route.params.id"
       :showBack="true"
-      :isStraight="this.isStraight"
+      :isStraight="isStraight"
+      :scale="scale"
       @togglePathStyle="linkHandler"
-      @reload="() => { this.selected={}; this.fetchCluster(); }"
+      @reload="() => { selected={}; fetchCluster(); }"
+      @zoomIn="() => { $refs.targetTree.$refs.tree.zoomIn() }"
+      @zoomOut="() => { $refs.targetTree.$refs.tree.zoomOut() }"
     />
     <div
       id="chartLoadWrapper"
@@ -13,11 +16,13 @@
     >
       <TargetClusterTree
         id="targetTree"
+        ref="targetTree"
         :treeConfig="treeConfig"
         :treeData="treeData"
         :isStraight="isStraight"
         :legend="legend"
         @selectNode="selectNodeHandler"
+        @scale="(val) => { scale = val }"
         :style="{
           height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 84px)' 
         }"
@@ -199,6 +204,7 @@ export default {
       isStraight: false,
       treeData: {},
       treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
+      scale: 1,
       legend: {
         bootstrap: {
           name: "Bootstrap Provider",

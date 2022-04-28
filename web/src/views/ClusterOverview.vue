@@ -3,14 +3,19 @@
     <AppBar
       title="Cluster Management Overview"
       :isStraight="this.isStraight"
+      :scale="scale"
       @togglePathStyle="linkHandler"
       @reload="fetchOverview"
+      @zoomIn="() => { $refs.overviewTree.$refs.tree.zoomIn() }"
+      @zoomOut="() => { $refs.overviewTree.$refs.tree.zoomOut() }"
     />
     <OverviewTree
+      ref="overviewTree"
       :isStraight="this.isStraight"
       :treeConfig="treeConfig"
       :treeData="treeData"
       :treeIsReady="treeIsReady"
+      @scale="(val) => { scale = val }"
     />
   </div>
 </template>
@@ -36,6 +41,7 @@ export default {
       treeConfig: { nodeWidth: 300, nodeHeight: 120, levelHeight: 200 },
       treeData: {},
       treeIsReady: false,
+      scale: 1,
     };
   },
   methods: {

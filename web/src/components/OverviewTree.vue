@@ -2,10 +2,12 @@
   <div class="treeContainer">
     <vue-tree
       id="overviewTree"
+      ref="tree"
       :dataset="treeData"
       :config="treeConfig"
       :collapse-enabled="false"
       :linkStyle="(isStraight) ? 'straight' : 'curve'"
+      @scale="(val) => $emit('scale', val)"
       v-if="treeIsReady"
     >
       <template v-slot:node="{ node, collapsed }">

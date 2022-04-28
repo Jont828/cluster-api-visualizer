@@ -163,22 +163,26 @@ export default {
     zoomIn() {
       const originTransformStr = this.$refs.domContainer.style.transform;
       // 如果已有scale属性, 在原基础上修改
-      let targetScale = 1 * 1.2;
+      let targetScale = 1.2;
+      // let targetScale = 1 * 1.2;
       const scaleMatchResult = originTransformStr.match(MATCH_SCALE_REGEX);
       if (scaleMatchResult && scaleMatchResult.length > 0) {
         const originScale = parseFloat(scaleMatchResult[1]);
-        targetScale *= originScale;
+        targetScale = originScale + 0.1;
+        // targetScale *= originScale;
       }
       this.setScale(targetScale);
     },
     zoomOut() {
       const originTransformStr = this.$refs.domContainer.style.transform;
       // 如果已有scale属性, 在原基础上修改
-      let targetScale = 1 / 1.2;
+      let targetScale = 0.8;
+      // let targetScale = 1 / 1.2;
       const scaleMatchResult = originTransformStr.match(MATCH_SCALE_REGEX);
       if (scaleMatchResult && scaleMatchResult.length > 0) {
         const originScale = parseFloat(scaleMatchResult[1]);
-        targetScale = originScale / 1.2;
+        targetScale = originScale - 0.1;
+        // targetScale = originScale / 1.2;
       }
       this.setScale(targetScale);
     },
@@ -193,6 +197,7 @@ export default {
       this.$refs.domContainer.style.transform =
         `scale(${scaleNum}) ` + translateString;
       this.currentScale = scaleNum;
+      this.$emit("scale", scaleNum);
     },
     getTranslate() {
       let string = this.$refs.svg.style.transform;

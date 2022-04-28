@@ -24,17 +24,14 @@
       class="ma-2"
       v-else
     ></v-app-bar-nav-icon>
-
     <v-toolbar-title class="text-no-wrap pa-0">{{ title }}</v-toolbar-title>
-
-    <v-spacer></v-spacer>
     <v-tooltip bottom>
       <template v-slot:activator="{ on, attrs }">
         <v-btn
           icon
           text
           class="ma-2"
-          @click="reloadHandler"
+          @click="$emit('reload', true)"
           v-bind="attrs"
           v-on="on"
         >
@@ -45,13 +42,50 @@
       </template>
       <span>Reload resources</span>
     </v-tooltip>
+
+    <v-spacer></v-spacer>
     <v-tooltip bottom>
       <template v-slot:activator="{ on, attrs }">
         <v-btn
           icon
           text
           class="ma-2"
-          @click="linkHandler"
+          @click="$emit('zoomOut', true)"
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-icon color="white">
+            {{"mdi-minus"}}
+          </v-icon>
+        </v-btn>
+      </template>
+      <span>Zoom out</span>
+    </v-tooltip>
+    <span>{{ Math.round(scale*100) }}%</span>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+          icon
+          text
+          class="ma-2"
+          @click="$emit('zoomIn', true)"
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-icon color="white">
+            {{"mdi-plus"}}
+          </v-icon>
+        </v-btn>
+      </template>
+      <span>Zoom in</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+          icon
+          text
+          class="ma-2"
+          @click="$emit('togglePathStyle', !isStraight);"
           v-bind="attrs"
           v-on="on"
         >
@@ -73,15 +107,7 @@ export default {
     title: String,
     showBack: Boolean,
     isStraight: Boolean,
-  },
-  methods: {
-    linkHandler(value) {
-      console.log(this.isStraight);
-      this.$emit("togglePathStyle", !this.isStraight);
-    },
-    reloadHandler(value) {
-      this.$emit("reload", true);
-    },
+    scale: Number,
   },
 };
 </script>
