@@ -248,15 +248,15 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 
 	// Uncomment these fields when changes merge to CAPI main
 	dcOptions := client.DescribeClusterOptions{
-		Kubeconfig:              client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
-		Namespace:               "",
-		ClusterName:             clusterName,
-		ShowOtherConditions:     "",
-		ShowMachineSets:         true,
-		Echo:                    true,
-		Grouping:                false,
-		ShowClusterResourceSets: true,
-		ShowTemplates:           true,
+		Kubeconfig:          client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
+		Namespace:           "",
+		ClusterName:         clusterName,
+		ShowOtherConditions: "",
+		ShowMachineSets:     true,
+		Echo:                true,
+		Grouping:            false,
+		// ShowClusterResourceSets: true,
+		// ShowTemplates:           true,
 	}
 
 	tree, httpErr := internal.ConstructClusterResourceTree(c.DefaultClient, dcOptions)
