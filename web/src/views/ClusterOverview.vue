@@ -1,7 +1,7 @@
 <template>
   <div id="overview">
     <AppBar
-      title="Cluster Management Overview"
+      title="Management Cluster Overview"
       :isStraight="this.isStraight"
       :scale="scale"
       @togglePathStyle="linkHandler"
@@ -33,7 +33,7 @@ export default {
     AppBar,
   },
   mounted() {
-    document.title = "Cluster Management Overview";
+    document.title = "Management Cluster Overview";
   },
   data() {
     return {
