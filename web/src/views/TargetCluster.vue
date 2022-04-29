@@ -206,6 +206,11 @@ export default {
       treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
       scale: 1,
       legend: {
+        cluster: {
+          name: "Cluster API",
+          color: colors.blue.darken1,
+          // altColor: colors.blue.lighten1,
+        },
         bootstrap: {
           name: "Bootstrap Provider",
           color: colors.amber.darken2,
@@ -220,11 +225,6 @@ export default {
           name: "Infrastructure Provider",
           color: colors.green.base,
           // altColor: colors.green.lighten1,
-        },
-        cluster: {
-          name: "Cluster API",
-          color: colors.blue.darken1,
-          // altColor: colors.blue.lighten1,
         },
         addons: {
           name: "Addons",

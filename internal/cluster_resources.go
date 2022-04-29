@@ -105,7 +105,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 func createKindGroupNode(namespace string, kind string, provider string, children []*ClusterResourceNode) []*ClusterResourceNode {
 	log := klogr.New()
 
-	log.V(2).Info("Starting children are ", "children", nodeArrayNames(children))
+	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
 
 	resultChildren := []*ClusterResourceNode{}
 	groupNode := &ClusterResourceNode{
@@ -144,7 +144,7 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 		resultChildren = append(resultChildren, groupNode.Children...)
 	}
 
-	log.V(3).Info("Result children are ", "children", nodeArrayNames(resultChildren))
+	log.V(4).Info("Result children are ", "children", nodeArrayNames(resultChildren))
 
 	return resultChildren
 }

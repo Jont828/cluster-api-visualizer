@@ -52,7 +52,7 @@ func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *ap
 	}
 
 	if clusterList == nil || len(clusterList.Items) == 0 {
-		log.V(3).Info("No workload clusters found")
+		log.V(4).Info("No workload clusters found")
 		return root, nil
 	}
 

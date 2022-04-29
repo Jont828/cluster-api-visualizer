@@ -100,7 +100,7 @@
                   }"
               />
             </div>
-            <span class="legend-entry-text">Not Ready</span>
+            <span class="legend-entry-text">Resource Not Ready</span>
           </div>
         </div>
 
