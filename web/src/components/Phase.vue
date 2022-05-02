@@ -13,7 +13,7 @@
         class="phase-spinner"
         indeterminate
         :size="14"
-        :width="2"
+        :width="1"
         :color="color"
       ></v-progress-circular>
       <span :class="color + '--text'">

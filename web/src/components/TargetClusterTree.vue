@@ -10,12 +10,6 @@
       @scale="(val) => $emit('scale', val)"
     >
       <template v-slot:node="{ node, collapsed }">
-        <div
-          class="machine"
-          v-if="node.id == 'machine1'"
-        >
-          <span>x2</span>
-        </div>
         <v-hover>
           <template v-slot:default="{ hover }">
             <v-card
