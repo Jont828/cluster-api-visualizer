@@ -32,14 +32,25 @@ export default {
     OverviewTree,
     AppBar,
   },
+  async beforeMount() {
+    await this.fetchOverview();
+  },
   mounted() {
     document.title = "Management Cluster Overview";
+    setInterval(
+      function () {
+        console.log("Polling...");
+        this.fetchOverview();
+      }.bind(this),
+      1000 * 3
+    );
   },
   data() {
     return {
       isStraight: false,
       treeConfig: { nodeWidth: 300, nodeHeight: 120, levelHeight: 200 },
       treeData: {},
+      cachedTreeString: "",
       treeIsReady: false,
       scale: 1,
     };
@@ -51,14 +62,19 @@ export default {
     async fetchOverview() {
       try {
         const response = await Vue.axios.get("/multicluster");
-        this.treeData = response.data;
-        console.log(this.treeData);
-        if (this.treeData == null) {
+
+        if (response.data == null) {
           this.errorMessage =
             "Couldn't find a management cluster from default kubeconfig";
           return;
         }
-        this.treeIsReady = true;
+
+        console.log("Cluster overview data:", response.data);
+        if (this.cachedTreeString !== JSON.stringify(response.data)) {
+          this.treeData = response.data;
+          this.cachedTreeString = JSON.stringify(response.data);
+          this.treeIsReady = true;
+        }
       } catch (error) {
         console.log("Error:", error.toJSON());
         this.alert = true;
@@ -77,9 +93,6 @@ export default {
         }
       }
     },
-  },
-  async beforeMount() {
-    await this.fetchOverview();
   },
 };
 </script>

@@ -82,6 +82,10 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 
 	children := objTree.GetObjectsByParent(object.GetUID())
 	sort.Slice(children, func(i, j int) bool {
+		// TODO: make sure this is deterministic!
+		if children[i].GetObjectKind().GroupVersionKind().Kind == children[j].GetObjectKind().GroupVersionKind().Kind {
+			return children[i].GetUID() < children[j].GetUID()
+		}
 		return children[i].GetObjectKind().GroupVersionKind().Kind < children[j].GetObjectKind().GroupVersionKind().Kind
 	})
 
@@ -106,6 +110,9 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 	log := klogr.New()
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
+	sort.Slice(children, func(i, j int) bool {
+		return children[i].UID < children[j].UID
+	})
 
 	resultChildren := []*ClusterResourceNode{}
 	groupNode := &ClusterResourceNode{

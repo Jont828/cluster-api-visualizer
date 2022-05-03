@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"sort"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -55,6 +56,11 @@ func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *ap
 		log.V(4).Info("No workload clusters found")
 		return root, nil
 	}
+	sort.Slice(clusterList.Items, func(i, j int) bool {
+		// This must be deterministic, otherwise the tree will be different between runs.
+		// In this case, we can't have two clusters with the same name.
+		return clusterList.Items[i].GetName() < clusterList.Items[j].GetName()
+	})
 
 	for _, cluster := range clusterList.Items {
 		// Don't get the kubeconfig for now until we use it to find additional clusters.

@@ -67,6 +67,7 @@ import TargetClusterTree from "../components/TargetClusterTree.vue";
 import AppBar from "../components/AppBar.vue";
 import CustomResourceTree from "../components/CustomResourceTree.vue";
 import AlertError from "../components/AlertError.vue";
+import _ from "lodash";
 
 import colors from "vuetify/lib/util/colors";
 
@@ -78,8 +79,17 @@ export default {
     CustomResourceTree,
     AlertError,
   },
+  async beforeMount() {
+    await this.fetchCluster();
+  },
   mounted() {
     document.title = "Cluster Resources: " + this.$route.params.id;
+    setInterval(
+      function () {
+        this.fetchCluster();
+      }.bind(this),
+      1000 * 3
+    );
   },
   methods: {
     linkHandler(val) {
@@ -87,6 +97,8 @@ export default {
     },
     async selectNodeHandler(node) {
       try {
+        // TODO: refresh selected node view along with cluster tree
+        // TODO: fetch tree view using kubectl client instead of clusterctl
         const params = new URLSearchParams();
         params.append("kind", node.kind);
         params.append("apiVersion", node.group + "/" + node.version);
@@ -132,9 +144,13 @@ export default {
         const response = await Vue.axios.get(
           "/cluster-resources/" + this.$route.params.id
         );
-        this.treeData = response.data;
-        console.log(this.treeData);
-        this.treeIsReady = true;
+
+        console.log("Target cluster data:", response.data);
+        if (this.cachedTreeString !== JSON.stringify(response.data)) {
+          this.treeData = response.data;
+          this.cachedTreeString = JSON.stringify(response.data);
+          this.treeIsReady = true;
+        }
       } catch (error) {
         console.log("Error:", error.toJSON());
         this.alert = true;
@@ -190,9 +206,6 @@ export default {
       return result;
     },
   },
-  async beforeMount() {
-    await this.fetchCluster();
-  },
   data() {
     return {
       alert: false,
@@ -203,6 +216,7 @@ export default {
       selected: {},
       isStraight: false,
       treeData: {},
+      cachedTreeString: "",
       treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
       scale: 1,
       legend: {
