@@ -13,26 +13,33 @@
         <v-hover>
           <template v-slot:default="{ hover }">
             <v-card
-              :class="[ 'node', 'mx-auto', 'transition-swing', { animated: (node.hasReady && !node.ready) } ]"
+              :class="[ 'node', 'mx-auto', 'transition-swing',  ]"
               :elevation="hover ? 6 : 3"
               :style="{ 
-                background: (node.hasReady && !node.ready) ? computeNotReadyGradient(legend[node.provider].color, 40) : legend[node.provider].color,
-                border: collapsed ? '' : '',
+                background: legend[node.provider].color,
               }"
               v-on:click="selectNode(node)"
             >
-              <!-- <router-link
-          :to="'/'"
-          class="node-router-link"
-        > -->
-              <p
-                class="kind font-weight-medium"
-                v-if="!node.isVirtual"
-              >{{ node.kind }}</p>
-              <p
-                class="kind font-weight-medium"
-                v-else
-              >{{ node.displayName }}</p>
+              <div>
+                <div class="readyWrap">
+                  <span class="kind font-weight-medium">{{ (node.isVirtual) ? node.displayName : node.kind }}</span>
+                  <v-icon
+                    v-if="node.hasReady && node.ready"
+                    class="readyIcon ml-1"
+                    color="white"
+                    :size="11"
+                  > mdi-check-circle</v-icon>
+                  <v-progress-circular
+                    v-if="node.hasReady && !node.ready"
+                    class="readySpinner ml-1"
+                    indeterminate
+                    :size="10"
+                    :width="2"
+                    color="white"
+                  >
+                  </v-progress-circular>
+                </div>
+              </div>
 
               <p
                 class="name font-italic"
@@ -55,7 +62,6 @@
                 indeterminate
                 color="white"
               ></v-progress-linear> -->
-              <!-- </router-link> -->
             </v-card>
           </template>
         </v-hover>
@@ -236,6 +242,31 @@ export default {
   // box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.3);
   color: white;
 
+  // display: flex;
+  // flex-direction: row;
+  // align-items: center;
+
+  .readyWrap {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .readyIcon {
+    display: inline-block;
+    vertical-align: middle;
+
+    // font-size: 16px;
+  }
+
+  .readySpinner {
+    display: inline-block !important;
+    line-height: 13px;
+    font-size: 10px;
+    svg {
+      vertical-align: middle;
+    }
+  }
+
   p {
     font-size: 11px;
     margin: 2px;
@@ -251,12 +282,16 @@ export default {
 
   .kind {
     font-size: 12.5px;
+    max-width: 145px;
+  }
+
+  .name {
+    max-width: 160px;
   }
 
   .name,
   .kind {
     // text-shadow: rgba(0, 0, 0, 1) 3px 0 5px;
-    max-width: 160px;
     text-align: center;
     white-space: nowrap;
     display: inline-block;
