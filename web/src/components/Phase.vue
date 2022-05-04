@@ -5,15 +5,15 @@
     <div class="wrap">
       <v-icon
         v-if="icon != ''"
-        class="phase-icon"
+        class="phase-icon mr-1"
         :color="color"
       > mdi-{{ icon }} </v-icon>
       <v-progress-circular
         v-else
-        class="phase-spinner"
+        class="phase-spinner mr-1"
         indeterminate
         :size="14"
-        :width="1"
+        :width="2"
         :color="color"
       ></v-progress-circular>
       <span :class="color + '--text'">
@@ -58,7 +58,7 @@ export default {
     setIcon(phase) {
       switch (phase) {
         case "Provisioned":
-          this.icon = "check";
+          this.icon = "check-circle";
           break;
         case "Pending":
         case "Provisioning":
@@ -66,10 +66,10 @@ export default {
           this.icon = "";
           break;
         case "Failed":
-          this.icon = "close";
+          this.icon = "alert";
           break;
         case "Unknown":
-          this.icon = "help";
+          this.icon = "help-circle";
           break;
         default:
           this.icon = "";
@@ -86,7 +86,8 @@ export default {
 
 <style lang="less" scoped>
 .cardSubtitle {
-  padding-bottom: 0;
+  padding: 3px 16px !important;
+  line-height: 16px;
 
   .wrap {
     display: flex;
@@ -96,12 +97,10 @@ export default {
     .phase-icon {
       display: inline-block;
       font-size: 16px;
-      margin-right: 2px;
     }
 
     .phase-spinner {
       display: inline-block;
-      margin-right: 4px;
     }
 
     span {

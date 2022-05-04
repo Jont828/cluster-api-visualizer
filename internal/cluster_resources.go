@@ -26,6 +26,7 @@ type ClusterResourceNode struct {
 	Collapsable bool                   `json:"collapsable"`
 	Collapsed   bool                   `json:"collapsed"`
 	Ready       bool                   `json:"ready"`
+	Severity    string                 `json:"severity"`
 	HasReady    bool                   `json:"hasReady"`
 	Children    []*ClusterResourceNode `json:"children"`
 }
@@ -63,6 +64,10 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	}
 
 	readyCondition := tree.GetReadyCondition(object)
+	var severity string
+	if readyCondition != nil {
+		severity = string(readyCondition.Severity)
+	}
 
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),
@@ -74,6 +79,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		IsVirtual:   tree.IsVirtualObject(object),
 		HasReady:    readyCondition != nil,
 		Ready:       readyCondition != nil && readyCondition.Status == corev1.ConditionTrue,
+		Severity:    severity,
 		Collapsable: tree.IsVirtualObject(object),
 		Collapsed:   false,
 		Children:    []*ClusterResourceNode{},

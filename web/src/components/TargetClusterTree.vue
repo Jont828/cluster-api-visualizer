@@ -12,57 +12,67 @@
       <template v-slot:node="{ node, collapsed }">
         <v-hover>
           <template v-slot:default="{ hover }">
-            <v-card
-              :class="[ 'node', 'mx-auto', 'transition-swing',  ]"
-              :elevation="hover ? 6 : 3"
-              :style="{ 
-                background: legend[node.provider].color,
-              }"
-              v-on:click="selectNode(node)"
-            >
-              <div>
-                <div class="readyWrap">
-                  <span class="kind font-weight-medium">{{ (node.isVirtual) ? node.displayName : node.kind }}</span>
-                  <v-icon
-                    v-if="node.hasReady && node.ready"
-                    class="readyIcon ml-1"
-                    color="white"
-                    :size="11"
-                  > mdi-check-circle</v-icon>
-                  <v-progress-circular
-                    v-if="node.hasReady && !node.ready"
-                    class="readySpinner ml-1"
-                    indeterminate
-                    :size="10"
-                    :width="2"
-                    color="white"
-                  >
-                  </v-progress-circular>
+            <div class="card-wrap">
+              <v-card
+                :class="[ 'node', 'mx-auto', 'transition-swing',  ]"
+                :elevation="hover ? 6 : 3"
+                :style="{ 
+                  background: legend[node.provider].color,
+                  // opacity: (node.hasReady) ? 0.7 : 1,
+                }"
+                v-on:click="selectNode(node)"
+              >
+                <div>
+                  <div class="readyWrap">
+                    <span class="kind font-weight-medium">{{ (node.isVirtual) ? node.displayName : node.kind }}</span>
+                    <v-icon
+                      v-if="false"
+                      class="readyIcon ml-1"
+                      color="white"
+                      :size="12"
+                    > mdi-check</v-icon>
+                    <v-icon
+                      v-else-if="node.hasReady && node.ready"
+                      class="readyIcon ml-1"
+                      color="white"
+                      :size="12"
+                    > mdi-alert-circle</v-icon>
+                    <v-progress-circular
+                      v-else-if="node.hasReady && !node.ready"
+                      class="readySpinner ml-1"
+                      indeterminate
+                      :size="10"
+                      :width="2"
+                      color="white"
+                    >
+                    </v-progress-circular>
+                  </div>
                 </div>
-              </div>
 
-              <p
-                class="name font-italic"
-                v-if="!node.isVirtual"
-              >{{ node.displayName }}</p>
-              <v-icon
-                class="chevron"
-                size="18"
-                color="white"
-                v-else-if="collapsed"
-              >mdi-chevron-down</v-icon>
-              <v-icon
-                class="chevron"
-                size="18"
-                color="white"
-                v-else
-              >mdi-chevron-up</v-icon>
-              <!-- <v-progress-linear
+                <p
+                  class="name font-italic"
+                  v-if="!node.isVirtual"
+                >{{ node.displayName }}</p>
+                <v-icon
+                  class="chevron"
+                  size="18"
+                  color="white"
+                  v-else-if="collapsed"
+                >mdi-chevron-down</v-icon>
+                <v-icon
+                  class="chevron"
+                  size="18"
+                  color="white"
+                  v-else
+                >mdi-chevron-up</v-icon>
+                <!-- <v-progress-linear
                 v-if="node.hasReady && !node.ready"
                 indeterminate
                 color="white"
               ></v-progress-linear> -->
-            </v-card>
+              </v-card>
+
+            </div>
           </template>
         </v-hover>
       </template>
@@ -230,6 +240,10 @@ export default {
   cursor: default !important;
 }
 
+.card-wrap {
+  background-color: #f8f3f2;
+}
+
 .node {
   width: 170px;
   height: 50px;
@@ -254,8 +268,6 @@ export default {
   .readyIcon {
     display: inline-block;
     vertical-align: middle;
-
-    // font-size: 16px;
   }
 
   .readySpinner {
