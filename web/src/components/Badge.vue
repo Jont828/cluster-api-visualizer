@@ -1,0 +1,184 @@
+<template>
+  <div>
+    <div
+      :class="['readyWrap']"
+      :style="{
+        'background-color': '#f8f3f2',
+        'top': -(size/2) + 'px',
+        'right': -(size/2) + 'px',
+        'width': (size-2) + 'px',
+        'height': (size-2) + 'px',
+        'line-height': (size-2) + 'px',
+      }"
+    ></div>
+    <div
+      :class="['readyWrap', {blinking: type === 'blinking'}]"
+      :style="{
+        'background-color': getColor(),
+        'top': -(size/2) + 'px',
+        'right': -(size/2) + 'px',
+        'width': (size-2) + 'px',
+        'height': (size-2) + 'px',
+        'line-height': (size-2) + 'px',
+      }"
+    >
+
+      <v-icon
+        v-if="type==='ready'"
+        class="readyIcon"
+        color="white"
+        :size="size-2"
+      > mdi-check</v-icon>
+      <v-icon
+        v-else-if="type==='error'"
+        class="readyIcon"
+        color="white"
+        :size="size-2"
+      > mdi-exclamation</v-icon>
+      <v-progress-circular
+        v-else-if="type==='loading'"
+        class="readySpinner"
+        indeterminate
+        :size="size-6"
+        :width="1.5"
+        color="white"
+      >
+      </v-progress-circular>
+      <!-- <v-icon
+      v-if="false"
+      class="readyIcon"
+      color="white"
+      :size="12"
+    > mdi-check</v-icon>
+    <v-icon
+      v-else-if="node.hasReady && node.ready"
+      class="readyIcon"
+      color="white"
+      :size="12"
+    > mdi-exclamation</v-icon>
+    <v-progress-circular
+      v-else-if="node.hasReady && !node.ready"
+      class="readySpinner"
+      indeterminate
+      :size="10"
+      :width="2"
+      color="grey"
+    >
+    </v-progress-circular> -->
+
+    </div>
+
+  </div>
+
+</template>
+
+<script>
+import colors from "vuetify/lib/util/colors";
+
+export default {
+  name: "Badge",
+  props: {
+    type: String,
+    size: {
+      default: 16,
+      type: Number,
+    },
+  },
+  methods: {
+    getColor() {
+      switch (this.type) {
+        case "ready":
+          return colors.green.base;
+        case "error":
+          return colors.red.accent2;
+        case "loading":
+        case "blinking":
+          return colors.orange.darken1;
+        default:
+          return colors.grey;
+      }
+    },
+  },
+};
+</script>
+
+<style lang="less" scoped>
+.blink-transition {
+  transition: all 1s ease;
+  opacity: 0%;
+}
+
+.blink-enter,
+.blink-leave {
+  opacity: 100%;
+}
+.readyButton {
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+}
+
+.readyWrap {
+  position: absolute;
+  // background-color: #fff;
+  text-align: center;
+
+  border-radius: 50%;
+  border: 2px solid #f8f3f2;
+  // box-shadow: 0px 0px 10px rgba(0, 0, 0, 1);
+}
+
+.readyIcon {
+  display: inline-block;
+  vertical-align: middle;
+  // border-radius: 50%;
+  padding: 2px;
+}
+
+@-webkit-keyframes Blinking {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@-moz-keyframes Blinking {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes Blinking {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.blinking {
+  -webkit-animation: Blinking 3s ease-in-out infinite !important;
+  -moz-animation: Blinking 3s ease-in-out infinite !important;
+  animation: Blinking 3s ease-in-out infinite !important;
+}
+
+// .readySpinner {
+//   display: inline-block !important;
+//   svg {
+//     vertical-align: middle;
+//   }
+// }
+</style>

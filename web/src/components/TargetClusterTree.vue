@@ -12,7 +12,8 @@
       <template v-slot:node="{ node, collapsed }">
         <v-hover>
           <template v-slot:default="{ hover }">
-            <div class="card-wrap">
+            <div class="card-wrap shadow">
+
               <v-card
                 :class="[ 'node', 'mx-auto', 'transition-swing',  ]"
                 :elevation="hover ? 6 : 3"
@@ -22,32 +23,7 @@
                 }"
                 v-on:click="selectNode(node)"
               >
-                <div>
-                  <div class="readyWrap">
-                    <span class="kind font-weight-medium">{{ (node.isVirtual) ? node.displayName : node.kind }}</span>
-                    <v-icon
-                      v-if="false"
-                      class="readyIcon ml-1"
-                      color="white"
-                      :size="12"
-                    > mdi-check</v-icon>
-                    <v-icon
-                      v-else-if="node.hasReady && node.ready"
-                      class="readyIcon ml-1"
-                      color="white"
-                      :size="12"
-                    > mdi-alert-circle</v-icon>
-                    <v-progress-circular
-                      v-else-if="node.hasReady && !node.ready"
-                      class="readySpinner ml-1"
-                      indeterminate
-                      :size="10"
-                      :width="2"
-                      color="white"
-                    >
-                    </v-progress-circular>
-                  </div>
-                </div>
+                <p class="kind font-weight-medium">{{ (node.isVirtual) ? node.displayName : node.kind }}</p>
 
                 <p
                   class="name font-italic"
@@ -70,7 +46,12 @@
                 indeterminate
                 color="white"
               ></v-progress-linear> -->
+
               </v-card>
+              <Badge
+                type="loading"
+                :size="16"
+              ></Badge>
 
             </div>
           </template>
@@ -121,11 +102,13 @@
 
 <script>
 import VueTree from "../components/VueTree.vue";
+import Badge from "../components/Badge.vue";
 
 export default {
   name: "TargetClusterTree",
   components: {
     VueTree,
+    Badge,
   },
   data() {
     return {
@@ -242,6 +225,36 @@ export default {
 
 .card-wrap {
   background-color: #f8f3f2;
+  position: relative;
+}
+
+.shadow {
+  // box-shadow: 2px 2px 10px 0px rgba(255, 0, 0, 0.75), 2px -2px 10px 0px rgba(255, 0, 0, 0.75);
+}
+
+.badge {
+  padding: 0;
+}
+
+.v-badge {
+  padding: 0 !important;
+}
+
+.node-hidden {
+  width: 170px;
+  height: 50px;
+  position: absolute;
+  background: red;
+  z-index: -100;
+  top: 0;
+  left: 0;
+  text-align: right;
+
+  .node-hidden-inner {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+  }
 }
 
 .node {
@@ -259,25 +272,6 @@ export default {
   // display: flex;
   // flex-direction: row;
   // align-items: center;
-
-  .readyWrap {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-  .readyIcon {
-    display: inline-block;
-    vertical-align: middle;
-  }
-
-  .readySpinner {
-    display: inline-block !important;
-    line-height: 13px;
-    font-size: 10px;
-    svg {
-      vertical-align: middle;
-    }
-  }
 
   p {
     font-size: 11px;
