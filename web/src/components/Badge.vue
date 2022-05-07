@@ -27,13 +27,13 @@
         v-if="type==='ready'"
         class="readyIcon"
         color="white"
-        :size="size-2"
+        :size="size-6"
       > mdi-check</v-icon>
       <v-icon
         v-else-if="type==='error'"
         class="readyIcon"
         color="white"
-        :size="size-2"
+        :size="size-6"
       > mdi-exclamation</v-icon>
       <v-progress-circular
         v-else-if="type==='loading'"
@@ -131,6 +131,7 @@ export default {
 .readyIcon {
   display: inline-block;
   vertical-align: middle;
+  text-align: center;
   // border-radius: 50%;
   padding: 2px;
 }
