@@ -16,10 +16,17 @@ func GetCustomResource(runtimeClient ctrlclient.Client, kind string, apiVersion 
 		Name:       name,
 		APIVersion: apiVersion,
 	}
+	// object := &unstructured.Unstructured{}
+	// gvr := schema.FromAPIVersionAndKind(apiVersion, kind)
+	// object.SetGroupVersionKind(gvr)
+	// err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, object)
 	object, err := external.Get(context.TODO(), runtimeClient, &objectRef, namespace)
 	if err != nil {
 		return nil, &HTTPError{404, err.Error()}
 	}
+
+	// Remove managed fields for now since they're read only and don't show in `kubectl get -o yaml`
+	object.SetManagedFields(nil)
 
 	return object, nil
 }

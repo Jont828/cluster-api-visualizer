@@ -75,10 +75,18 @@ export default {
   },
   data() {
     return {
-      open: [1, 2],
+      open: [],
       search: null,
       caseSensitive: false,
     };
+  },
+  mounted() {
+    // Open all top level elements
+    this.items.forEach((e, i) => {
+      if (e.children.length > 0) {
+        this.open.push(i);
+      }
+    });
   },
   methods: {
     downloadYaml() {

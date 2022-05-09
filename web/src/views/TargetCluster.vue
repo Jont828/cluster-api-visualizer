@@ -84,9 +84,10 @@ export default {
   },
   mounted() {
     document.title = "Cluster Resources: " + this.$route.params.id;
-    const reloadTime = 1 * 1000;
+    const reloadTime = 60 * 1000;
     this.polling = setInterval(
       function () {
+        this.selected = {};
         this.fetchCluster();
       }.bind(this),
       reloadTime
@@ -197,7 +198,7 @@ export default {
         Object.entries(resource).forEach(([key, value]) => {
           let name = "";
           let children = [];
-          if (typeof value == "string") {
+          if (typeof value == "string" || typeof value == "number") {
             name = key + ": " + value;
           } else {
             name = key;
