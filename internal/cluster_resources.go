@@ -63,12 +63,6 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		log.Error(err, "failed to get provider for object", "kind", kind, "name", object.GetName())
 	}
 
-	readyCondition := tree.GetReadyCondition(object)
-	var severity string
-	if readyCondition != nil {
-		severity = string(readyCondition.Severity)
-	}
-
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),
 		DisplayName: object.GetName(),
@@ -77,20 +71,23 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		Version:     version,
 		Provider:    provider,
 		IsVirtual:   tree.IsVirtualObject(object),
-		HasReady:    readyCondition != nil,
-		Ready:       readyCondition != nil && readyCondition.Status == corev1.ConditionTrue,
-		Severity:    severity,
 		Collapsable: tree.IsVirtualObject(object),
 		Collapsed:   false,
 		Children:    []*ClusterResourceNode{},
 		UID:         string(object.GetUID()),
 	}
 
+	if readyCondition := tree.GetReadyCondition(object); readyCondition != nil {
+		node.HasReady = true
+		node.Ready = readyCondition.Status == corev1.ConditionTrue
+		node.Severity = string(readyCondition.Severity)
+	}
+
 	children := objTree.GetObjectsByParent(object.GetUID())
 	sort.Slice(children, func(i, j int) bool {
 		// TODO: make sure this is deterministic!
 		if children[i].GetObjectKind().GroupVersionKind().Kind == children[j].GetObjectKind().GroupVersionKind().Kind {
-			return children[i].GetUID() < children[j].GetUID()
+			return children[i].GetName() < children[j].GetName()
 		}
 		return children[i].GetObjectKind().GroupVersionKind().Kind < children[j].GetObjectKind().GroupVersionKind().Kind
 	})
@@ -116,9 +113,9 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 	log := klogr.New()
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
-	sort.Slice(children, func(i, j int) bool {
-		return children[i].UID < children[j].UID
-	})
+	// sort.Slice(children, func(i, j int) bool {
+	// 	return children[i].Name < children[j].Name
+	// })
 
 	resultChildren := []*ClusterResourceNode{}
 	groupNode := &ClusterResourceNode{

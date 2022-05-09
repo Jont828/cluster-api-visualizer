@@ -84,7 +84,7 @@ export default {
   },
   mounted() {
     document.title = "Cluster Resources: " + this.$route.params.id;
-    const reloadTime = 60 * 1000;
+    const reloadTime = 1 * 1000;
     this.polling = setInterval(
       function () {
         this.fetchCluster();

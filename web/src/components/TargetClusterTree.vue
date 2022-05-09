@@ -73,7 +73,7 @@
 
         </div>
 
-        <div class="legend-entry">
+        <!-- <div class="legend-entry">
           <div class="legend-entry-content">
             <div class="overlapping-icon-wrapper">
               <div
@@ -88,7 +88,7 @@
             </div>
             <span class="legend-entry-text">Resource Not Ready</span>
           </div>
-        </div>
+        </div> -->
 
       </v-card>
     </div>
