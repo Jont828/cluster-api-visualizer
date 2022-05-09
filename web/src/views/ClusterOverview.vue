@@ -5,7 +5,7 @@
       :isStraight="this.isStraight"
       :scale="scale"
       @togglePathStyle="linkHandler"
-      @reload="fetchOverview"
+      @reload="fetchOverview(forceRedraw=true)"
       @zoomIn="() => { $refs.overviewTree.$refs.tree.zoomIn() }"
       @zoomOut="() => { $refs.overviewTree.$refs.tree.zoomOut() }"
     />
@@ -37,16 +37,21 @@ export default {
   },
   mounted() {
     document.title = "Management Cluster Overview";
-    setInterval(
+    const reloadTime = 60 * 1000;
+    this.polling = setInterval(
       function () {
-        console.log("Polling...");
         this.fetchOverview();
       }.bind(this),
-      1000 * 3
+      reloadTime
     );
+  },
+  beforeDestroy() {
+    this.selected = {};
+    clearInterval(this.polling);
   },
   data() {
     return {
+      polling: null,
       isStraight: false,
       treeConfig: { nodeWidth: 300, nodeHeight: 120, levelHeight: 200 },
       treeData: {},
@@ -59,7 +64,7 @@ export default {
     linkHandler(val) {
       this.isStraight = val;
     },
-    async fetchOverview() {
+    async fetchOverview(forceRedraw = false) {
       try {
         const response = await Vue.axios.get("/multicluster");
 
@@ -70,7 +75,10 @@ export default {
         }
 
         console.log("Cluster overview data:", response.data);
-        if (this.cachedTreeString !== JSON.stringify(response.data)) {
+        if (
+          forceRedraw ||
+          this.cachedTreeString !== JSON.stringify(response.data)
+        ) {
           this.treeData = response.data;
           this.cachedTreeString = JSON.stringify(response.data);
           this.treeIsReady = true;

@@ -6,7 +6,7 @@
       :isStraight="isStraight"
       :scale="scale"
       @togglePathStyle="linkHandler"
-      @reload="() => { selected={}; fetchCluster(); }"
+      @reload="() => { selected={}; fetchCluster(forceRedraw=true); }"
       @zoomIn="() => { $refs.targetTree.$refs.tree.zoomIn() }"
       @zoomOut="() => { $refs.targetTree.$refs.tree.zoomOut() }"
     />
@@ -84,12 +84,17 @@ export default {
   },
   mounted() {
     document.title = "Cluster Resources: " + this.$route.params.id;
-    setInterval(
+    const reloadTime = 60 * 1000;
+    this.polling = setInterval(
       function () {
         this.fetchCluster();
       }.bind(this),
-      1000 * 3
+      reloadTime
     );
+  },
+  beforeDestroy() {
+    this.selected = {};
+    clearInterval(this.polling);
   },
   methods: {
     linkHandler(val) {
@@ -138,7 +143,7 @@ export default {
         }
       }
     },
-    async fetchCluster() {
+    async fetchCluster(forceRedraw = false) {
       try {
         // const response = await getCluster(this.$route.params.id);
         const response = await Vue.axios.get(
@@ -146,7 +151,10 @@ export default {
         );
 
         console.log("Target cluster data:", response.data);
-        if (this.cachedTreeString !== JSON.stringify(response.data)) {
+        if (
+          forceRedraw ||
+          this.cachedTreeString !== JSON.stringify(response.data)
+        ) {
           this.treeData = response.data;
           this.cachedTreeString = JSON.stringify(response.data);
           this.treeIsReady = true;
@@ -208,6 +216,7 @@ export default {
   },
   data() {
     return {
+      polling: null,
       alert: false,
       errorMessage: "",
       treeIsReady: false,
