@@ -12,7 +12,7 @@
       }"
     ></div>
     <div
-      :class="['readyWrap', {blinking: type === 'blinking'}]"
+      :class="['readyWrap', {blinking: blinking}]"
       :style="{
         'background-color': getColor(),
         'top': -(size/2) + 'px',
@@ -44,28 +44,6 @@
         color="white"
       >
       </v-progress-circular>
-      <!-- <v-icon
-      v-if="false"
-      class="readyIcon"
-      color="white"
-      :size="12"
-    > mdi-check</v-icon>
-    <v-icon
-      v-else-if="node.hasReady && node.ready"
-      class="readyIcon"
-      color="white"
-      :size="12"
-    > mdi-exclamation</v-icon>
-    <v-progress-circular
-      v-else-if="node.hasReady && !node.ready"
-      class="readySpinner"
-      indeterminate
-      :size="10"
-      :width="2"
-      color="grey"
-    >
-    </v-progress-circular> -->
-
     </div>
 
   </div>
@@ -79,6 +57,7 @@ export default {
   name: "Badge",
   props: {
     type: String,
+    blinking: Boolean,
     size: {
       default: 16,
       type: Number,
@@ -92,7 +71,6 @@ export default {
         case "error":
           return colors.red.accent2;
         case "loading":
-        case "blinking":
           return colors.orange.darken1;
         default:
           return colors.grey;

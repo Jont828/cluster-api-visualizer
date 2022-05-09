@@ -19,7 +19,6 @@
                 :elevation="hover ? 6 : 3"
                 :style="{ 
                   background: legend[node.provider].color,
-                  // opacity: (node.hasReady) ? 0.7 : 1,
                 }"
                 v-on:click="selectNode(node)"
               >
@@ -41,11 +40,6 @@
                   color="white"
                   v-else
                 >mdi-chevron-up</v-icon>
-                <!-- <v-progress-linear
-                v-if="node.hasReady && !node.ready"
-                indeterminate
-                color="white"
-              ></v-progress-linear> -->
 
               </v-card>
               <Badge

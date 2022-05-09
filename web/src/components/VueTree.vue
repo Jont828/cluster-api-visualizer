@@ -426,7 +426,12 @@ export default {
     buildTree(rootNode) {
       const treeBuilder = this.d3
         .tree()
-        .nodeSize([this.config.nodeWidth, this.config.levelHeight]);
+        .nodeSize([this.config.nodeWidth, this.config.levelHeight])
+        .separation(function separation(a, b) {
+          // return a.parent == b.parent ? 1 : 2;
+          // Reduce separation of subtrees at higher depths. At depth 0, separation is 2 and asymptotically approaches 1.
+          return a.parent == b.parent ? 1 : 1 + 1 / (a.depth + 1);
+        });
       const tree = treeBuilder(this.d3.hierarchy(rootNode));
       return [tree.descendants(), tree.links()];
     },
