@@ -6,7 +6,7 @@
       :isStraight="isStraight"
       :scale="scale"
       @togglePathStyle="linkHandler"
-      @reload="() => { selected={}; fetchCluster(forceRedraw=true); }"
+      @reload="() => { fetchCluster(forceRedraw=true); fetchCRD(selected, true) }"
       @zoomIn="() => { $refs.targetTree.$refs.tree.zoomIn() }"
       @zoomOut="() => { $refs.targetTree.$refs.tree.zoomOut() }"
     />
@@ -21,7 +21,7 @@
         :treeData="treeData"
         :isStraight="isStraight"
         :legend="legend"
-        @selectNode="selectNodeHandler"
+        @selectNode="fetchCRD"
         @scale="(val) => { scale = val }"
         :style="{
           height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 84px)' 
@@ -84,11 +84,13 @@ export default {
   },
   mounted() {
     document.title = "Cluster Resources: " + this.$route.params.id;
-    const reloadTime = 60 * 1000;
+    const reloadTime = 60 * 1000; // 1 minute
     this.polling = setInterval(
       function () {
-        this.selected = {};
         this.fetchCluster();
+        if (Object.keys(this.selected).length > 0) {
+          this.fetchCRD(this.selected, true);
+        }
       }.bind(this),
       reloadTime
     );
@@ -101,7 +103,15 @@ export default {
     linkHandler(val) {
       this.isStraight = val;
     },
-    async selectNodeHandler(node) {
+    async fetchCRD(node, closeOnFailure = false) {
+      if (!node.name || !node.kind || !node.group || !node.version) {
+        console.log("Node missing required fields:", node);
+        if (closeOnFailure) {
+          this.resourceIsReady = false;
+          this.selected = {}; // TODO: do we want to reset the selected variable or is `this.resourceIsReady = false` enough?
+        }
+        return;
+      }
       try {
         // TODO: refresh selected node view along with cluster tree
         // TODO: fetch tree view using kubectl client instead of clusterctl
@@ -121,17 +131,22 @@ export default {
       } catch (error) {
         console.log("Error:", error.toJSON());
         this.alert = true;
+        if (closeOnFailure) {
+          this.resourceIsReady = false;
+          this.selected = {}; // TODO: do we want to reset the selected variable or is `this.resourceIsReady = false` enough?
+        }
+
         if (error.response) {
           if (error.response.status == 404) {
             this.errorMessage =
-              "Custom Resource Definition `" +
+              "Cluster Resource `" +
               node.kind +
               "/" +
               node.name +
               "` not found";
           } else {
             this.errorMessage =
-              "Unable to load Custom Resource Definition `" +
+              "Unable to load Cluster Resource `" +
               node.kind +
               "/" +
               node.name +
