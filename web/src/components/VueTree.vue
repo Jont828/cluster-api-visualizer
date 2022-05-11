@@ -248,7 +248,7 @@ export default {
           obj[key] = node[key];
         }
       }
-      if ("collapsed" in node && node["collapsable"] && node["collapsed"]) {
+      if ("collapsed" in node && node["collapsible"] && node["collapsed"]) {
         obj["_children"] = obj["children"];
         obj["children"] = null;
         obj["_collapsed"] = true;
@@ -488,7 +488,7 @@ export default {
     onClickNode(index) {
       if (this.collapseEnabled) {
         const curNode = this.nodeDataList[index];
-        if (!curNode.data.collapsable) return;
+        if (!curNode.data.collapsible) return;
         if (curNode.data.children) {
           curNode.data._children = curNode.data.children;
           curNode.data.children = null;

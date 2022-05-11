@@ -22,11 +22,11 @@
                 }"
                 v-on:click="selectNode(node)"
               >
-                <p class="kind font-weight-medium">{{ (node.isVirtual) ? node.displayName : node.kind }}</p>
+                <p class="kind font-weight-medium">{{ (node.collapsible) ? node.displayName : node.kind }}</p>
 
                 <p
                   class="name font-italic"
-                  v-if="!node.isVirtual"
+                  v-if="!node.collapsible"
                 >{{ node.displayName }}</p>
                 <v-icon
                   class="chevron"
@@ -120,7 +120,7 @@ export default {
   },
   methods: {
     selectNode(node) {
-      if (!node.isVirtual) {
+      if (!node.collapsible) {
         this.$emit("selectNode", node);
       } else {
         // TODO: store info about which nodes are open or closed and on a reload, preserve the collapse state of nodes that still exist
