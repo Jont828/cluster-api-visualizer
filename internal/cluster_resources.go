@@ -23,13 +23,14 @@ type ClusterResourceNode struct {
 	Provider    string                 `json:"provider"`
 	UID         string                 `json:"uid"`
 	IsVirtual   bool                   `json:"isVirtual"`
-	Collapsable bool                   `json:"collapsable"`
 	Collapsed   bool                   `json:"collapsed"`
 	Ready       bool                   `json:"ready"`
 	Severity    string                 `json:"severity"`
 	HasReady    bool                   `json:"hasReady"`
 	Children    []*ClusterResourceNode `json:"children"`
 }
+
+// Note: ObjectReferenceObjects do not have the virtual annotation so we can assume that all virtual objects are collapsible
 
 func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
 	objTree, err := defaultClient.DescribeCluster(dcOptions)
@@ -71,7 +72,6 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		Version:     version,
 		Provider:    provider,
 		IsVirtual:   tree.IsVirtualObject(object),
-		Collapsable: tree.IsVirtualObject(object),
 		Collapsed:   false,
 		Children:    []*ClusterResourceNode{},
 		UID:         string(object.GetUID()),
@@ -126,7 +126,6 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 		Version:     "v1beta1",
 		Provider:    "cluster",
 		IsVirtual:   true,
-		Collapsable: true,
 		Collapsed:   true,
 		Children:    []*ClusterResourceNode{},
 		HasReady:    false,

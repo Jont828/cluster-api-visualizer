@@ -122,6 +122,10 @@ export default {
     selectNode(node) {
       if (!node.isVirtual) {
         this.$emit("selectNode", node);
+      } else {
+        // TODO: store info about which nodes are open or closed and on a reload, preserve the collapse state of nodes that still exist
+        // TODO: use a UID map and refactor GroupByKindNodes to have the same UID, i.e. make it dependent on the parent instead
+        // this.$emit("toggleNodeCollapse", node);
       }
     },
     computeNotReadyGradient(color, width) {
