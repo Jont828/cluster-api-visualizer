@@ -4,7 +4,6 @@ FROM node:16 as web-builder
 
 WORKDIR /app
 COPY ./web /app
-RUN rm -rf /app/node_modules /app/dist
 RUN npm install
 RUN npm run build
 
@@ -25,8 +24,10 @@ COPY go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
 go mod download
 
-# Copy all sources
-COPY ./ ./
+
+COPY ./main.go /app/
+COPY ./internal /app/internal
+
 
 RUN go build -o main
 
