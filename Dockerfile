@@ -3,9 +3,9 @@
 FROM node:16 as web-builder
 
 WORKDIR /app
-COPY ./web/package.json ./web/package-lock.json /app/
-RUN npm install
 COPY ./web /app
+RUN rm -rf /app/node_modules /app/dist
+RUN npm install
 RUN npm run build
 
 

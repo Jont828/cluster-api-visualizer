@@ -227,9 +227,9 @@ export default {
   position: relative;
 }
 
-.shadow {
-  // box-shadow: 2px 2px 10px 0px rgba(255, 0, 0, 0.75), 2px -2px 10px 0px rgba(255, 0, 0, 0.75);
-}
+// .shadow {
+//   box-shadow: 2px 2px 10px 0px rgba(255, 0, 0, 0.75), 2px -2px 10px 0px rgba(255, 0, 0, 0.75);
+// }
 
 .badge {
   padding: 0;

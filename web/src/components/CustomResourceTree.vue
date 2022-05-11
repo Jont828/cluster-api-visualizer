@@ -116,7 +116,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.resourceSheet {
-  // padding: 0 16px 16px 16px;
-}
+// .resourceSheet {
+//   padding: 0 16px 16px 16px;
+// }
 </style>
