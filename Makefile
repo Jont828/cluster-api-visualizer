@@ -8,7 +8,7 @@ DIST_FOLDER := ./$(VUE_DIR)/dist
 GO_BIN_OUT := main
 
 TAG ?= latest
-REGISTRY ?= jont828
+REGISTRY ?= ghcr.io/jont828
 IMAGE_NAME ?= cluster-api-visualizer
 DOCKER_IMAGE ?= $(REGISTRY)/$(IMAGE_NAME)
 
