@@ -3,12 +3,12 @@ entries:
   cluster-api-visualizer:
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2022-05-11T19:52:00.713230651-04:00"
+    created: "2022-05-11T20:57:46.539186519-04:00"
     description: A Helm chart for Kubernetes
-    digest: 40608b97db7e61ad3975fe1fa46d034388f0d54046f279d9eb3aa62dd4919da7
+    digest: ac5e2f52c5a7c8cca308b6aab0da3d293e996b74036a1c6fcd3647d756ab0109
     name: cluster-api-visualizer
     type: application
     urls:
     - cluster-api-visualizer-0.1.0.tgz
     version: 0.1.0
-generated: "2022-05-11T19:52:00.712908706-04:00"
+generated: "2022-05-11T20:57:46.537502077-04:00"
