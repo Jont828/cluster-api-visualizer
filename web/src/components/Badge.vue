@@ -8,7 +8,6 @@
         'right': -(size/2) + 'px',
         'width': (size-2) + 'px',
         'height': (size-2) + 'px',
-        'line-height': (size-2) + 'px',
       }"
     ></div>
     <div
@@ -19,7 +18,6 @@
         'right': -(size/2) + 'px',
         'width': (size-2) + 'px',
         'height': (size-2) + 'px',
-        'line-height': (size-2) + 'px',
       }"
     >
 
@@ -98,8 +96,10 @@ export default {
 
 .readyWrap {
   position: absolute;
-  // background-color: #fff;
-  text-align: center;
+  display: flex; // make us of Flexbox
+  align-items: center; // does vertically center the desired content
+  justify-content: center; // horizontally centers single line items
+  text-align: center; // optional, but helps horizontally center text that breaks into multiple lines
 
   border-radius: 50%;
   border: 2px solid #f8f3f2;
@@ -111,7 +111,7 @@ export default {
   vertical-align: middle;
   text-align: center;
   // border-radius: 50%;
-  padding: 2px;
+  // padding: 2px;
 }
 
 @-webkit-keyframes Blinking {
@@ -156,8 +156,6 @@ export default {
 
 // .readySpinner {
 //   display: inline-block !important;
-//   svg {
-//     vertical-align: middle;
-//   }
+//   margin-bottom: 1px;
 // }
 </style>
