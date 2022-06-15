@@ -1,23 +1,13 @@
 <template>
   <div>
     <div
-      :class="['readyWrap']"
-      :style="{
-        'background-color': '#f8f3f2',
-        'top': -(size/2) + 'px',
-        'right': -(size/2) + 'px',
-        'width': (size-2) + 'px',
-        'height': (size-2) + 'px',
-      }"
-    ></div>
-    <div
       :class="['readyWrap', {blinking: blinking}]"
       :style="{
         'background-color': getColor(),
         'top': -(size/2) + 'px',
         'right': -(size/2) + 'px',
-        'width': (size-2) + 'px',
-        'height': (size-2) + 'px',
+        'width': (size-4) + 'px',
+        'height': (size-4) + 'px',
       }"
     >
 
@@ -37,7 +27,7 @@
         v-else-if="type==='loading'"
         class="readySpinner"
         indeterminate
-        :size="size-6"
+        :size="size-8"
         :width="1.5"
         color="white"
       >

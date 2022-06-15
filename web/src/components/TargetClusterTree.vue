@@ -45,7 +45,7 @@
               <Badge
                 v-if="node.hasReady"
                 :type="(node.ready) ? 'ready' : (node.severity === 'Error') ? 'error' : 'loading'"
-                :size="16"
+                :size="18"
               ></Badge>
 
             </div>
