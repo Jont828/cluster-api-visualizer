@@ -6,7 +6,7 @@
       dark
     >
       <v-card-title class="text-h5">
-        Resource: {{ name }}
+        {{ name }}
         <v-spacer></v-spacer>
         <v-btn
           icon
@@ -24,6 +24,36 @@
         </v-btn>
 
       </v-card-title>
+      <v-card-subtitle>
+        <v-chip-group
+          column
+          @change="selectConditions"
+          multiple
+        >
+          <v-chip
+            active
+            v-for="condition in conditions"
+            :key="condition.type"
+            color="white"
+            active-class="primary--text"
+            :text-color="(condition.status) ? 'success' : 'error'"
+          >
+            <v-icon
+              left
+              v-if="condition.status"
+            >
+              mdi-check-circle
+            </v-icon>
+            <v-icon
+              left
+              v-else
+            >
+              mdi-alert-circle
+            </v-icon>
+            {{ condition.type }}
+          </v-chip>
+        </v-chip-group>
+      </v-card-subtitle>
       <v-text-field
         v-model="search"
         label="Search Custom Resource Fields"
@@ -49,14 +79,10 @@
         :search="search"
         :filter="filter"
         :open.sync="open"
+        :active.sync="active"
+        rounded
         class="text-wrap"
       >
-        <!-- <template v-slot:prepend="{ item }">
-          <v-icon
-            v-if="item.children"
-            v-text="`mdi-${item.id === 1 ? 'home-variant' : 'folder-network'}`"
-          ></v-icon>
-        </template> -->
       </v-treeview>
     </v-card-text>
   </v-card>
@@ -76,17 +102,22 @@ export default {
   data() {
     return {
       open: [],
+      active: [], // for auto-highlighting statuses
       search: null,
       caseSensitive: false,
+      conditions: [],
     };
   },
   mounted() {
     // Open all top level elements
-    this.items.forEach((e, i) => {
-      if (e.children.length > 0) {
-        this.open.push(i);
-      }
-    });
+    console.log("Items are", this.items);
+    // this.items.forEach((e, i) => {
+    //   if (e.children.length > 0) {
+    //     this.open.push(i);
+    //   }
+    // });
+    // this.open = [".status", ".status.conditions", ".status.conditions[0]"];
+    this.setConditions(this.jsonItems?.status?.conditions);
   },
   methods: {
     downloadYaml() {
@@ -95,6 +126,39 @@ export default {
       link.href = `data:text/plain;charset=utf-8,${yamlCRD}`;
       link.download = this.name + ".yaml";
       link.click();
+    },
+    setConditions(conditions) {
+      this.conditions = [];
+      if (conditions !== undefined) {
+        conditions.forEach((e, i) => {
+          this.conditions.push({
+            type: e.type,
+            status: e.status === "True",
+          });
+        });
+        // console.log("Conditions are", this.conditions);
+      }
+    },
+    selectConditions(indexArr) {
+      console.log(indexArr);
+      if (indexArr.length > 0) {
+        this.open = [".status", ".status.conditions"];
+      } else {
+        this.open = [];
+      }
+      this.active = []; // TODO: it looks like this array only highlights the last index
+      indexArr.forEach((index) => {
+        this.open.push(".status.conditions[" + index + "]");
+        this.active.push(".status.conditions[" + index + "].type");
+      });
+      // console.log("Open is", this.open);
+    },
+  },
+  watch: {
+    jsonItems: {
+      handler(val, old) {
+        this.setConditions(val?.status?.conditions);
+      },
     },
   },
   computed: {

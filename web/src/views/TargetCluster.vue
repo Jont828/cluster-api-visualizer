@@ -24,7 +24,7 @@
         @selectNode="fetchCRD"
         @scale="(val) => { scale = val }"
         :style="{
-          height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 84px)' 
+          height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 84px - 48px)'  // height of card title + card subtitle/chip group
         }"
       />
 
@@ -195,7 +195,7 @@ export default {
         }
       }
     },
-    formatToTreeview(resource, id = 0) {
+    formatToTreeview(resource, path = "") {
       let result = [];
       if (typeof resource == "string") {
         return [{ name: resource }];
@@ -203,9 +203,9 @@ export default {
         let children = [];
         resource.forEach((e, i) => {
           result.push({
-            id: id++,
+            id: path + "[" + i + "]",
             name: i.toString(),
-            children: this.formatToTreeview(e, id),
+            children: this.formatToTreeview(e, path + "[" + i + "]"),
           });
         });
       } else {
@@ -217,10 +217,10 @@ export default {
             name = key + ": " + value;
           } else {
             name = key;
-            children = this.formatToTreeview(value, id);
+            children = this.formatToTreeview(value, path + "." + key);
           }
           result.push({
-            id: id++,
+            id: path + "." + key,
             name: name,
             children: children,
           });
