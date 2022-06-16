@@ -80,9 +80,16 @@
         :filter="filter"
         :open.sync="open"
         :active.sync="active"
+        activatable
         rounded
         class="text-wrap"
       >
+        <template
+          slot="label"
+          slot-scope="props"
+        >
+          <span :ref="props.item.id">{{ props.item.name }}</span>
+        </template>
       </v-treeview>
     </v-card-text>
   </v-card>
@@ -140,18 +147,26 @@ export default {
       }
     },
     selectConditions(indexArr) {
-      console.log(indexArr);
+      this.active = []; // TODO: it looks like this array only highlights the last index
       if (indexArr.length > 0) {
         this.open = [".status", ".status.conditions"];
       } else {
         this.open = [];
+        return;
       }
-      this.active = []; // TODO: it looks like this array only highlights the last index
       indexArr.forEach((index) => {
         this.open.push(".status.conditions[" + index + "]");
         this.active.push(".status.conditions[" + index + "].type");
       });
-      // console.log("Open is", this.open);
+
+      this.$nextTick(() => this.scrollTo(this.active[this.active.length - 1]));
+      // setTimeout(() => {
+      //   this.scrollTo(this.active[this.active.length - 1]);
+      // }, 100);
+    },
+    scrollTo(refName) {
+      // TODO: use a smooth scroll component
+      this.$refs[refName].scrollIntoView({ behavior: "smooth" });
     },
   },
   watch: {
