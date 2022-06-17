@@ -24,7 +24,7 @@
         </v-btn>
 
       </v-card-title>
-      <v-card-subtitle>
+      <v-card-subtitle id="subtitle">
         <v-chip-group
           column
           @change="selectConditions"
@@ -32,20 +32,35 @@
         >
           <v-chip
             active
+            class="conditionChip"
             v-for="condition in conditions"
             :key="condition.type"
             color="white"
-            active-class="primary--text"
-            :text-color="(condition.status) ? 'success' : 'error'"
+            :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning') "
           >
             <v-icon
               left
+              class="mr-1"
               v-if="condition.status"
             >
               mdi-check-circle
             </v-icon>
+            <v-avatar
+              left
+              class="mr-1 warning"
+              v-else-if="!condition.isError"
+            >
+              <v-progress-circular
+                indeterminate
+                size="16"
+                :width="3"
+                color="white"
+              >
+              </v-progress-circular>
+            </v-avatar>
             <v-icon
               left
+              class="mr-1"
               v-else
             >
               mdi-alert-circle
@@ -84,11 +99,8 @@
         rounded
         class="text-wrap"
       >
-        <template
-          slot="label"
-          slot-scope="props"
-        >
-          <span :ref="props.item.id">{{ props.item.name }}</span>
+        <template v-slot:label="{ item }">
+          <span :ref="item.id">{{ item.name }}</span>
         </template>
       </v-treeview>
     </v-card-text>
@@ -141,6 +153,7 @@ export default {
           this.conditions.push({
             type: e.type,
             status: e.status === "True",
+            isError: e.severity === "Error",
           });
         });
         // console.log("Conditions are", this.conditions);
@@ -195,6 +208,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
+#subtitle {
+  .conditionChip {
+    .loading {
+      height: 20px !important;
+      width: 20px !important;
+      min-height: 20px !important;
+      min-width: 20px !important;
+    }
+  }
+}
 // .resourceSheet {
 //   padding: 0 16px 16px 16px;
 // }
