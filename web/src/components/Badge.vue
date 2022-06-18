@@ -1,37 +1,44 @@
 <template>
-  <div>
+  <div class="badge">
     <div
-      :class="['readyWrap', {blinking: blinking}]"
+      class="topRight"
       :style="{
-        'background-color': getColor(),
         'top': -(size/2) + 'px',
         'right': -(size/2) + 'px',
-        'width': (size-4) + 'px',
-        'height': (size-4) + 'px',
+        'height': size + 'px',
+        'width': size + 'px',
       }"
     >
-
-      <v-icon
-        v-if="type==='ready'"
-        class="readyIcon"
-        color="white"
-        :size="size-6"
-      > mdi-check</v-icon>
-      <v-icon
-        v-else-if="type==='error'"
-        class="readyIcon"
-        color="white"
-        :size="size-6"
-      > mdi-exclamation</v-icon>
-      <v-progress-circular
-        v-else-if="type==='loading'"
-        class="readySpinner"
-        indeterminate
-        :size="size-8"
-        :width="1.5"
-        color="white"
+      <v-avatar
+        :class="['readyWrap', {blinking: blinking}]"
+        :size="size-4"
+        min-width="0"
+        min-height="0"
+        color="success"
       >
-      </v-progress-circular>
+
+        <v-icon
+          v-if="type==='ready'"
+          class="readyIcon"
+          color="white"
+          :size="size-6"
+        > mdi-check</v-icon>
+        <v-icon
+          v-else-if="type==='error'"
+          class="readyIcon"
+          color="white"
+          :size="size-6"
+        > mdi-exclamation</v-icon>
+        <v-progress-circular
+          v-else-if="type==='loading'"
+          class="readySpinner"
+          indeterminate
+          :size="size-8"
+          :width="1.5"
+          color="white"
+        >
+        </v-progress-circular>
+      </v-avatar>
     </div>
 
   </div>
@@ -78,21 +85,15 @@ export default {
 .blink-leave {
   opacity: 100%;
 }
-.readyButton {
-  width: 20px;
-  height: 20px;
-  line-height: 18px;
+
+.badge .topRight {
+  position: absolute;
+  display: inline-block;
 }
 
-.readyWrap {
+.badge .readyWrap {
   position: absolute;
-  display: flex; // make us of Flexbox
-  align-items: center; // does vertically center the desired content
-  justify-content: center; // horizontally centers single line items
-  text-align: center; // optional, but helps horizontally center text that breaks into multiple lines
-
-  border-radius: 50%;
-  border: 2px solid #f8f3f2;
+  border: 2px solid #f8f3f2 !important;
   // box-shadow: 0px 0px 10px rgba(0, 0, 0, 1);
 }
 
