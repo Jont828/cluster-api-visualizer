@@ -36,35 +36,36 @@
             v-for="condition in conditions"
             :key="condition.type"
             color="white"
-            :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning') "
+            :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
           >
-            <v-icon
-              left
-              class="mr-1"
-              v-if="condition.status"
-            >
-              mdi-check-circle
-            </v-icon>
             <v-avatar
               left
-              class="mr-1 warning"
-              v-else-if="!condition.isError"
+              class="mr-1"
+              :color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
             >
+              <v-icon
+                v-if="condition.status"
+                color="white"
+                size="20px"
+              >
+                mdi-check
+              </v-icon>
               <v-progress-circular
+                v-else-if="!condition.isError"
                 indeterminate
                 size="16"
                 :width="3"
                 color="white"
               >
               </v-progress-circular>
+              <v-icon
+                v-else
+                color="white"
+                size="20px"
+              >
+                mdi-exclamation
+              </v-icon>
             </v-avatar>
-            <v-icon
-              left
-              class="mr-1"
-              v-else
-            >
-              mdi-alert-circle
-            </v-icon>
             {{ condition.type }}
           </v-chip>
         </v-chip-group>
