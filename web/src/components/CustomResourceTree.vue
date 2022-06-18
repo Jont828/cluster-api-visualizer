@@ -38,7 +38,14 @@
             color="white"
             :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
           >
-            <v-avatar
+            <StatusIcon
+              :type="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
+              :size="20"
+              :spinnerWidth="2"
+              left
+            >
+            </StatusIcon>
+            <!-- <v-avatar
               left
               class="mr-1"
               :color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
@@ -65,7 +72,7 @@
               >
                 mdi-exclamation
               </v-icon>
-            </v-avatar>
+            </v-avatar> -->
             {{ condition.type }}
           </v-chip>
         </v-chip-group>
@@ -110,9 +117,13 @@
 
 <script>
 import yaml from "js-yaml";
+import StatusIcon from "./StatusIcon.vue";
 
 export default {
   name: "CustomResourceTree",
+  components: {
+    StatusIcon,
+  },
   props: {
     items: Array,
     jsonItems: Object,

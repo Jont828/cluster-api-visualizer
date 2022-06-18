@@ -9,7 +9,13 @@
         'width': size + 'px',
       }"
     >
-      <v-avatar
+      <StatusIcon
+        class="readyWrap"
+        :type="type"
+        :size="size-4"
+      >
+      </StatusIcon>
+      <!-- <v-avatar
         :class="['readyWrap', {blinking: blinking}]"
         :size="size-4"
         min-width="0"
@@ -38,7 +44,7 @@
           color="white"
         >
         </v-progress-circular>
-      </v-avatar>
+      </v-avatar> -->
     </div>
 
   </div>
@@ -47,9 +53,13 @@
 
 <script>
 import colors from "vuetify/lib/util/colors";
+import StatusIcon from "./StatusIcon.vue";
 
 export default {
   name: "Badge",
+  components: {
+    StatusIcon,
+  },
   props: {
     type: String,
     blinking: Boolean,
