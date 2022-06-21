@@ -10,41 +10,13 @@
       }"
     >
       <StatusIcon
+        circle
+        spinner
         class="readyWrap"
         :type="type"
         :size="size-4"
       >
       </StatusIcon>
-      <!-- <v-avatar
-        :class="['readyWrap', {blinking: blinking}]"
-        :size="size-4"
-        min-width="0"
-        min-height="0"
-        color="success"
-      >
-
-        <v-icon
-          v-if="type==='ready'"
-          class="readyIcon"
-          color="white"
-          :size="size-6"
-        > mdi-check</v-icon>
-        <v-icon
-          v-else-if="type==='error'"
-          class="readyIcon"
-          color="white"
-          :size="size-6"
-        > mdi-exclamation</v-icon>
-        <v-progress-circular
-          v-else-if="type==='loading'"
-          class="readySpinner"
-          indeterminate
-          :size="size-8"
-          :width="1.5"
-          color="white"
-        >
-        </v-progress-circular>
-      </v-avatar> -->
     </div>
 
   </div>

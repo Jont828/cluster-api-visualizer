@@ -38,9 +38,10 @@
             color="white"
             :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
           >
+            <!-- :type="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'loading')" -->
+            <!-- :type="(condition.status) ? 'success' : condition.severity.toLowerCase()" -->
             <StatusIcon
-              :type="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
-              :size="20"
+              :type="(condition.status) ? 'success' : condition.severity.toLowerCase()"
               :spinnerWidth="2"
               left
             >
@@ -166,6 +167,7 @@ export default {
             type: e.type,
             status: e.status === "True",
             isError: e.severity === "Error",
+            severity: e.severity,
           });
         });
         // console.log("Conditions are", this.conditions);
