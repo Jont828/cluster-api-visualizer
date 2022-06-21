@@ -22,10 +22,10 @@
                 }"
                 v-on:click="selectNode(node)"
               >
-                <p class="kind font-weight-medium">{{ (node.collapsible) ? node.displayName : node.kind }}</p>
+                <p class="kind font-weight-medium text-truncate">{{ (node.collapsible) ? node.displayName : node.kind }}</p>
 
                 <p
-                  class="name font-italic"
+                  class="name font-italic text-truncate"
                   v-if="!node.collapsible"
                 >{{ node.displayName }}</p>
                 <v-icon
@@ -298,10 +298,10 @@ export default {
   .kind {
     // text-shadow: rgba(0, 0, 0, 1) 3px 0 5px;
     text-align: center;
-    white-space: nowrap;
+    // white-space: nowrap;
     display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    // overflow: hidden;
+    // text-overflow: ellipsis;
   }
 }
 

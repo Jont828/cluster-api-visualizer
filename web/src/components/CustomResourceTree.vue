@@ -46,34 +46,6 @@
               left
             >
             </StatusIcon>
-            <!-- <v-avatar
-              left
-              class="mr-1"
-              :color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
-            >
-              <v-icon
-                v-if="condition.status"
-                color="white"
-                size="20px"
-              >
-                mdi-check
-              </v-icon>
-              <v-progress-circular
-                v-else-if="!condition.isError"
-                indeterminate
-                size="16"
-                :width="3"
-                color="white"
-              >
-              </v-progress-circular>
-              <v-icon
-                v-else
-                color="white"
-                size="20px"
-              >
-                mdi-exclamation
-              </v-icon>
-            </v-avatar> -->
             {{ condition.type }}
           </v-chip>
         </v-chip-group>
@@ -109,7 +81,10 @@
         class="text-wrap"
       >
         <template v-slot:label="{ item }">
-          <span :ref="item.id">{{ item.name }}</span>
+          <span
+            :ref="item.id"
+            class="text-wrap"
+          >{{ item.name }}</span>
         </template>
       </v-treeview>
     </v-card-text>
@@ -232,7 +207,10 @@ export default {
     }
   }
 }
-// .resourceSheet {
-//   padding: 0 16px 16px 16px;
-// }
+</style>
+
+<style lang="less">
+.v-treeview-node__label {
+  padding: 10px 0;
+}
 </style>
