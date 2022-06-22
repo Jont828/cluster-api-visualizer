@@ -24,23 +24,13 @@
         </v-btn>
 
       </v-card-title>
-      <v-card-subtitle id="subtitle">
-        <!-- <v-chip-group
-          column
-          @change="
-        selectConditions"
-          multiple
-        > -->
-        <div class="conditionChipWrapper mt-2">
+      <v-card-subtitle>
+        <div class="conditionChipWrapper my-2">
           <v-chip
             active
             link
             :class="{
               'conditionChip': true,
-              // 'mt-1': true,
-              // 'mb-1': true,
-              // 'mr-1': index != conditions.length - 1,
-              // 'ml-1': index > 0
             }"
             v-for="(condition, index) in conditions"
             :key="index"
@@ -48,8 +38,6 @@
             :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
             @click="selectCondition(index)"
           >
-            <!-- :type="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'loading')" -->
-            <!-- :type="(condition.status) ? 'success' : condition.severity.toLowerCase()" -->
             <StatusIcon
               :type="(condition.status) ? 'success' : condition.severity.toLowerCase()"
               :spinnerWidth="2"
@@ -59,25 +47,28 @@
             {{ condition.type }}
           </v-chip>
         </div>
-        <!-- </v-chip-group> -->
+
+        <div class="mt-4">
+          <v-text-field
+            v-model="search"
+            label="Search Custom Resource Fields"
+            dark
+            flat
+            solo-inverted
+            hide-details
+            clearable
+            clear-icon="mdi-close-circle-outline"
+            :color="color"
+          ></v-text-field>
+          <v-checkbox
+            v-model="caseSensitive"
+            dark
+            hide-details
+            label="Case sensitive search"
+          ></v-checkbox>
+        </div>
+
       </v-card-subtitle>
-      <v-text-field
-        v-model="search"
-        label="Search Custom Resource Fields"
-        dark
-        flat
-        solo-inverted
-        hide-details
-        clearable
-        clear-icon="mdi-close-circle-outline"
-        :color="color"
-      ></v-text-field>
-      <v-checkbox
-        v-model="caseSensitive"
-        dark
-        hide-details
-        label="Case sensitive search"
-      ></v-checkbox>
     </v-sheet>
     <v-card-text>
       <v-treeview
@@ -127,14 +118,6 @@ export default {
     };
   },
   mounted() {
-    // Open all top level elements
-    console.log("Items are", this.items);
-    // this.items.forEach((e, i) => {
-    //   if (e.children.length > 0) {
-    //     this.open.push(i);
-    //   }
-    // });
-    // this.open = [".status", ".status.conditions", ".status.conditions[0]"];
     this.setConditions(this.jsonItems?.status?.conditions);
   },
   methods: {
@@ -156,15 +139,14 @@ export default {
             severity: e.severity,
           });
         });
-        // console.log("Conditions are", this.conditions);
       }
     },
     selectCondition(index) {
-      // this.open = [".status", ".status.conditions"];
       this.open.push(".status");
       this.open.push(".status.conditions");
       this.open.push(".status.conditions[" + index + "]");
       this.active.push(".status.conditions[" + index + "].type");
+      console.log(this.open);
 
       let refName = ".status.conditions[" + index + "].type";
       this.$nextTick(() =>
@@ -173,27 +155,6 @@ export default {
           duration: 1000,
         })
       );
-    },
-    selectConditions(indexArr) {
-      this.active = []; // TODO: it looks like this array only highlights the last index
-      if (indexArr.length > 0) {
-        this.open = [".status", ".status.conditions"];
-      } else {
-        this.open = [];
-        return;
-      }
-      indexArr.forEach((index) => {
-        this.open.push(".status.conditions[" + index + "]");
-        this.active.push(".status.conditions[" + index + "].type");
-      });
-
-      let refName = this.active[this.active.length - 1];
-      // this.$nextTick(() =>
-      //   this.$vuetify.goTo(this.$refs[refName], {
-      //     easing: "easeInOutQuint",
-      //     duration: 1000,
-      //   })
-      // );
     },
   },
   watch: {
@@ -222,21 +183,19 @@ export default {
 </script>
 
 <style lang="less" scoped>
-#subtitle {
-  .conditionChipWrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .conditionChip {
-    .loading {
-      height: 20px !important;
-      width: 20px !important;
-      min-height: 20px !important;
-      min-width: 20px !important;
-    }
-  }
+.conditionChipWrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
+// .conditionChip {
+//   .loading {
+//     height: 20px !important;
+//     width: 20px !important;
+//     min-height: 20px !important;
+//     min-width: 20px !important;
+//   }
+// }
 </style>
 
 <style lang="less">

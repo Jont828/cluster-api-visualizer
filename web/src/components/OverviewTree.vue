@@ -14,7 +14,8 @@
         <v-hover>
           <template v-slot:default="{ hover }">
             <router-link
-              :to="node.isManagement ? '#' : ('/target-cluster/' + node.name)"
+              :to="'/target-cluster/' + node.name"
+              :event="node.isManagement ? '' : 'click' /* disable link on management cluster */"
               class="node-router-link"
             >
               <v-card
@@ -81,7 +82,6 @@
 import VueTree from "./VueTree.vue";
 import AlertError from "./AlertError.vue";
 import Phase from "./Phase.vue";
-// import { getClusterOverview } from "../services/Service.js";
 
 export default {
   name: "OverviewTree",
