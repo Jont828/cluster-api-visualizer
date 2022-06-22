@@ -295,6 +295,8 @@ export default {
   }
 
   .name {
+    padding: 0 4px;
+    // Note: this stops the end of the italicized text from getting cut off. The name will overflow but it doesn't affect max-width.
     max-width: 160px;
   }
 
