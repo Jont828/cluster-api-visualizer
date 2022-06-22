@@ -161,14 +161,13 @@ export default {
         this.active.push(".status.conditions[" + index + "].type");
       });
 
-      this.$nextTick(() => this.scrollTo(this.active[this.active.length - 1]));
-      // setTimeout(() => {
-      //   this.scrollTo(this.active[this.active.length - 1]);
-      // }, 100);
-    },
-    scrollTo(refName) {
-      // TODO: use a smooth scroll component
-      this.$refs[refName].scrollIntoView({ behavior: "smooth" });
+      let refName = this.active[this.active.length - 1];
+      this.$nextTick(() =>
+        this.$vuetify.goTo(this.$refs[refName], {
+          easing: "easeInOutQuint",
+          duration: 1000,
+        })
+      );
     },
   },
   watch: {
