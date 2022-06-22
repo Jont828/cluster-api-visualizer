@@ -25,18 +25,28 @@
 
       </v-card-title>
       <v-card-subtitle id="subtitle">
-        <v-chip-group
+        <!-- <v-chip-group
           column
-          @change="selectConditions"
+          @change="
+        selectConditions"
           multiple
-        >
+        > -->
+        <div class="conditionChipWrapper mt-2">
           <v-chip
             active
-            class="conditionChip"
-            v-for="condition in conditions"
-            :key="condition.type"
+            link
+            :class="{
+              'conditionChip': true,
+              // 'mt-1': true,
+              // 'mb-1': true,
+              // 'mr-1': index != conditions.length - 1,
+              // 'ml-1': index > 0
+            }"
+            v-for="(condition, index) in conditions"
+            :key="index"
             color="white"
             :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
+            @click="selectCondition(index)"
           >
             <!-- :type="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'loading')" -->
             <!-- :type="(condition.status) ? 'success' : condition.severity.toLowerCase()" -->
@@ -48,7 +58,8 @@
             </StatusIcon>
             {{ condition.type }}
           </v-chip>
-        </v-chip-group>
+        </div>
+        <!-- </v-chip-group> -->
       </v-card-subtitle>
       <v-text-field
         v-model="search"
@@ -148,6 +159,21 @@ export default {
         // console.log("Conditions are", this.conditions);
       }
     },
+    selectCondition(index) {
+      // this.open = [".status", ".status.conditions"];
+      this.open.push(".status");
+      this.open.push(".status.conditions");
+      this.open.push(".status.conditions[" + index + "]");
+      this.active.push(".status.conditions[" + index + "].type");
+
+      let refName = ".status.conditions[" + index + "].type";
+      this.$nextTick(() =>
+        this.$vuetify.goTo(this.$refs[refName], {
+          easing: "easeInOutQuint",
+          duration: 1000,
+        })
+      );
+    },
     selectConditions(indexArr) {
       this.active = []; // TODO: it looks like this array only highlights the last index
       if (indexArr.length > 0) {
@@ -162,12 +188,12 @@ export default {
       });
 
       let refName = this.active[this.active.length - 1];
-      this.$nextTick(() =>
-        this.$vuetify.goTo(this.$refs[refName], {
-          easing: "easeInOutQuint",
-          duration: 1000,
-        })
-      );
+      // this.$nextTick(() =>
+      //   this.$vuetify.goTo(this.$refs[refName], {
+      //     easing: "easeInOutQuint",
+      //     duration: 1000,
+      //   })
+      // );
     },
   },
   watch: {
@@ -197,6 +223,11 @@ export default {
 
 <style lang="less" scoped>
 #subtitle {
+  .conditionChipWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
   .conditionChip {
     .loading {
       height: 20px !important;

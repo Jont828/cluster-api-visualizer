@@ -24,7 +24,7 @@
         @selectNode="fetchCRD"
         @scale="(val) => { scale = val }"
         :style="{
-          height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 84px - 48px)'  // height of card title + card subtitle/chip group
+          height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 84px - 40px)'  // height of card title + card subtitle/chip group
         }"
       />
 
