@@ -62,13 +62,17 @@
           :key="provider"
         >
           <div class="legend-entry-content">
-            <div
+            <v-icon
+              class="legend-entry-icon"
+              :color="entry.color"
+            >mdi-square-rounded</v-icon>
+            <!-- <div
               class="legend-entry-icon"
               :style="{
                 'background-color': entry.color
               }"
-            />
-            <span class="legend-entry-text">{{ entry.name }}</span>
+            /> -->
+            <div class="legend-entry-text">{{ entry.name }}</div>
           </div>
 
         </div>
@@ -314,20 +318,40 @@ export default {
   width: 100%;
 
   .legend-card {
-    padding: 10px 10px;
+    padding: 10px 5px;
     display: inline-block;
 
     .legend-entry {
       display: inline-block;
       margin-right: 10px;
+      line-height: 24px;
+      height: 24px;
 
       .legend-entry-content {
-        display: flex;
-        position: relative;
-        align-items: center;
-        justify-content: center;
+        line-height: 24px;
+        height: 24px !important;
+        // display: flex;
+        // position: relative;
+        // align-items: center;
+        // justify-content: center;
+
+        .legend-entry-icon {
+          display: inline-block;
+          border-radius: 3px;
+          margin: 0 6px;
+          height: 24px;
+          line-height: 24px;
+          font-size: 24px;
+          vertical-align: top;
+        }
+        .legend-entry-text {
+          line-height: 24px;
+          vertical-align: top;
+          display: inline-block;
+        }
 
         .overlapping-icon-wrapper {
+          // vertical-align: middle;
           position: relative;
           height: 18px;
           width: 18px;
@@ -345,16 +369,6 @@ export default {
           .overlapping-icon + .overlapping-icon {
             opacity: 0;
           }
-        }
-        .legend-entry-icon {
-          display: inline-block;
-          border-radius: 3px;
-          margin: 0 8px;
-          width: 18px;
-          height: 18px;
-        }
-        .legend-entry-text {
-          display: inline-block;
         }
       }
     }
