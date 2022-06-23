@@ -4,7 +4,7 @@ FROM node:16 as web-builder
 
 WORKDIR /app
 COPY ./web /app
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 
