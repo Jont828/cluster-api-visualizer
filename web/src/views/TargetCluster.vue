@@ -24,7 +24,8 @@
         @selectNode="fetchCRD"
         @scale="(val) => { scale = val }"
         :style="{
-          height: Object.keys(selected).length == 0 ? '100%' : 'calc(100% - 84px - 40px)'  // height of card title + card subtitle/chip group
+          height: Object.keys(selected).length == 0 ? '100%' : (hasConditions() ? 'calc(100% - 84px - 40px)' : 'calc(100% - 84px)') 
+          // height of card title + card subtitle/chip group
         }"
       />
 
@@ -123,7 +124,7 @@ export default {
         const response = await Vue.axios.get("/custom-resource", {
           params: params,
         });
-        console.log(response.data);
+        console.log("Response is", response.data);
         this.resource = response.data;
         this.treeviewResource = this.formatToTreeview(response.data);
         this.selected = node; // Don't select until an error won't pop up
@@ -229,6 +230,12 @@ export default {
 
       return result;
     },
+    hasConditions() {
+      return (
+        this.resource?.status?.conditions != undefined &&
+        this.resource?.status?.conditions.length > 0
+      );
+    },
   },
   data() {
     return {
@@ -237,7 +244,7 @@ export default {
       errorMessage: "",
       treeIsReady: false,
       resourceIsReady: false,
-      resource: [],
+      resource: {},
       selected: {},
       isStraight: false,
       treeData: {},

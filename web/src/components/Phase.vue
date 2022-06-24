@@ -39,16 +39,16 @@ export default {
     getColor(phase) {
       switch (phase) {
         case "Provisioned":
-          this.color = "green";
+          this.color = "success";
           break;
         case "Pending":
         case "Provisioning":
         case "Deleting":
-          this.color = "amber";
+          this.color = "warning";
           break;
         case "Failed":
         case "Unknown":
-          this.color = "red";
+          this.color = "error";
           break;
         default:
           this.color = "grey";
