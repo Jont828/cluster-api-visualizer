@@ -43,6 +43,7 @@
   </v-avatar>
   <v-avatar
     :size="size"
+    tile
     min-width="0"
     min-height="0"
     :color="getColor(type)"
@@ -82,7 +83,7 @@
       class="readyIcon"
       :color="getColor(type)"
       :size="size"
-    > mdi-information</v-icon>
+    > mdi-information-outline</v-icon>
   </v-avatar>
 </template>
 

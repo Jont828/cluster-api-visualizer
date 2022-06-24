@@ -140,9 +140,7 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 			if child.HasReady {
 				groupNode.HasReady = true
 				groupNode.Ready = child.Ready && groupNode.Ready
-				if child.Severity == "Error" {
-					groupNode.Severity = child.Severity
-				}
+				groupNode.Severity = child.Severity
 			}
 		} else {
 			resultChildren = append(resultChildren, child)
