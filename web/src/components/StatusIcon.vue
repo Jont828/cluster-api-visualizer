@@ -83,7 +83,7 @@
       class="readyIcon"
       :color="getColor(type)"
       :size="size"
-    > mdi-information-outline</v-icon>
+    > mdi-information</v-icon>
   </v-avatar>
 </template>
 
@@ -111,13 +111,14 @@ export default {
   },
   methods: {
     getColor(type) {
-      if (!this.circle) {
-        return "";
-      }
+      if (!this.circle) return "";
 
-      if (this.spinner && (type === "warning" || type === "info")) {
+      if (this.spinner && (type === "warning" || type === "info"))
         return "warning";
-      }
+
+      // Remove this if we want info to be blue.
+      if (type === "info") return "warning";
+
       return type;
     },
   },
