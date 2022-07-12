@@ -17,7 +17,7 @@ Create a local management cluster with [kind](https://kind.sigs.k8s.io/) and a w
 
 Then, run the following command to start the app:
 ```
-./hack/deploy-repo-to-kind.sh <name-of-management-cluster>
+./hack/deploy-repo-to-kind.sh
 ```
 
 This will run the app as a deployment on management clusters built with kind.
