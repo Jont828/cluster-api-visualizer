@@ -1,10 +1,14 @@
 package internal
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -12,13 +16,49 @@ import (
 	"k8s.io/klog/v2/klogr"
 )
 
+func GetKubeadmClusterName(restConfig *rest.Config, namespace string, name string) (string, error) {
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return "", nil
+	}
+
+	kubeadmConfigMap, err := clientset.CoreV1().ConfigMaps(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	clusterConfigStr := kubeadmConfigMap.Data["ClusterConfiguration"]
+	clusterConfigMap := make(map[string]interface{})
+	if err := yaml.Unmarshal([]byte(clusterConfigStr), &clusterConfigMap); err != nil {
+		return "", err
+	}
+
+	result, ok := clusterConfigMap["clusterName"]
+	if !ok {
+		return "", errors.Errorf("Field `clusterName` not found in configMap %s/%s", namespace, name)
+	}
+
+	clusterName, ok := result.(string)
+	if !ok {
+		return "", errors.Errorf("Field `clusterName` in configMap %s/%s is %T, not a string", namespace, name, result)
+	}
+
+	return clusterName, nil
+}
+
 func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*clientcmdapi.Config, error) {
 	log := klogr.New()
 
-	// clusterName := "kind-capz"
-	// userName := "kind-capz"
-	// contextName := "kind-capz"
-	clusterName := "management-cluster"
+	log.V(2).Info("Constructing kubeconfig file from rest.Config")
+
+	var clusterName string
+	// Attempt to get the cluster name from the kubeadm configmap, if it fails then set a default name.
+	clusterName, err := GetKubeadmClusterName(restConfig, "kube-system", "kubeadm-config")
+	if err != nil {
+		log.Error(err, "failed to get cluster name from kubeadm configmap")
+		clusterName = "management-cluster"
+	}
+
 	userName := "default-user"
 	contextName := "default-context"
 	clusters := make(map[string]*clientcmdapi.Cluster)
@@ -29,7 +69,7 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 		// Used in in-cluster configs.
 		CertificateAuthority: restConfig.CAFile,
 	}
-	log.V(2).Info("Constructing clusters", "clusters", clusters)
+	// log.V(2).Info("Constructing clusters", "clusters", clusters)
 
 	contexts := make(map[string]*clientcmdapi.Context)
 	contexts[contextName] = &clientcmdapi.Context{
@@ -37,7 +77,7 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 		Namespace: namespace,
 		AuthInfo:  userName,
 	}
-	log.V(2).Info("Constructing contexts", "contexts", contexts)
+	// log.V(2).Info("Constructing contexts", "contexts", contexts)
 
 	authInfos := make(map[string]*clientcmdapi.AuthInfo)
 	authInfos[userName] = &clientcmdapi.AuthInfo{
@@ -45,7 +85,7 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 		ClientCertificateData: restConfig.TLSClientConfig.CertData,
 		ClientKeyData:         restConfig.TLSClientConfig.KeyData,
 	}
-	log.V(2).Info("Constructing authInfos/users", "users", authInfos)
+	// log.V(2).Info("Constructing authInfos/users", "users", authInfos)
 
 	return &clientcmdapi.Config{
 		Kind:           "Config",
@@ -67,7 +107,8 @@ func WriteKubeconfigToFile(filePath string, clientConfig clientcmdapi.Config) er
 			return errors.Wrapf(err, "failed to create directory %s", dir)
 		}
 	}
-	log.V(2).Info("Preparing to write to file at dir", "directory", dir)
+
+	log.V(2).Info("Writing kubeconfig to location", "location", filePath)
 	if err := clientcmd.WriteToFile(clientConfig, filePath); err != nil {
 		return err
 	}
