@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: capi-visualizer
+  namespace: {{ .Release.Namespace }}
   labels:
     {{ .Values.label.key }}: {{ .Values.label.value }}
 spec:
@@ -20,4 +21,4 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 8081
-
+      serviceAccountName: capi-visualizer
