@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Jont828/cluster-api-visualizer/internal"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
@@ -40,6 +41,25 @@ var kubeContext = ""
 func init() {
 	log := klogr.New()
 
+	if inClusterConfig, err := rest.InClusterConfig(); err == nil {
+		apiConfig, err := internal.ConstructInClusterKubeconfig(inClusterConfig, "")
+		if err != nil {
+			log.Error(err, "error constructing in-cluster kubeconfig")
+			return
+		}
+		filePath := "tmp/management.kubeconfig"
+		if err = internal.WriteKubeconfigToFile(filePath, *apiConfig); err != nil {
+			log.Error(err, "error writing kubeconfig to file")
+			return
+		}
+		kubeconfigPath = filePath
+		kubeContext = apiConfig.CurrentContext
+	} else if err == rest.ErrNotInCluster {
+		log.V(2).Info("Not running in cluster, will use default kubeconfig discovery") // Try to initialize client but allow GUI to start anyway even if it fails
+	} else {
+		log.Error(err, "Unexpected error getting in cluster config, will allow frontend to start") // Try to initialize client but allow GUI to start anyway even if it fails
+	}
+
 	var httpErr *internal.HTTPError
 	c, httpErr = newClient()
 	if httpErr != nil {
@@ -53,12 +73,12 @@ func newClient() (*Client, *internal.HTTPError) {
 	c := &Client{}
 	var err error
 
-	c.DefaultClient, err = client.New("")
+	c.DefaultClient, err = client.New(kubeconfigPath)
 	if err != nil {
 		return nil, internal.NewInternalError(err)
 	}
 
-	configClient, err := config.New("")
+	configClient, err := config.New(kubeconfigPath)
 	if err != nil {
 		return nil, internal.NewInternalError(err)
 	}

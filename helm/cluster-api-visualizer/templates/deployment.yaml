@@ -20,14 +20,4 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 8081
-        env:
-        - name: KUBECONFIG
-          value: "/mnt/kubeconfig"
-        volumeMounts:
-          - mountPath: "/mnt"
-            name: management-kubeconfig
-            readOnly: true
-      volumes:
-      - name: management-kubeconfig
-        secret:
-          secretName: management-kubeconfig
+
