@@ -112,23 +112,20 @@ func main() {
 
 	if generateConfig {
 		log.V(2).Info("Generating kubeconfig file")
-		restConfig, err := configclient.GetConfig()
+		restConfig := configclient.GetConfigOrDie()
+
+		apiConfig, err := internal.ConstructInClusterKubeconfig(restConfig, "")
 		if err != nil {
-			log.Error(err, "failed to get config for management cluster, will attempt to use default discovery rules")
-		} else {
-			apiConfig, err := internal.ConstructInClusterKubeconfig(restConfig, "")
-			if err != nil {
-				log.Error(err, "error constructing in-cluster kubeconfig")
-				return
-			}
-			filePath := "tmp/management.kubeconfig"
-			if err = internal.WriteKubeconfigToFile(filePath, *apiConfig); err != nil {
-				log.Error(err, "error writing kubeconfig to file")
-				return
-			}
-			kubeconfigPath = filePath
-			kubeContext = apiConfig.CurrentContext
+			log.Error(err, "error constructing in-cluster kubeconfig")
+			return
 		}
+		filePath := "tmp/management.kubeconfig"
+		if err = internal.WriteKubeconfigToFile(filePath, *apiConfig); err != nil {
+			log.Error(err, "error writing kubeconfig to file")
+			return
+		}
+		kubeconfigPath = filePath
+		kubeContext = apiConfig.CurrentContext
 	}
 
 	var httpErr *internal.HTTPError

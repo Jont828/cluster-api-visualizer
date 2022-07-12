@@ -23,8 +23,11 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 	contextName := "default-context"
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters[clusterName] = &clientcmdapi.Cluster{
-		Server:                   restConfig.Host,
+		Server: restConfig.Host,
+		// Used in regular kubeconfigs.
 		CertificateAuthorityData: restConfig.CAData,
+		// Used in in-cluster configs.
+		CertificateAuthority: restConfig.CAFile,
 	}
 	log.V(2).Info("Constructing clusters", "clusters", clusters)
 
