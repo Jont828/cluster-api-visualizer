@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: v2
 name: cluster-api-visualizer
 description: A Helm Chart for installing the Cluster API Visualizer
 type: application
