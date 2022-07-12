@@ -33,4 +33,4 @@ RUN go build -o main
 
 EXPOSE 8081
 
-ENTRYPOINT [ "/app/main", "-host", "0.0.0.0" ]
+ENTRYPOINT [ "/app/main", "-host", "0.0.0.0", "-generate-config" ]
