@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/Jont828/cluster-api-visualizer/internal"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
@@ -23,6 +22,7 @@ import (
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/config"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	configclient "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 type Client struct {
@@ -37,35 +37,7 @@ var c *Client
 
 var kubeconfigPath = ""
 var kubeContext = ""
-
-func init() {
-	log := klogr.New()
-
-	if inClusterConfig, err := rest.InClusterConfig(); err == nil {
-		apiConfig, err := internal.ConstructInClusterKubeconfig(inClusterConfig, "")
-		if err != nil {
-			log.Error(err, "error constructing in-cluster kubeconfig")
-			return
-		}
-		filePath := "tmp/management.kubeconfig"
-		if err = internal.WriteKubeconfigToFile(filePath, *apiConfig); err != nil {
-			log.Error(err, "error writing kubeconfig to file")
-			return
-		}
-		kubeconfigPath = filePath
-		kubeContext = apiConfig.CurrentContext
-	} else if err == rest.ErrNotInCluster {
-		log.V(2).Info("Not running in cluster, will use default kubeconfig discovery") // Try to initialize client but allow GUI to start anyway even if it fails
-	} else {
-		log.Error(err, "Unexpected error getting in cluster config, will allow frontend to start") // Try to initialize client but allow GUI to start anyway even if it fails
-	}
-
-	var httpErr *internal.HTTPError
-	c, httpErr = newClient()
-	if httpErr != nil {
-		log.Error(httpErr, "failed to initialize client, will allow frontend to start") // Try to initialize client but allow GUI to start anyway even if it fails
-	}
-}
+var clusterctlConfigPath = ""
 
 func newClient() (*Client, *internal.HTTPError) {
 	log := klogr.New()
@@ -73,17 +45,22 @@ func newClient() (*Client, *internal.HTTPError) {
 	c := &Client{}
 	var err error
 
-	c.DefaultClient, err = client.New(kubeconfigPath)
+	clusterKubeconfig := cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}
+
+	c.DefaultClient, err = client.New(clusterctlConfigPath)
+	c.DefaultClient.Init(client.InitOptions{Kubeconfig: client.Kubeconfig(clusterKubeconfig)})
 	if err != nil {
+		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
 	}
 
-	configClient, err := config.New(kubeconfigPath)
+	configClient, err := config.New(clusterctlConfigPath)
 	if err != nil {
+		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
 	}
 
-	c.ClusterClient = cluster.New(cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}, configClient)
+	c.ClusterClient = cluster.New(clusterKubeconfig, configClient)
 
 	err = c.ClusterClient.Proxy().CheckClusterAvailable()
 	if err != nil {
@@ -93,11 +70,13 @@ func newClient() (*Client, *internal.HTTPError) {
 
 	c.RuntimeClient, err = c.ClusterClient.Proxy().NewClient()
 	if err != nil {
+		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
 	}
 
 	c.CurrentNamespace, err = c.ClusterClient.Proxy().CurrentNamespace()
 	if err != nil {
+		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
 	}
 
@@ -105,8 +84,10 @@ func newClient() (*Client, *internal.HTTPError) {
 	rules.ExplicitPath = c.ClusterClient.Kubeconfig().Path
 	c.K8sConfigClient, err = rules.Load()
 	if err != nil {
+		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
 	} else if c.K8sConfigClient == nil {
+		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
 	}
 
@@ -116,9 +97,11 @@ func newClient() (*Client, *internal.HTTPError) {
 func main() {
 	var host string
 	var port int
+	var generateConfig bool
 
 	flag.StringVar(&host, "host", "localhost", "Host to listen on")
 	flag.IntVar(&port, "port", 8081, "The port to listen on")
+	flag.BoolVar(&generateConfig, "generate-config", false, "Generate a kubeconfig file and write it to disk. Useful for running inside a pod within a cluster.")
 
 	klog.InitFlags(nil)
 	flag.Set("v", "2")
@@ -126,6 +109,33 @@ func main() {
 	flag.Parse()
 
 	log := klogr.New()
+
+	if generateConfig {
+		log.V(2).Info("Generating kubeconfig file")
+		restConfig, err := configclient.GetConfig()
+		if err != nil {
+			log.Error(err, "failed to get config for management cluster, will attempt to use default discovery rules")
+		} else {
+			apiConfig, err := internal.ConstructInClusterKubeconfig(restConfig, "")
+			if err != nil {
+				log.Error(err, "error constructing in-cluster kubeconfig")
+				return
+			}
+			filePath := "tmp/management.kubeconfig"
+			if err = internal.WriteKubeconfigToFile(filePath, *apiConfig); err != nil {
+				log.Error(err, "error writing kubeconfig to file")
+				return
+			}
+			kubeconfigPath = filePath
+			kubeContext = apiConfig.CurrentContext
+		}
+	}
+
+	var httpErr *internal.HTTPError
+	c, httpErr = newClient()
+	if httpErr != nil {
+		log.Error(httpErr, "failed to initialize client, will allow frontend to start") // Try to initialize client but allow GUI to start anyway even if it fails
+	}
 
 	http.Handle("/api/v1/multicluster/", http.HandlerFunc(handleMultiClusterTree))
 	http.Handle("/api/v1/custom-resource/", http.HandlerFunc(handleCustomResourceTree))

@@ -15,8 +15,12 @@ import (
 func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*clientcmdapi.Config, error) {
 	log := klogr.New()
 
+	// clusterName := "kind-capz"
+	// userName := "kind-capz"
+	// contextName := "kind-capz"
 	clusterName := "management-cluster"
 	userName := "default-user"
+	contextName := "default-context"
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters[clusterName] = &clientcmdapi.Cluster{
 		Server:                   restConfig.Host,
@@ -25,7 +29,7 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 	log.V(2).Info("Constructing clusters", "clusters", clusters)
 
 	contexts := make(map[string]*clientcmdapi.Context)
-	contexts["default-context"] = &clientcmdapi.Context{
+	contexts[contextName] = &clientcmdapi.Context{
 		Cluster:   clusterName,
 		Namespace: namespace,
 		AuthInfo:  userName,
@@ -45,7 +49,7 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 		APIVersion:     "v1",
 		Clusters:       clusters,
 		Contexts:       contexts,
-		CurrentContext: "default-context",
+		CurrentContext: contextName,
 		AuthInfos:      authInfos,
 	}, nil
 }
@@ -60,7 +64,7 @@ func WriteKubeconfigToFile(filePath string, clientConfig clientcmdapi.Config) er
 			return errors.Wrapf(err, "failed to create directory %s", dir)
 		}
 	}
-	log.V(2).Info("Preparing to write to file at dir", dir)
+	log.V(2).Info("Preparing to write to file at dir", "directory", dir)
 	if err := clientcmd.WriteToFile(clientConfig, filePath); err != nil {
 		return err
 	}
