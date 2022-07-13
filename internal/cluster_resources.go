@@ -30,6 +30,12 @@ type ClusterResourceNode struct {
 	Children    []*ClusterResourceNode `json:"children"`
 }
 
+type ClusterResourceTreeOptions struct {
+	GroupMachines                   bool
+	KindsToCollapse                 map[string]struct{}
+	VirtualNodeInheritChildProvider bool
+}
+
 // Note: ObjectReferenceObjects do not have the virtual annotation so we can assume that all virtual objects are collapsible
 
 func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
@@ -42,12 +48,20 @@ func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.
 		return nil, NewInternalError(err)
 	}
 
-	resourceTree := objectTreeToResourceTree(objTree, objTree.GetRoot(), true)
+	treeOptions := ClusterResourceTreeOptions{
+		GroupMachines: true,
+		KindsToCollapse: map[string]struct{}{
+			"TemplateGroup":           {},
+			"ClusterResourceSetGroup": {},
+		},
+		VirtualNodeInheritChildProvider: true,
+	}
+	resourceTree := objectTreeToResourceTree(objTree, objTree.GetRoot(), treeOptions)
 
 	return resourceTree, nil
 }
 
-func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object, groupMachines bool) *ClusterResourceNode {
+func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object, treeOptions ClusterResourceTreeOptions) *ClusterResourceNode {
 	log := klogr.New()
 
 	if object == nil {
@@ -59,31 +73,31 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	version := object.GetObjectKind().GroupVersionKind().Version
 
 	// fmt.Printf("%s %s %s %s\n", group, kind, version, object.GetObjectKind().GroupVersionKind().String())
-	provider, err := getProvider(object, group)
-	if err != nil {
-		log.Error(err, "failed to get provider for object", "kind", kind, "name", object.GetName())
-	}
 
+	// log.V(2).Info("Object has kind, name, and metaName", "kind", kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
+
+	_, collapsed := treeOptions.KindsToCollapse[kind]
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),
-		DisplayName: object.GetName(),
+		DisplayName: getDisplayName(object),
 		Kind:        kind,
 		Group:       group,
 		Version:     version,
-		Provider:    provider,
 		Collapsible: tree.IsVirtualObject(object),
-		Collapsed:   false,
+		Collapsed:   collapsed,
 		Children:    []*ClusterResourceNode{},
 		UID:         string(object.GetUID()),
 	}
 
-	if readyCondition := tree.GetReadyCondition(object); readyCondition != nil {
-		node.HasReady = true
-		node.Ready = readyCondition.Status == corev1.ConditionTrue
-		node.Severity = string(readyCondition.Severity)
-	}
-
 	children := objTree.GetObjectsByParent(object.GetUID())
+	provider, err := getProvider(object, children, treeOptions)
+	if err != nil {
+		log.Error(err, "failed to get provider for object", "kind", kind, "name", object.GetName())
+	}
+	node.Provider = provider
+
+	setReadyFields(object, node)
+
 	sort.Slice(children, func(i, j int) bool {
 		// TODO: make sure this is deterministic!
 		if children[i].GetObjectKind().GroupVersionKind().Kind == children[j].GetObjectKind().GroupVersionKind().Kind {
@@ -94,12 +108,16 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 
 	childTrees := []*ClusterResourceNode{}
 	for _, child := range children {
-		childTrees = append(childTrees, objectTreeToResourceTree(objTree, child, true))
+		childTrees = append(childTrees, objectTreeToResourceTree(objTree, child, treeOptions))
 		// node.Children = append(node.Children, objectTreeToResourceTree(objTree, child, true))
 	}
 
 	log.V(3).Info("Node is", "node", node.Kind+"/"+node.Name)
-	node.Children = createKindGroupNode(object.GetNamespace(), "Machine", "cluster", childTrees)
+	if treeOptions.GroupMachines {
+		node.Children = createKindGroupNode(object.GetNamespace(), "Machine", "cluster", childTrees)
+	} else {
+		node.Children = childTrees
+	}
 
 	return node
 }
@@ -124,7 +142,7 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 		Kind:        kind,
 		Group:       "virtual.cluster.x-k8s.io",
 		Version:     "v1beta1",
-		Provider:    "cluster",
+		Provider:    "cluster", // TODO: don't hardcode this
 		Collapsible: true,
 		Collapsed:   true,
 		Children:    []*ClusterResourceNode{},
@@ -159,7 +177,37 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 	return resultChildren
 }
 
-func getProvider(object ctrlclient.Object, group string) (string, error) {
+func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOptions ClusterResourceTreeOptions) (string, error) {
+	log := klogr.New()
+
+	if tree.IsVirtualObject(object) && treeOptions.VirtualNodeInheritChildProvider {
+		log.V(2).Info("Aggregating object w/ kind, name, and metaName", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
+
+		providerAggregate := ""
+		for _, child := range children {
+			provider, err := lookUpProvider(child)
+			if err != nil {
+				return "", err
+			}
+			log.V(2).Info("Child object w/ kind, name, and provider", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
+
+			if provider == "virtual" { // Do not inherit virtual provider
+				return "virtual", nil
+			}
+			if providerAggregate != "" && provider != providerAggregate { // If two children have different providers, don't inherit
+				return "virtual", nil
+			}
+			providerAggregate = provider
+		}
+
+		return providerAggregate, nil
+	} else {
+		return lookUpProvider(object)
+	}
+}
+
+func lookUpProvider(object ctrlclient.Object) (string, error) {
+	group := object.GetObjectKind().GroupVersionKind().Group
 	providerIndex := strings.IndexByte(group, '.')
 	if tree.IsVirtualObject(object) {
 		return "virtual", nil
@@ -167,6 +215,26 @@ func getProvider(object ctrlclient.Object, group string) (string, error) {
 		return group[:providerIndex], nil
 	} else {
 		return "", errors.Errorf("No provider found for object %s of %s \n", object.GetName(), object.GetObjectKind().GroupVersionKind().String())
+	}
+}
+
+func getDisplayName(object ctrlclient.Object) string {
+	metaName := tree.GetMetaName(object)
+	displayName := object.GetName()
+	if metaName != "" {
+		if object.GetName() == "" || tree.IsVirtualObject(object) {
+			displayName = metaName
+		}
+	}
+
+	return displayName
+}
+
+func setReadyFields(object ctrlclient.Object, node *ClusterResourceNode) {
+	if readyCondition := tree.GetReadyCondition(object); readyCondition != nil {
+		node.HasReady = true
+		node.Ready = readyCondition.Status == corev1.ConditionTrue
+		node.Severity = string(readyCondition.Severity)
 	}
 }
 
