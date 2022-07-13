@@ -31,9 +31,9 @@ type ClusterResourceNode struct {
 }
 
 type ClusterResourceTreeOptions struct {
-	GroupMachines                   bool
-	KindsToCollapse                 map[string]struct{}
-	VirtualNodeInheritChildProvider bool
+	GroupMachines                bool
+	KindsToCollapse              map[string]struct{}
+	VNodesToInheritChildProvider map[string]struct{}
 }
 
 // Note: ObjectReferenceObjects do not have the virtual annotation so we can assume that all virtual objects are collapsible
@@ -54,7 +54,10 @@ func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.
 			"TemplateGroup":           {},
 			"ClusterResourceSetGroup": {},
 		},
-		VirtualNodeInheritChildProvider: true,
+		VNodesToInheritChildProvider: map[string]struct{}{
+			"ClusterResourceSetGroup": {},
+			// "WorkerGroup":             {},
+		},
 	}
 	resourceTree := objectTreeToResourceTree(objTree, objTree.GetRoot(), treeOptions)
 
@@ -180,11 +183,15 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOptions ClusterResourceTreeOptions) (string, error) {
 	log := klogr.New()
 
-	if tree.IsVirtualObject(object) && treeOptions.VirtualNodeInheritChildProvider {
+	if tree.IsVirtualObject(object) {
+		_, inherit := treeOptions.VNodesToInheritChildProvider[object.GetObjectKind().GroupVersionKind().Kind]
+		if !inherit {
+			return "virtual", nil
+		}
 		log.V(2).Info("Aggregating object w/ kind, name, and metaName", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
 
-		providerAggregate := ""
-		for _, child := range children {
+		prev := ""
+		for i, child := range children {
 			provider, err := lookUpProvider(child)
 			if err != nil {
 				return "", err
@@ -194,13 +201,13 @@ func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOpt
 			if provider == "virtual" { // Do not inherit virtual provider
 				return "virtual", nil
 			}
-			if providerAggregate != "" && provider != providerAggregate { // If two children have different providers, don't inherit
+			if i > 0 && provider != prev { // If two children have different providers, don't inherit
 				return "virtual", nil
 			}
-			providerAggregate = provider
+			prev = provider
 		}
 
-		return providerAggregate, nil
+		return prev, nil
 	} else {
 		return lookUpProvider(object)
 	}
