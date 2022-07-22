@@ -32,6 +32,7 @@ type ClusterResourceNode struct {
 
 type ClusterResourceTreeOptions struct {
 	GroupMachines                bool
+	AddControlPlaneVirtualNode   bool
 	KindsToCollapse              map[string]struct{}
 	VNodesToInheritChildProvider map[string]struct{}
 }
@@ -49,7 +50,8 @@ func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.
 	}
 
 	treeOptions := ClusterResourceTreeOptions{
-		GroupMachines: true,
+		GroupMachines:              true,
+		AddControlPlaneVirtualNode: false,
 		KindsToCollapse: map[string]struct{}{
 			"TemplateGroup":           {},
 			"ClusterResourceSetGroup": {},
@@ -120,6 +122,23 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		node.Children = createKindGroupNode(object.GetNamespace(), "Machine", "cluster", childTrees)
 	} else {
 		node.Children = childTrees
+	}
+
+	if treeOptions.AddControlPlaneVirtualNode && tree.GetMetaName(object) == "ControlPlane" {
+		parent := &ClusterResourceNode{
+			Name:        "control-plane-parent",
+			DisplayName: "ControlPlane",
+			Kind:        kind,
+			Provider:    provider, // TODO: should this be provider=controlplane or provider=virtual?
+			Group:       group,
+			Version:     version,
+			Collapsible: true,
+			Collapsed:   false,
+			Children:    []*ClusterResourceNode{node},
+			UID:         "control-plane-parent",
+		}
+
+		return parent
 	}
 
 	return node
