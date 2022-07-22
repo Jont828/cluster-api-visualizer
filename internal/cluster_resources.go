@@ -151,6 +151,7 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 		Children:    []*ClusterResourceNode{},
 		HasReady:    false,
 		Ready:       true,
+		Severity:    "",
 		UID:         kind + ": ",
 	}
 
@@ -161,7 +162,8 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 			if child.HasReady {
 				groupNode.HasReady = true
 				groupNode.Ready = child.Ready && groupNode.Ready
-				groupNode.Severity = child.Severity
+				groupNode.Severity = updateSeverityIfMoreSevere(groupNode.Severity, child.Severity)
+				// Set severity based on most severe child, i.e. Error > Warning > Info > Success
 			}
 		} else {
 			resultChildren = append(resultChildren, child)
@@ -178,6 +180,27 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 	log.V(4).Info("Result children are ", "children", nodeArrayNames(resultChildren))
 
 	return resultChildren
+}
+
+func updateSeverityIfMoreSevere(existingSev string, newSev string) string {
+	switch {
+	case existingSev == "":
+		return newSev
+	case existingSev == "Info":
+		if newSev == "Error" || newSev == "Warning" {
+			return newSev
+		}
+		return existingSev
+	case existingSev == "Warning":
+		if newSev == "Error" {
+			return newSev
+		}
+		return existingSev
+	case existingSev == "Error":
+		return existingSev
+	}
+
+	return existingSev
 }
 
 func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOptions ClusterResourceTreeOptions) (string, error) {
