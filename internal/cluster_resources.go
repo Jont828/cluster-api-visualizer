@@ -51,7 +51,7 @@ func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.
 
 	treeOptions := ClusterResourceTreeOptions{
 		GroupMachines:              true,
-		AddControlPlaneVirtualNode: false,
+		AddControlPlaneVirtualNode: true,
 		KindsToCollapse: map[string]struct{}{
 			"TemplateGroup":           {},
 			"ClusterResourceSetGroup": {},
@@ -119,7 +119,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 
 	log.V(3).Info("Node is", "node", node.Kind+"/"+node.Name)
 	if treeOptions.GroupMachines {
-		node.Children = createKindGroupNode(object.GetNamespace(), "Machine", "cluster", childTrees)
+		node.Children = createKindGroupNode(object.GetNamespace(), "Machine", "cluster", childTrees, false)
 	} else {
 		node.Children = childTrees
 	}
@@ -129,7 +129,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 			Name:        "control-plane-parent",
 			DisplayName: "ControlPlane",
 			Kind:        kind,
-			Provider:    provider, // TODO: should this be provider=controlplane or provider=virtual?
+			Provider:    "virtual", // TODO: should this be provider=controlplane or provider=virtual?
 			Group:       group,
 			Version:     version,
 			Collapsible: true,
@@ -149,7 +149,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 // If count > 1, create a group node and add children to group node
 // Look into adding a striped background for nodes that aren't ready
 
-func createKindGroupNode(namespace string, kind string, provider string, children []*ClusterResourceNode) []*ClusterResourceNode {
+func createKindGroupNode(namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool) []*ClusterResourceNode {
 	log := klogr.New()
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
@@ -164,7 +164,7 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 		Kind:        kind,
 		Group:       "virtual.cluster.x-k8s.io",
 		Version:     "v1beta1",
-		Provider:    "cluster", // TODO: don't hardcode this
+		Provider:    provider, // TODO: don't hardcode this
 		Collapsible: true,
 		Collapsed:   true,
 		Children:    []*ClusterResourceNode{},
@@ -191,6 +191,9 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 
 	if len(groupNode.Children) > 1 {
 		groupNode.DisplayName = fmt.Sprintf("%d %s", len(groupNode.Children), flect.Pluralize(kind))
+		resultChildren = append(resultChildren, groupNode)
+	} else if len(groupNode.Children) == 1 && groupForOne {
+		groupNode.DisplayName = fmt.Sprintf("1 %s", kind)
 		resultChildren = append(resultChildren, groupNode)
 	} else {
 		resultChildren = append(resultChildren, groupNode.Children...)
