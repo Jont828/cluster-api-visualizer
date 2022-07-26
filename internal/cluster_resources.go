@@ -117,7 +117,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		// node.Children = append(node.Children, objectTreeToResourceTree(objTree, child, true))
 	}
 
-	log.V(3).Info("Node is", "node", node.Kind+"/"+node.Name)
+	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
 	if treeOptions.GroupMachines {
 		node.Children = createKindGroupNode(object.GetNamespace(), "Machine", "cluster", childTrees, false)
 	} else {
@@ -233,7 +233,7 @@ func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOpt
 		if !inherit {
 			return "virtual", nil
 		}
-		log.V(2).Info("Aggregating object w/ kind, name, and metaName", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
+		log.V(4).Info("Aggregating object w/ kind, name, and metaName", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
 
 		prev := ""
 		for i, child := range children {
@@ -241,7 +241,7 @@ func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOpt
 			if err != nil {
 				return "", err
 			}
-			log.V(2).Info("Child object w/ kind, name, and provider", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
+			log.V(4).Info("Child object w/ kind, name, and provider", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
 
 			if provider == "virtual" { // Do not inherit virtual provider
 				return "virtual", nil

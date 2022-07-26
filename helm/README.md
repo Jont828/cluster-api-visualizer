@@ -37,9 +37,9 @@ helm delete <name-of-cluster-api-visualizer-release>
 | Configuration value | Default value | Description |
 | --- | --- | --- |
 | `namespace` | `"default"` | Namespace the app will run on. |
-| `image.repository` | `"docker.io/jont828"` | Repository where the containerized app is hosted. |
+| `image.repository` | `"ghcr.io/jont828"` | Repository where the containerized app is hosted. |
 | `image.name` | `"cluster-api-visualizer"` | Name of the containerized app |
-| `image.tag` | `"0.0.7"` | Version of the app to run |
+| `image.tag` | `""` | Version of the app to run, if unset the chart `appVersion` is used |
 | `image.pullPolicy` | `"Always"` | Image pull policy for the deployment |
 | `label.key` | `"app"` | Internal selector key for selecting components. Default values recommended. |
 | `label.value` | `"capi-visualizer"` | Internal selector value for selecting components. Default values recommended. |
