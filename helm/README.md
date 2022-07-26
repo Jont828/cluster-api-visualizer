@@ -15,6 +15,8 @@ To deploy using the repo, run the following script from the root directory:
 ./hack/deploy-repo-to-kind.sh <name-of-management-cluster>
 ```
 
+Note: The repo in `helm/repo` will be deprecated in favor of repo hosted at the URL above.
+
 ### Install using the local Helm chart
 
 A local copy of the chart is also available at `./helm/cluster-api-visualizer`. To deploy using this chart, run the following script from the root directory:
