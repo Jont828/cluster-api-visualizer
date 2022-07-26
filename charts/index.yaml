@@ -2,10 +2,10 @@ apiVersion: v1
 entries:
   cluster-api-visualizer:
   - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2022-07-26T22:44:31.201154838Z"
+    appVersion: v0.1.0-alpha.2
+    created: "2022-07-26T22:59:17.011225344Z"
     description: A Helm Chart for installing the Cluster API Visualizer
-    digest: 59ebe66e2521f00c9f2d37f2214b40c9dd7404c50617167961d0657dd1afca7c
+    digest: 586730eba3f5af0703cc4f05ac4b5565ede4ac569a312d089f6a6adcc11acaf5
     maintainers:
     - email: jt572@cornell.edu
       name: Jonathan Tong
@@ -16,4 +16,4 @@ entries:
     urls:
     - https://Jont828.github.io/cluster-api-visualizer/charts/cluster-api-visualizer-0.1.1.tgz
     version: 0.1.1
-generated: "2022-07-26T22:44:31.200674836Z"
+generated: "2022-07-26T22:59:17.00997087Z"
