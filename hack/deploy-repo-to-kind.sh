@@ -3,7 +3,7 @@
 ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 NAMESPACE=${NAMESPACE:-default}
 
-helm install --repo https://raw.githubusercontent.com/Jont828/cluster-api-visualizer/main/helm/repo cluster-api-visualizer --generate-name -n ${NAMESPACE}|| exit 1
+helm install --repo https://jont828.github.io/cluster-api-visualizer/charts cluster-api-visualizer --generate-name -n ${NAMESPACE}|| exit 1
 kubectl rollout status deployment -n ${NAMESPACE} capi-visualizer
 
 echo "Running at http://localhost:8081"
