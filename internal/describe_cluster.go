@@ -107,22 +107,17 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 
 	sort.Slice(children, func(i, j int) bool {
 		// TODO: make sure this is deterministic!
-		// TODO: sort by display name instead?
-		// getKindAndDisplayName := func(obj ctrlclient.Object) string {
-		// 	return fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, getDisplayName(obj))
-		// }
+		// Sort by z-order, then kind, then display name
 
-		// if tree.GetZOrder(children[i]) == tree.GetZOrder(children[j]) {
-		// 	return getKindAndDisplayName(children[i]) < getKindAndDisplayName(children[j])
-		// }
+		if tree.GetZOrder(children[i]) == tree.GetZOrder(children[j]) {
+			if children[i].GetObjectKind().GroupVersionKind().Kind == children[j].GetObjectKind().GroupVersionKind().Kind {
+				return getDisplayName(children[i]) < getDisplayName(children[j])
+			}
+			return children[i].GetObjectKind().GroupVersionKind().Kind < children[j].GetObjectKind().GroupVersionKind().Kind
 
-		// log.V(2).Info("Sorting by zOrder", "i", getKindAndDisplayName(children[i]), "j", getKindAndDisplayName(children[j]), "iZOrder", tree.GetZOrder(children[i]), "jZOrder", tree.GetZOrder(children[j]))
-		// return tree.GetZOrder(children[i]) > tree.GetZOrder(children[j])
-
-		if children[i].GetObjectKind().GroupVersionKind().Kind == children[j].GetObjectKind().GroupVersionKind().Kind {
-			return getDisplayName(children[i]) < getDisplayName(children[j])
 		}
-		return children[i].GetObjectKind().GroupVersionKind().Kind < children[j].GetObjectKind().GroupVersionKind().Kind
+		return tree.GetZOrder(children[i]) > tree.GetZOrder(children[j])
+
 	})
 
 	childTrees := []*ClusterResourceNode{}
