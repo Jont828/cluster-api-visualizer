@@ -15,7 +15,7 @@
           <template v-slot:default="{ hover }">
             <!-- :to="{ path: 'clusters', params: { name: node.name, namespace: node.namespace }}" -->
             <router-link
-              :to="'/clusters?name=' + node.name + '&namespace=' + node.namespace"
+              :to="'/cluster?name=' + node.name + '&namespace=' + node.namespace"
               :event="node.isManagement ? '' : 'click' /* disable link on management cluster */"
               class="node-router-link"
             >

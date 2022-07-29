@@ -12,7 +12,7 @@ const routes = [
     component: ManagementCluster
   },
   {
-    path: '/clusters/',
+    path: '/cluster/',
     name: 'DescribeCluster',
     component: DescribeCluster,
     props: true
