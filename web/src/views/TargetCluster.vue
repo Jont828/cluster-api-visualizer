@@ -1,7 +1,8 @@
 <template>
   <div class="wrapper">
+    <!-- :title="'Cluster Resources: ' + this.$route.query.namespace + '/' + this.$route.query.name" -->
     <AppBar
-      :title="'Cluster Resources: ' + this.$route.params.id"
+      :title="'Cluster Resources: ' + this.$route.query.name"
       :showBack="true"
       :isStraight="isStraight"
       :scale="scale"
@@ -120,6 +121,7 @@ export default {
         params.append("kind", node.kind);
         params.append("apiVersion", node.group + "/" + node.version);
         params.append("name", node.name);
+        params.append("namespace", node.namespace);
 
         const response = await Vue.axios.get("/custom-resource", {
           params: params,
@@ -161,11 +163,20 @@ export default {
       }
     },
     async fetchCluster(forceRedraw = false) {
+      console.log("Query params are ", this.$route.query);
+      console.log("Other params are ", this.$route.params);
       try {
         // const response = await getCluster(this.$route.params.id);
-        const response = await Vue.axios.get(
-          "/cluster-resources/" + this.$route.params.id
-        );
+        const params = new URLSearchParams();
+        params.append("name", this.$route.query.name);
+        params.append("namespace", this.$route.query.namespace);
+
+        const response = await Vue.axios.get("/cluster-resources", {
+          params: params,
+        });
+        // const response = await Vue.axios.get(
+        //   "/cluster-resources/" + this.$route.params.id
+        // );
 
         console.log("Target cluster data:", response.data);
         if (

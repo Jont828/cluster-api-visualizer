@@ -271,13 +271,17 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 	log := klogr.New()
 
 	log.V(2).Info("GET call to url", "url", r.URL.Path)
-	clusterName := r.URL.Path[len("/api/v1/cluster-resources/"):]
+	log.V(2).Info("GET call params are", "params", r.URL.Query())
+	// name := r.URL.Path[len("/api/v1/cluster-resources/"):]
+	// namespace := r.URL.Query().Get("namespace")
+	name := r.URL.Query().Get("name")
+	namespace := r.URL.Query().Get("namespace")
 
 	// Uncomment these fields when changes merge to CAPI main
 	dcOptions := client.DescribeClusterOptions{
 		Kubeconfig:              client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
-		Namespace:               "",
-		ClusterName:             clusterName,
+		Namespace:               namespace,
+		ClusterName:             name,
 		ShowOtherConditions:     "",
 		ShowMachineSets:         true,
 		Echo:                    true,
@@ -289,7 +293,7 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 
 	tree, httpErr := internal.ConstructClusterResourceTree(c.DefaultClient, dcOptions)
 	if httpErr != nil {
-		log.Error(httpErr, "failed to construct resource tree for target cluster", "clusterName", clusterName)
+		log.Error(httpErr, "failed to construct resource tree for target cluster", "clusterName", name)
 		http.Error(w, httpErr.Error(), httpErr.Status)
 		return
 	}
@@ -315,9 +319,10 @@ func handleCustomResourceTree(w http.ResponseWriter, r *http.Request) {
 	kind := r.URL.Query().Get("kind")
 	apiVersion := r.URL.Query().Get("apiVersion")
 	name := r.URL.Query().Get("name")
+	namespace := r.URL.Query().Get("namespace")
 
 	// TODO: should the runtimeClient be regenerated here?
-	object, httpErr := internal.GetCustomResource(c.RuntimeClient, kind, apiVersion, c.CurrentNamespace, name)
+	object, httpErr := internal.GetCustomResource(c.RuntimeClient, kind, apiVersion, namespace, name)
 	if httpErr != nil {
 		log.Error(httpErr, "failed to construct tree for custom resource", "kind", kind, "name", name)
 		http.Error(w, httpErr.Error(), httpErr.Status)
