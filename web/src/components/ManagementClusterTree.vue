@@ -85,7 +85,7 @@ import AlertError from "./AlertError.vue";
 import Phase from "./Phase.vue";
 
 export default {
-  name: "OverviewTree",
+  name: "ManagementClusterTree",
   components: {
     VueTree,
     AlertError,

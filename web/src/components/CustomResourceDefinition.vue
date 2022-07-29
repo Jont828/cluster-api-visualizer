@@ -98,7 +98,7 @@ import yaml from "js-yaml";
 import StatusIcon from "./StatusIcon.vue";
 
 export default {
-  name: "CustomResourceTree",
+  name: "CustomResourceDefinition",
   components: {
     StatusIcon,
   },

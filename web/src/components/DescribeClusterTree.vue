@@ -104,7 +104,7 @@ import VueTree from "../components/VueTree.vue";
 import Badge from "../components/Badge.vue";
 
 export default {
-  name: "TargetClusterTree",
+  name: "DescribeClusterTree",
   components: {
     VueTree,
     Badge,

@@ -9,7 +9,7 @@
       @zoomIn="() => { $refs.overviewTree.$refs.tree.zoomIn() }"
       @zoomOut="() => { $refs.overviewTree.$refs.tree.zoomOut() }"
     />
-    <OverviewTree
+    <ManagementClusterTree
       ref="overviewTree"
       :isStraight="this.isStraight"
       :treeConfig="treeConfig"
@@ -23,13 +23,13 @@
 <script>
 import Vue from "vue";
 
-import OverviewTree from "../components/OverviewTree.vue";
+import ManagementClusterTree from "../components/ManagementClusterTree.vue";
 import AppBar from "../components/AppBar.vue";
 
 export default {
-  name: "Overview",
+  name: "ManagementCluster",
   components: {
-    OverviewTree,
+    ManagementClusterTree,
     AppBar,
   },
   async beforeMount() {
@@ -66,7 +66,7 @@ export default {
     },
     async fetchOverview(forceRedraw = false) {
       try {
-        const response = await Vue.axios.get("/multicluster");
+        const response = await Vue.axios.get("/management-cluster");
 
         if (response.data == null) {
           this.errorMessage =

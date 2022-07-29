@@ -134,9 +134,9 @@ func main() {
 		log.Error(httpErr, "failed to initialize client, will allow frontend to start") // Try to initialize client but allow GUI to start anyway even if it fails
 	}
 
-	http.Handle("/api/v1/multicluster/", http.HandlerFunc(handleMultiClusterTree))
-	http.Handle("/api/v1/custom-resource/", http.HandlerFunc(handleCustomResourceTree))
-	http.Handle("/api/v1/cluster-resources/", http.HandlerFunc(handleClusterResourceTree))
+	http.Handle("/api/v1/management-cluster/", http.HandlerFunc(handleManagementClusterTree))
+	http.Handle("/api/v1/custom-resource-definition/", http.HandlerFunc(handleCustomResourceDefinitionTree))
+	http.Handle("/api/v1/describe-cluster/", http.HandlerFunc(handleDescribeClusterTree))
 
 	var frontend fs.FS = os.DirFS("web/dist")
 	httpFS := http.FS(frontend)
@@ -234,7 +234,7 @@ func serveFileContents(file string, files http.FileSystem) http.HandlerFunc {
 	}
 }
 
-func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
+func handleManagementClusterTree(w http.ResponseWriter, r *http.Request) {
 	log := klogr.New()
 
 	log.V(2).Info("GET call to url", "url", r.URL.Path)
@@ -267,7 +267,7 @@ func handleMultiClusterTree(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
+func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {
 	log := klogr.New()
 
 	log.V(2).Info("GET call to url", "url", r.URL.Path)
@@ -310,7 +310,7 @@ func handleClusterResourceTree(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleCustomResourceTree(w http.ResponseWriter, r *http.Request) {
+func handleCustomResourceDefinitionTree(w http.ResponseWriter, r *http.Request) {
 	log := klogr.New()
 
 	log.V(2).Info("GET call to url", "url", r.URL.Path)

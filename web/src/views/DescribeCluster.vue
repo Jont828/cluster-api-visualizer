@@ -15,7 +15,7 @@
       id="chartLoadWrapper"
       v-if="treeIsReady"
     >
-      <TargetClusterTree
+      <DescribeClusterTree
         id="targetTree"
         ref="targetTree"
         :treeConfig="treeConfig"
@@ -34,7 +34,7 @@
         class="resourceView"
         v-if="resourceIsReady && this.selected.name"
       >
-        <CustomResourceTree
+        <CustomResourceDefinition
           :items="treeviewResource"
           :jsonItems="resource"
           :name="selected.kind + '/' + selected.name"
@@ -65,20 +65,20 @@
 <script>
 /* eslint-disable */
 import Vue from "vue";
-import TargetClusterTree from "../components/TargetClusterTree.vue";
+import DescribeClusterTree from "../components/DescribeClusterTree.vue";
 import AppBar from "../components/AppBar.vue";
-import CustomResourceTree from "../components/CustomResourceTree.vue";
+import CustomResourceDefinition from "../components/CustomResourceDefinition.vue";
 import AlertError from "../components/AlertError.vue";
 import _ from "lodash";
 
 import colors from "vuetify/lib/util/colors";
 
 export default {
-  name: "TargetCluster",
+  name: "DescribeCluster",
   components: {
-    TargetClusterTree,
+    DescribeClusterTree,
     AppBar,
-    CustomResourceTree,
+    CustomResourceDefinition,
     AlertError,
   },
   async beforeMount() {
@@ -123,7 +123,7 @@ export default {
         params.append("name", node.name);
         params.append("namespace", node.namespace);
 
-        const response = await Vue.axios.get("/custom-resource", {
+        const response = await Vue.axios.get("/custom-resource-definition", {
           params: params,
         });
         console.log("Response is", response.data);
@@ -171,7 +171,7 @@ export default {
         params.append("name", this.$route.query.name);
         params.append("namespace", this.$route.query.namespace);
 
-        const response = await Vue.axios.get("/cluster-resources", {
+        const response = await Vue.axios.get("/describe-cluster", {
           params: params,
         });
         // const response = await Vue.axios.get(

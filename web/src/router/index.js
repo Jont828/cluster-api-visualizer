@@ -1,25 +1,25 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import ClusterOverview from '../views/ClusterOverview.vue'
-import TargetCluster from '../views/TargetCluster.vue'
+import ManagementCluster from '../views/ManagementCluster.vue'
+import DescribeCluster from '../views/DescribeCluster.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
     path: '/',
-    name: 'ClusterOverview',
-    component: ClusterOverview
+    name: 'ManagementCluster',
+    component: ManagementCluster
   },
   {
     path: '/clusters/',
-    name: 'TargetCluster',
-    component: TargetCluster,
+    name: 'DescribeCluster',
+    component: DescribeCluster,
     props: true
   },
   {
     path: '*',
-    component: ClusterOverview
+    component: ManagementCluster
   }
 ]
 
