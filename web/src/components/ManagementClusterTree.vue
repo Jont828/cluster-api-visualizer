@@ -24,6 +24,7 @@
                 :elevation="hover ? 6 : 3"
                 :style="{ 
                   border: collapsed ? '2px solid grey' : '',
+                  height: (node.isManagement) ? '120px' : '140px',
                   // 'background-color': hover ? '#f0f0f0' : '#fff'
                 }"
               >
@@ -38,9 +39,11 @@
                 </v-card-title>
                 <!-- <v-card-subtitle class="cardSubtitle">{{ (node.isManagement) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle> -->
                 <v-card-subtitle
-                  v-if="node.isManagement"
-                  class="cardSubtitle"
-                >Management Cluster</v-card-subtitle>
+                  v-if="!node.isManagement"
+                  class="pb-1"
+                >{{ node.namespace }}</v-card-subtitle>
+
+                <v-card-subtitle v-if="node.isManagement">Management Cluster</v-card-subtitle>
                 <Phase
                   v-else
                   :phase="node.phase"
@@ -163,6 +166,7 @@ export default {
     padding-right: 12px;
 
     .card-bottom-text {
+      padding-top: 8px;
       padding-left: 8px;
     }
   }

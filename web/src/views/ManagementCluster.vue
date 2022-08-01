@@ -53,7 +53,7 @@ export default {
     return {
       polling: null,
       isStraight: false,
-      treeConfig: { nodeWidth: 300, nodeHeight: 120, levelHeight: 200 },
+      treeConfig: { nodeWidth: 300, nodeHeight: 140, levelHeight: 250 },
       treeData: {},
       cachedTreeString: "",
       treeIsReady: false,

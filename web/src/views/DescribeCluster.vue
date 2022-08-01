@@ -2,7 +2,7 @@
   <div class="wrapper">
     <!-- :title="'Cluster Resources: ' + this.$route.query.namespace + '/' + this.$route.query.name" -->
     <AppBar
-      :title="'Cluster Resources: ' + this.$route.query.name"
+      :title="'Cluster Resources: ' + getTitle()"
       :showBack="true"
       :isStraight="isStraight"
       :scale="scale"
@@ -85,7 +85,7 @@ export default {
     await this.fetchCluster();
   },
   mounted() {
-    document.title = "Cluster Resources: " + this.$route.query.name;
+    document.title = "Cluster Resources: " + this.getTitle();
     const reloadTime = 60 * 1000; // 1 minute
     this.polling = setInterval(
       function () {
@@ -102,6 +102,14 @@ export default {
     clearInterval(this.polling);
   },
   methods: {
+    getTitle() {
+      let namespace = this.$route.query.namespace;
+      let name = this.$route.query.name;
+      if (namespace != "" && namespace != "default") {
+        return namespace + "/" + name;
+      }
+      return name;
+    },
     linkHandler(val) {
       this.isStraight = val;
     },

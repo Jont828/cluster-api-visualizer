@@ -28,6 +28,7 @@ func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *ap
 
 	currentContextName := k8sConfigClient.CurrentContext
 	currentContext, ok := k8sConfigClient.Contexts[currentContextName]
+	currentNamespace := currentContext.Namespace
 	if !ok {
 		return nil, &HTTPError{Status: 404, Message: "current context not found"}
 	}
@@ -39,7 +40,7 @@ func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *ap
 
 	root := &MultiClusterTreeNode{
 		Name:                   name,
-		Namespace:              "",
+		Namespace:              currentNamespace,
 		InfrastructureProvider: "",
 		Children:               []*MultiClusterTreeNode{},
 		IsManagement:           true,
