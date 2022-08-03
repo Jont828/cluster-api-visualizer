@@ -24,7 +24,7 @@
                 :elevation="hover ? 6 : 3"
                 :style="{ 
                   border: collapsed ? '2px solid grey' : '',
-                  height: (node.isManagement) ? '120px' : '140px',
+                  // height: (node.isManagement) ? '120px' : '140px',
                   // 'background-color': hover ? '#f0f0f0' : '#fff'
                 }"
               >
@@ -38,14 +38,11 @@
                   </v-icon>
                 </v-card-title>
                 <!-- <v-card-subtitle class="cardSubtitle">{{ (node.isManagement) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle> -->
-                <v-card-subtitle
-                  v-if="!node.isManagement"
-                  class="pb-1"
-                >{{ node.namespace }}</v-card-subtitle>
+                <v-card-subtitle class="pb-1">{{ node.namespace }}</v-card-subtitle>
 
-                <v-card-subtitle v-if="node.isManagement">Management Cluster</v-card-subtitle>
+                <!-- <v-card-subtitle v-if="node.isManagement">Management Cluster</v-card-subtitle> -->
                 <Phase
-                  v-else
+                  v-if="!node.isManagement"
                   :phase="node.phase"
                 />
                 <v-card-actions
@@ -141,7 +138,7 @@ export default {
 
 .node {
   width: 250px;
-  height: 120px;
+  height: 140px;
   background-color: #fff;
 
   p {
