@@ -46,14 +46,12 @@
                   v-if="!node.isManagement"
                   :phase="node.phase"
                 />
-                <v-card-actions
-                  class="cardActions"
-                  v-if="!node.isManagement"
-                >
-                  <v-card-text class="card-bottom-text">Resources</v-card-text>
-                  <v-spacer></v-spacer>
-                  <v-icon>mdi-arrow-top-right</v-icon>
-
+                <v-card-actions :class="[ 'cardActions', (node.isManagement) ? 'pt-8' : 'pt-2' ]">
+                  <v-card-text class="card-bottom-text">{{ (node.isManagement) ? 'Management Cluster' : 'View Workload Cluster' }}</v-card-text>
+                  <span v-if="!node.isManagement">
+                    <v-spacer></v-spacer>
+                    <v-icon>mdi-arrow-top-right</v-icon>
+                  </span>
                 </v-card-actions>
 
               </v-card>
@@ -160,11 +158,11 @@ export default {
   }
 
   .cardActions {
-    padding-top: 0;
     padding-right: 12px;
 
     .card-bottom-text {
-      padding-top: 8px;
+      padding-top: 0px;
+      padding-bottom: 0;
       padding-left: 8px;
     }
   }
