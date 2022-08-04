@@ -16,6 +16,7 @@
             <!-- :to="{ path: 'clusters', params: { name: node.name, namespace: node.namespace }}" -->
             <router-link
               :to="'/cluster?name=' + node.name + '&namespace=' + node.namespace"
+              :is="node.isManagement ? 'span' : 'router-link'"
               :event="node.isManagement ? '' : 'click' /* disable link on management cluster */"
               class="node-router-link"
             >
@@ -38,7 +39,7 @@
                   </v-icon>
                 </v-card-title>
                 <!-- <v-card-subtitle class="cardSubtitle">{{ (node.isManagement) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle> -->
-                <v-card-subtitle class="pb-1">{{ node.namespace }}</v-card-subtitle>
+                <v-card-subtitle class="pb-1">{{ (node.namespace == "") ? "default" : node.namespace }}</v-card-subtitle>
 
                 <!-- <v-card-subtitle v-if="node.isManagement">Management Cluster</v-card-subtitle> -->
                 <Phase
