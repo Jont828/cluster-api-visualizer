@@ -85,7 +85,6 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	_, collapsed := treeOptions.KindsToCollapse[kind]
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),
-		Namespace:   object.GetNamespace(),
 		DisplayName: getDisplayName(object),
 		Kind:        kind,
 		Group:       group,
@@ -94,6 +93,9 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		Collapsed:   collapsed,
 		Children:    []*ClusterResourceNode{},
 		UID:         string(object.GetUID()),
+	}
+	if node.Namespace = object.GetNamespace(); node.Namespace == "" {
+		node.Namespace = "default"
 	}
 
 	children := objTree.GetObjectsByParent(object.GetUID())

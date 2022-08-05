@@ -25,27 +25,41 @@
 
       </v-card-title>
       <v-card-subtitle>
-        <div class="conditionChipWrapper my-2">
-          <v-chip
-            active
-            link
-            :class="{
-              'conditionChip': true,
-            }"
+        <div class="conditionChipListWrapper my-2">
+          <div
             v-for="(condition, index) in conditions"
             :key="index"
-            color="white"
-            :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
-            @click="selectCondition(index)"
           >
-            <StatusIcon
-              :type="(condition.status) ? 'success' : condition.severity.toLowerCase()"
-              :spinnerWidth="2"
-              left
+            <v-tooltip
+              :top="scrollY <= 20"
+              :bottom="scrollY > 20"
+              :disabled="condition.status"
             >
-            </StatusIcon>
-            {{ condition.type }}
-          </v-chip>
+              <template v-slot:activator="{ on, attrs }">
+                <v-chip
+                  active
+                  link
+                  :class="{
+                    'conditionChip': true,
+                  }"
+                  color="white"
+                  :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
+                  @click="selectCondition(index)"
+                  v-bind="attrs"
+                  v-on="on"
+                >
+                  <StatusIcon
+                    :type="(condition.status) ? 'success' : condition.severity.toLowerCase()"
+                    :spinnerWidth="2"
+                    left
+                  >
+                  </StatusIcon>
+                  {{ condition.type }}
+                </v-chip>
+              </template>
+              <span>{{ condition.severity }}: {{ condition.reason }}</span>
+            </v-tooltip>
+          </div>
         </div>
 
         <div class="mt-4">
@@ -115,12 +129,20 @@ export default {
       search: null,
       caseSensitive: false,
       conditions: [],
+      scrollY: 0,
     };
   },
   mounted() {
     this.setConditions(this.jsonItems?.status?.conditions);
+    console.log("Scroll is", window.scrollY);
+    window.addEventListener("scroll", this.onScroll);
   },
   methods: {
+    onScroll(e) {
+      console.log("Scroll is", window.scrollY);
+      this.scrollY = window.scrollY;
+      // this.windowTop = window.top.scrollY /* or: e.target.documentElement.scrollTop */
+    },
     downloadYaml() {
       const yamlCRD = yaml.dump(this.jsonItems);
       const link = document.createElement("a");
@@ -137,9 +159,11 @@ export default {
             status: e.status === "True",
             isError: e.severity === "Error",
             severity: e.severity,
+            reason: e.reason,
           });
         });
       }
+      console.log(this.conditions);
     },
     selectCondition(index) {
       this.open.push(".status");
@@ -183,7 +207,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.conditionChipWrapper {
+.conditionChipListWrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
