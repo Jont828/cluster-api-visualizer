@@ -107,32 +107,11 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 
 	setReadyFields(object, node)
 
-	sort.Slice(children, func(i, j int) bool {
-		// TODO: make sure this is deterministic!
-		// Sort by z-order, then kind, then display name
-
-		if tree.GetZOrder(children[i]) == tree.GetZOrder(children[j]) {
-			if children[i].GetObjectKind().GroupVersionKind().Kind == children[j].GetObjectKind().GroupVersionKind().Kind {
-				return getDisplayName(children[i]) < getDisplayName(children[j])
-			}
-			return children[i].GetObjectKind().GroupVersionKind().Kind < children[j].GetObjectKind().GroupVersionKind().Kind
-
-		}
-		return tree.GetZOrder(children[i]) > tree.GetZOrder(children[j])
-
-	})
-
 	childTrees := []*ClusterResourceNode{}
 	for _, child := range children {
 		childTrees = append(childTrees, objectTreeToResourceTree(objTree, child, treeOptions))
 		// node.Children = append(node.Children, objectTreeToResourceTree(objTree, child, true))
 	}
-
-	// sort.Slice(childTrees, func(i, j int) bool {
-	// 	// TODO: make sure this is deterministic!
-	// 	// TODO: sort by display name instead?
-	// 	return childTrees[i].Kind+"/"+childTrees[i].DisplayName < childTrees[j].Kind+"/"+childTrees[j].DisplayName
-	// })
 
 	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
 	if treeOptions.GroupMachines {
@@ -140,6 +119,14 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	} else {
 		node.Children = childTrees
 	}
+
+	sort.Slice(node.Children, func(i, j int) bool {
+		// TODO: make sure this is deterministic!
+		if getSortKeys(node.Children[i])[0] == getSortKeys(node.Children[j])[0] {
+			return getSortKeys(node.Children[i])[1] < getSortKeys(node.Children[j])[1]
+		}
+		return getSortKeys(node.Children[i])[0] < getSortKeys(node.Children[j])[0]
+	})
 
 	if treeOptions.AddControlPlaneVirtualNode && tree.GetMetaName(object) == "ControlPlane" {
 		parent := &ClusterResourceNode{
@@ -162,6 +149,17 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	return node
 }
 
+func getSortKeys(node *ClusterResourceNode) []string {
+	if node.Group == "virtual.cluster.x-k8s.io" {
+		return []string{node.DisplayName, ""}
+	}
+	return []string{node.Kind, node.DisplayName}
+	// if tree.IsVirtualObject(object) {
+	// 	return []string{getDisplayName(object), ""}
+	// }
+	// return []string{object.GetObjectKind().GroupVersionKind().Kind, getDisplayName(object)}
+}
+
 // TODO: create map of kinds to group by
 // For each kind in map, get count of the kind in children
 // If count > 1, create a group node and add children to group node
@@ -181,8 +179,6 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 		Namespace:   namespace,
 		DisplayName: "",
 		Kind:        kind,
-		Group:       "virtual.cluster.x-k8s.io",
-		Version:     "v1beta1",
 		Provider:    provider, // TODO: don't hardcode this
 		Collapsible: true,
 		Collapsed:   true,
@@ -195,6 +191,8 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 
 	for _, child := range children {
 		if child.Kind == kind {
+			groupNode.Group = child.Group
+			groupNode.Version = child.Version
 			groupNode.Children = append(groupNode.Children, child)
 			groupNode.UID += child.UID + " "
 			if child.HasReady {
