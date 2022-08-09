@@ -33,10 +33,6 @@ func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *ap
 		return nil, &HTTPError{Status: 404, Message: "current context not found"}
 	}
 	name := currentContext.Cluster
-	// namespace, err := clusterClient.Proxy().CurrentNamespace()
-	// if err != nil {
-	// 	return nil, NewInternalError(err)
-	// }
 
 	root := &MultiClusterTreeNode{
 		Name:                   name,
@@ -64,10 +60,6 @@ func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *ap
 	})
 
 	for _, cluster := range clusterList.Items {
-		// Don't get the kubeconfig for now until we use it to find additional clusters.
-		// kubeconfig, err := pkgClient.GetKubeconfig(client.GetKubeconfigOptions{
-		// 	WorkloadClusterName: clusterName,
-		// })
 		infraProvider := cluster.Spec.InfrastructureRef.Kind
 
 		readyCondition := conditions.Get(&cluster, clusterv1.ReadyCondition)

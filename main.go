@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 
-	// "log"
 	"net/http"
 	"os"
 	"strings"
@@ -247,7 +246,6 @@ func handleManagementClusterTree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: should we pass in the runtimeClient here or regenerate it in the function?
 	tree, httpErr := internal.ConstructMultiClusterTree(c.RuntimeClient, c.K8sConfigClient)
 	if httpErr != nil {
 		log.Error(httpErr, "failed to construct management cluster tree view")
@@ -272,12 +270,9 @@ func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {
 
 	log.V(2).Info("GET call to url", "url", r.URL.Path)
 	log.V(2).Info("GET call params are", "params", r.URL.Query())
-	// name := r.URL.Path[len("/api/v1/cluster-resources/"):]
-	// namespace := r.URL.Query().Get("namespace")
 	name := r.URL.Query().Get("name")
 	namespace := r.URL.Query().Get("namespace")
 
-	// Uncomment these fields when changes merge to CAPI main
 	dcOptions := client.DescribeClusterOptions{
 		Kubeconfig:              client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
 		Namespace:               namespace,

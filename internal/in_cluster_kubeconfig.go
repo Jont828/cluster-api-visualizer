@@ -69,7 +69,6 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 		// Used in in-cluster configs.
 		CertificateAuthority: restConfig.CAFile,
 	}
-	// log.V(2).Info("Constructing clusters", "clusters", clusters)
 
 	contexts := make(map[string]*clientcmdapi.Context)
 	contexts[contextName] = &clientcmdapi.Context{
@@ -77,7 +76,6 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 		Namespace: namespace,
 		AuthInfo:  userName,
 	}
-	// log.V(2).Info("Constructing contexts", "contexts", contexts)
 
 	authInfos := make(map[string]*clientcmdapi.AuthInfo)
 	authInfos[userName] = &clientcmdapi.AuthInfo{
@@ -85,7 +83,6 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 		ClientCertificateData: restConfig.TLSClientConfig.CertData,
 		ClientKeyData:         restConfig.TLSClientConfig.KeyData,
 	}
-	// log.V(2).Info("Constructing authInfos/users", "users", authInfos)
 
 	return &clientcmdapi.Config{
 		Kind:           "Config",

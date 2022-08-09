@@ -39,7 +39,6 @@ type ClusterResourceTreeOptions struct {
 }
 
 // Note: ObjectReferenceObjects do not have the virtual annotation so we can assume that all virtual objects are collapsible
-
 func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
 	objTree, err := defaultClient.DescribeCluster(dcOptions)
 	if err != nil {
@@ -78,10 +77,6 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	kind := object.GetObjectKind().GroupVersionKind().Kind
 	version := object.GetObjectKind().GroupVersionKind().Version
 
-	// fmt.Printf("%s %s %s %s\n", group, kind, version, object.GetObjectKind().GroupVersionKind().String())
-
-	// log.V(2).Info("Object has kind, name, and metaName", "kind", kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
-
 	_, collapsed := treeOptions.KindsToCollapse[kind]
 	node := &ClusterResourceNode{
 		Name:        object.GetName(),
@@ -110,7 +105,6 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	childTrees := []*ClusterResourceNode{}
 	for _, child := range children {
 		childTrees = append(childTrees, objectTreeToResourceTree(objTree, child, treeOptions))
-		// node.Children = append(node.Children, objectTreeToResourceTree(objTree, child, true))
 	}
 
 	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
@@ -154,24 +148,13 @@ func getSortKeys(node *ClusterResourceNode) []string {
 		return []string{node.DisplayName, ""}
 	}
 	return []string{node.Kind, node.DisplayName}
-	// if tree.IsVirtualObject(object) {
-	// 	return []string{getDisplayName(object), ""}
-	// }
-	// return []string{object.GetObjectKind().GroupVersionKind().Kind, getDisplayName(object)}
 }
 
-// TODO: create map of kinds to group by
-// For each kind in map, get count of the kind in children
-// If count > 1, create a group node and add children to group node
-// Look into adding a striped background for nodes that aren't ready
-
+// Find all objects in children with `kind` and create a parent node for them
 func createKindGroupNode(namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool) []*ClusterResourceNode {
 	log := klogr.New()
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
-	// sort.Slice(children, func(i, j int) bool {
-	// 	return children[i].Name < children[j].Name
-	// })
 
 	resultChildren := []*ClusterResourceNode{}
 	groupNode := &ClusterResourceNode{
