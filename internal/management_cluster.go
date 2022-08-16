@@ -60,18 +60,21 @@ func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *ap
 	})
 
 	for _, cluster := range clusterList.Items {
-		infraProvider := cluster.Spec.InfrastructureRef.Kind
-
 		readyCondition := conditions.Get(&cluster, clusterv1.ReadyCondition)
 
 		workloadCluster := MultiClusterTreeNode{
-			Name:                   cluster.GetName(),
-			Namespace:              cluster.GetNamespace(),
-			InfrastructureProvider: infraProvider,
-			IsManagement:           false,
-			Phase:                  cluster.Status.Phase,
-			Ready:                  readyCondition != nil && readyCondition.Status == corev1.ConditionTrue,
-			Children:               []*MultiClusterTreeNode{},
+			Name:         cluster.GetName(),
+			Namespace:    cluster.GetNamespace(),
+			IsManagement: false,
+			Phase:        cluster.Status.Phase,
+			Ready:        readyCondition != nil && readyCondition.Status == corev1.ConditionTrue,
+			Children:     []*MultiClusterTreeNode{},
+		}
+
+		// TODO: edge case in topology Clusters where infraRef is nil if it fails to create.
+		// In that case we can try to fetch the ClusterClass and read the infraRef from there and trim the output, i.e. DockerClusterTemplate => DockerCluster.
+		if cluster.Spec.InfrastructureRef != nil {
+			workloadCluster.InfrastructureProvider = cluster.Spec.InfrastructureRef.Kind
 		}
 
 		root.Children = append(root.Children, &workloadCluster)
