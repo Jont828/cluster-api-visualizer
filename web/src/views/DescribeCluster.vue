@@ -292,7 +292,7 @@ export default {
           // altColor: colors.green.lighten1,
         },
         addons: {
-          name: "Addons",
+          name: "Add-ons",
           color: colors.red.darken1,
           // altColor: colors.red.lighten2,
         },
