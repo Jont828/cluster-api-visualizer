@@ -14,13 +14,13 @@ Create a local management cluster with kind and a workload cluster by following 
 
 ```
 cd ${GOPATH}/src # Or your go directory if GOPATH is not set
-git clone https://github.com/Jont828/capi-visualization.git
+git clone https://github.com/Jont828/cluster-api-visualizer.git
 ```
 
 #### 4. Install Go packages
 
 ```
-cd ${GOPATH}/src/capi-visualization/
+cd ${GOPATH}/src/cluster-api-visualizer/
 go get ./...
 ```
 
@@ -43,13 +43,13 @@ make run            # Run the Go binary if the binary is built
 
 For development and testing, the app can be run with hot reloading for both Go and Vue. 
 
-To hot reload the Go server, install [Air](https://github.com/cosmtrek/air) and run `air init` in the root folder. After installing the Go packages, do not run `make` and instead and start the Go server from `${GOPATH}/src/capi-visualization/` with
+To hot reload the Go server, install [Air](https://github.com/cosmtrek/air) and run `air init` in the root folder. After installing the Go packages, do not run `make` and instead and start the Go server from `${GOPATH}/src/cluster-api-visualizer/` with
 
 ```
 air
 ```
 
-To hot reload the front end server, open a separate terminal, enter `${GOPATH}/src/capi-visualization/web`, and install node packages if you haven't done so with
+To hot reload the front end server, open a separate terminal, enter `${GOPATH}/src/cluster-api-visualizer/web`, and install node packages if you haven't done so with
 
 
 ```
