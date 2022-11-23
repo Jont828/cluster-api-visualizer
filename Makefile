@@ -33,7 +33,7 @@ clean:
 
 .PHONY: npm-install
 npm-install: $(VUE_DIR)/package.json
-	npm install --prefix ./$(VUE_DIR)
+	npm install --prefix ./$(VUE_DIR) --legacy-peer-deps
 
 .PHONY: build-web
 build-web: $(NODE_MODULES)
