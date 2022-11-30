@@ -8,7 +8,6 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@mdi/font": "5.9.55",
     "axios": "^0.24.0",
     "core-js": "^3.6.5",
     "css-loader": "^6.4.0",
@@ -24,6 +23,7 @@
     "vuetify": "^2.5.10"
   },
   "devDependencies": {
+    "@mdi/font": "^7.0.96",
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
