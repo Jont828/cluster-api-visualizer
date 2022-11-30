@@ -16,7 +16,7 @@ module.exports = {
       "^/api": {
         target: "http://0.0.0.0:8081",
         changeOrigin: true,
-        logLevel: 'debug' 
+        logLevel: 'debug'
       },
     },
   },
