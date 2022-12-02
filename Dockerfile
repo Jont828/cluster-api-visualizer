@@ -1,5 +1,8 @@
 # syntax=docker/dockerfile:1
 
+# Build architecture
+ARG ARCH
+
 # Build the web app.
 FROM node:16 as web-builder
 
@@ -28,11 +31,10 @@ go mod download
 COPY ./main.go /app/
 COPY ./internal /app/internal
 
-
-RUN CGO_ENABLED=0 go build -trimpath -ldflags "-extldflags '-static'" -o main
+RUN CGO_ENABLED=0 GOARCH=${ARCH} go build -trimpath -ldflags "-extldflags '-static'" -o main
 
 # Build production image
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot-${ARCH}
 
 # Set working directory
 WORKDIR /app

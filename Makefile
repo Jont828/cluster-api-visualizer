@@ -12,6 +12,10 @@ REGISTRY ?= ghcr.io/jont828
 IMAGE_NAME ?= cluster-api-visualizer
 DOCKER_IMAGE ?= $(REGISTRY)/$(IMAGE_NAME)
 
+ARCH ?= $(shell go env GOARCH)
+# ALL_ARCH = amd64 arm64
+ALL_ARCH = amd64 arm arm64 ppc64le s390x
+
 ## --------------------------------------
 ## All
 ## --------------------------------------
@@ -83,13 +87,33 @@ go-fmt:
 ## Docker
 ## --------------------------------------
 
+.PHONY: docker-build-all
+docker-build-all: $(addprefix docker-build-,$(ALL_ARCH)) 
+
+docker-build-%:
+	$(MAKE) ARCH=$* docker-build
+
 .PHONY: docker-build
 docker-build: 
-	docker build --no-cache -t $(DOCKER_IMAGE):$(TAG) .
+	docker build --no-cache --build-arg ARCH=$(ARCH) -t $(DOCKER_IMAGE)-$(ARCH):$(TAG) .
 
 .PHONY: docker-push
 docker-push: 
-	docker push $(DOCKER_IMAGE):$(TAG)
+	docker push $(DOCKER_IMAGE)-$(ARCH):$(TAG)
+
+.PHONY: docker-push-all
+docker-push-all: $(addprefix docker-push-,$(ALL_ARCH)) ## Push all the architecture docker images.
+	$(MAKE) docker-push-manifest
+
+docker-push-%:
+	$(MAKE) ARCH=$* docker-push
+
+.PHONY: docker-push-manifest
+docker-push-manifest: ## Push the fat manifest docker image.
+	## Minimum docker version 18.06.0 is required for creating and pushing manifest images.
+	docker manifest create --amend $(DOCKER_IMAGE):$(TAG) $(shell echo $(ALL_ARCH) | sed -e "s~[^ ]*~$(DOCKER_IMAGE)\-&:$(TAG)~g")
+	@for arch in $(ALL_ARCH); do docker manifest annotate --arch $${arch} ${DOCKER_IMAGE}:${TAG} ${DOCKER_IMAGE}-$${arch}:${TAG}; done
+	docker manifest push --purge ${DOCKER_IMAGE}:${TAG}
 
 ## --------------------------------------
 ## Helm
