@@ -8,6 +8,7 @@
       @reload="fetchOverview(forceRedraw=true)"
       @zoomIn="() => { $refs.overviewTree.$refs.tree.zoomIn() }"
       @zoomOut="() => { $refs.overviewTree.$refs.tree.zoomOut() }"
+      @toggleDrawer="() => { drawer = !drawer }"
     />
     <ManagementClusterTree
       ref="overviewTree"
@@ -17,6 +18,63 @@
       :treeIsReady="treeIsReady"
       @scale="(val) => { scale = val }"
     />
+    <v-navigation-drawer
+      v-model="drawer"
+      absolute
+      temporary
+    >
+      <v-list nav>
+        <v-list-item link>
+          <v-list-item-icon>
+            <v-icon>mdi-information</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>About</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+
+        <v-list-item
+          link
+          @click="() => { showSettingsOverlay = !showSettingsOverlay; drawer = false }"
+        >
+          <v-list-item-icon>
+            <v-icon>mdi-cog</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>Settings</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+      <!-- <v-list nav>
+        <v-list-item
+          v-for="([icon, text], i) in items"
+          :key="i"
+          link
+        >
+          <v-list-item-icon>
+            <v-icon>mdi-{{ icon }}</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>{{ text }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list> -->
+    </v-navigation-drawer>
+
+    <v-overlay
+      absolute
+      :value="showSettingsOverlay"
+      z-index="99999"
+      light
+    >
+      <SettingsCard
+        @close="() => { showSettingsOverlay = !showSettingsOverlay }"
+        class="settingsCard"
+      />
+    </v-overlay>
   </div>
 </template>
 
@@ -24,12 +82,14 @@
 import Vue from "vue";
 
 import ManagementClusterTree from "../components/ManagementClusterTree.vue";
+import SettingsCard from "../components/SettingsCard.vue";
 import AppBar from "../components/AppBar.vue";
 
 export default {
   name: "ManagementCluster",
   components: {
     ManagementClusterTree,
+    SettingsCard,
     AppBar,
   },
   async beforeMount() {
@@ -51,6 +111,12 @@ export default {
   },
   data() {
     return {
+      showSettingsOverlay: false,
+      // items: [
+      //   ["information", "About"],
+      //   ["cog", "Settings"],
+      // ],
+      drawer: false,
       polling: null,
       isStraight: false,
       treeConfig: { nodeWidth: 300, nodeHeight: 140, levelHeight: 275 },
@@ -108,5 +174,9 @@ export default {
 <style lang="less" scoped>
 #overview {
   height: 100%;
+}
+
+.settingsCard {
+  // width: 500px;
 }
 </style>

@@ -22,6 +22,7 @@
     </router-link>
     <v-app-bar-nav-icon
       class="ma-2"
+      @click="$emit('toggleDrawer', true)"
       v-else
     ></v-app-bar-nav-icon>
     <v-toolbar-title class="text-no-wrap pa-0">{{ title }}</v-toolbar-title>
