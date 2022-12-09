@@ -25,11 +25,10 @@ import (
 )
 
 type Client struct {
-	DefaultClient    client.Client
-	ClusterClient    cluster.Client
-	RuntimeClient    ctrlclient.Client
-	K8sConfigClient  *api.Config
-	CurrentNamespace string
+	ClusterctlClient        client.Client     // The clusterctl client needed to run clusterctl operations like `c.DescribeCluster()`
+	ControllerRuntimeClient ctrlclient.Client // The Kubernetes controller-runtime client needed to run `external.Get()` to fetch any CRD as a JSON object
+	K8sConfigClient         *api.Config       // This is the Kubernetes config client needed to access information from the kubeconfig like the namespace and context
+	CurrentNamespace        string
 }
 
 var c *Client
@@ -46,8 +45,7 @@ func newClient() (*Client, *internal.HTTPError) {
 
 	clusterKubeconfig := cluster.Kubeconfig{Path: kubeconfigPath, Context: kubeContext}
 
-	c.DefaultClient, err = client.New(clusterctlConfigPath)
-	c.DefaultClient.Init(client.InitOptions{Kubeconfig: client.Kubeconfig(clusterKubeconfig)})
+	c.ClusterctlClient, err = client.New(clusterctlConfigPath)
 	if err != nil {
 		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
@@ -59,28 +57,28 @@ func newClient() (*Client, *internal.HTTPError) {
 		return nil, internal.NewInternalError(err)
 	}
 
-	c.ClusterClient = cluster.New(clusterKubeconfig, configClient)
+	clusterClient := cluster.New(clusterKubeconfig, configClient)
 
-	err = c.ClusterClient.Proxy().CheckClusterAvailable()
+	err = clusterClient.Proxy().CheckClusterAvailable()
 	if err != nil {
 		log.Error(err, "failed to check cluster availability for cluster client")
 		return nil, &internal.HTTPError{Status: http.StatusNotFound, Message: err.Error()}
 	}
 
-	c.RuntimeClient, err = c.ClusterClient.Proxy().NewClient()
+	c.ControllerRuntimeClient, err = clusterClient.Proxy().NewClient()
 	if err != nil {
 		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
 	}
 
-	c.CurrentNamespace, err = c.ClusterClient.Proxy().CurrentNamespace()
+	c.CurrentNamespace, err = clusterClient.Proxy().CurrentNamespace()
 	if err != nil {
 		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
 	}
 
 	rules := clientcmd.NewDefaultClientConfigLoadingRules()
-	rules.ExplicitPath = c.ClusterClient.Kubeconfig().Path
+	rules.ExplicitPath = clusterClient.Kubeconfig().Path
 	c.K8sConfigClient, err = rules.Load()
 	if err != nil {
 		log.Error(err, "failed to create client")
@@ -246,7 +244,7 @@ func handleManagementClusterTree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tree, httpErr := internal.ConstructMultiClusterTree(c.RuntimeClient, c.K8sConfigClient)
+	tree, httpErr := internal.ConstructMultiClusterTree(c.ControllerRuntimeClient, c.K8sConfigClient)
 	if httpErr != nil {
 		log.Error(httpErr, "failed to construct management cluster tree view")
 		http.Error(w, httpErr.Error(), httpErr.Status)
@@ -286,7 +284,7 @@ func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {
 		ShowTemplates:           true,
 	}
 
-	tree, httpErr := internal.ConstructClusterResourceTree(c.DefaultClient, dcOptions)
+	tree, httpErr := internal.ConstructClusterResourceTree(c.ClusterctlClient, dcOptions)
 	if httpErr != nil {
 		log.Error(httpErr, "failed to construct resource tree for target cluster", "clusterName", name)
 		http.Error(w, httpErr.Error(), httpErr.Status)
@@ -317,7 +315,7 @@ func handleCustomResourceDefinitionTree(w http.ResponseWriter, r *http.Request) 
 	namespace := r.URL.Query().Get("namespace")
 
 	// TODO: should the runtimeClient be regenerated here?
-	object, httpErr := internal.GetCustomResource(c.RuntimeClient, kind, apiVersion, namespace, name)
+	object, httpErr := internal.GetCustomResource(c.ControllerRuntimeClient, kind, apiVersion, namespace, name)
 	if httpErr != nil {
 		log.Error(httpErr, "failed to construct tree for custom resource", "kind", kind, "name", name)
 		http.Error(w, httpErr.Error(), httpErr.Status)
