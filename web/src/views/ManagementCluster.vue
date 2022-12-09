@@ -24,7 +24,10 @@
       temporary
     >
       <v-list nav>
-        <v-list-item link>
+        <v-list-item
+          link
+          @click="() => { showAboutOverlay = !showAboutOverlay; drawer = false }"
+        >
           <v-list-item-icon>
             <v-icon>mdi-information</v-icon>
           </v-list-item-icon>
@@ -75,6 +78,17 @@
         class="settingsCard"
       />
     </v-overlay>
+    <v-overlay
+      absolute
+      :value="showAboutOverlay"
+      z-index="99999"
+      light
+    >
+      <AboutCard
+        @close="() => { showAboutOverlay = !showAboutOverlay }"
+        class="settingsCard"
+      />
+    </v-overlay>
   </div>
 </template>
 
@@ -83,6 +97,7 @@ import Vue from "vue";
 
 import ManagementClusterTree from "../components/ManagementClusterTree.vue";
 import SettingsCard from "../components/SettingsCard.vue";
+import AboutCard from "../components/AboutCard.vue";
 import AppBar from "../components/AppBar.vue";
 
 export default {
@@ -90,6 +105,7 @@ export default {
   components: {
     ManagementClusterTree,
     SettingsCard,
+    AboutCard,
     AppBar,
   },
   async beforeMount() {
@@ -112,6 +128,7 @@ export default {
   data() {
     return {
       showSettingsOverlay: false,
+      showAboutOverlay: false,
       // items: [
       //   ["information", "About"],
       //   ["cog", "Settings"],
