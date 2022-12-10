@@ -38,7 +38,7 @@
           <v-list-item-title>Dark theme</v-list-item-title>
         </v-list-item-content>
         <v-list-item-action>
-          <v-switch>
+          <v-switch v-model="darkTheme">
           </v-switch>
         </v-list-item-action>
       </v-list-item>
@@ -52,7 +52,7 @@
           <v-list-item-title>Curved link style</v-list-item-title>
         </v-list-item-content>
         <v-list-item-action>
-          <v-switch :value="true">
+          <v-switch v-model="curvedLinks">
           </v-switch>
         </v-list-item-action>
       </v-list-item>
@@ -72,9 +72,9 @@
         </v-list-item-content>
         <v-list-item-action>
           <v-select
-            class="downloadFormat"
-            :items="fileFormats"
-            :value="fileFormats[0]"
+            class="selectBox"
+            v-model="selectedFileType"
+            :items="fileType"
             dense
             hide-details
           >
@@ -92,9 +92,9 @@
         </v-list-item-content>
         <v-list-item-action>
           <v-select
-            class="downloadFormat"
-            :items="pollingPeriod"
-            :value="pollingPeriod[0]"
+            class="selectBox"
+            :items="pollingInterval"
+            v-model="selectedInterval"
             dense
             hide-details
           >
@@ -116,16 +116,37 @@ export default {
   methods: {},
   data() {
     return {
-      fileFormats: ["YAML", "JSON"],
-      linkStyles: ["Curved", "Straight"],
-      pollingPeriod: ["1s", "5s", "10s", "30s", "1m", "5m", "Off"],
+      darkTheme: false,
+      curvedLinks: true,
+      fileType: ["YAML", "JSON"],
+      selectedFileType: "YAML",
+      pollingInterval: ["1s", "5s", "10s", "30s", "1m", "5m", "Off"],
+      selectedInterval: "1m",
     };
+  },
+  watch: {
+    darkTheme: function (val) {
+      console.log("darkTheme: " + val);
+      this.$emit("setDarkTheme", val);
+    },
+    curvedLinks: function (val) {
+      console.log("curvedLinks: " + val);
+      this.$emit("setStraightLinks", !val);
+    },
+    selectedFileType: function (val) {
+      console.log("selectedFileType: " + val);
+      this.$emit("setFileType", val);
+    },
+    selectedInterval: function (val) {
+      console.log("selectedInterval: " + val);
+      this.$emit("setInterval", val);
+    },
   },
 };
 </script>
 
 <style lang="less" scoped>
-.downloadFormat {
+.selectBox {
   width: 100px;
 }
 </style>

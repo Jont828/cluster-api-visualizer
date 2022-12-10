@@ -76,6 +76,10 @@
       <SettingsCard
         @close="() => { showSettingsOverlay = !showSettingsOverlay }"
         class="settingsCard"
+        @setDarkTheme="() => {  }"
+        @setStraightLinks="linkHandler"
+        @setFileType="() => {  }"
+        @setInterval="() => {  }"
       />
     </v-overlay>
     <v-overlay
