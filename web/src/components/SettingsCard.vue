@@ -112,8 +112,13 @@ import colors from "vuetify/lib/util/colors";
 export default {
   name: "SettingsCard",
   components: {},
-  props: {},
+  props: {
+    interval: String,
+  },
   methods: {},
+  mounted: function () {
+    this.selectedInterval = this.interval;
+  },
   data() {
     return {
       darkTheme: false,
@@ -121,7 +126,7 @@ export default {
       fileType: ["YAML", "JSON"],
       selectedFileType: "YAML",
       pollingInterval: ["1s", "5s", "10s", "30s", "1m", "5m", "Off"],
-      selectedInterval: "1m",
+      selectedInterval: null,
     };
   },
   watch: {

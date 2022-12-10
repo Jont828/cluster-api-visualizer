@@ -79,7 +79,8 @@
         @setDarkTheme="() => {  }"
         @setStraightLinks="linkHandler"
         @setFileType="() => {  }"
-        @setInterval="() => {  }"
+        :interval="pollingInterval"
+        @setInterval="intervalHandler"
       />
     </v-overlay>
     <v-overlay
@@ -139,6 +140,7 @@ export default {
       // ],
       drawer: false,
       polling: null,
+      pollingInterval: "1m",
       isStraight: false,
       treeConfig: { nodeWidth: 300, nodeHeight: 140, levelHeight: 275 },
       treeData: {},
@@ -148,6 +150,31 @@ export default {
     };
   },
   methods: {
+    intervalHandler(val) {
+      console.log("Setting polling interval to " + val);
+      clearInterval(this.polling);
+      if (val === "Off") return;
+
+      let totalSeconds = 0;
+
+      let seconds = val.match(/(\d+)\s*s/);
+      let minutes = val.match(/(\d+)\s*m/);
+
+      if (seconds) {
+        totalSeconds += parseInt(seconds[1]);
+      }
+      if (minutes) {
+        totalSeconds += parseInt(minutes[1]) * 60;
+      }
+
+      console.log("Setting interval to " + totalSeconds + " seconds");
+      this.polling = setInterval(
+        function () {
+          this.fetchOverview();
+        }.bind(this),
+        totalSeconds * 1000
+      );
+    },
     linkHandler(val) {
       this.isStraight = val;
     },
