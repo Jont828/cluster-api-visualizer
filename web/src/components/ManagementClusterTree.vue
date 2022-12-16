@@ -6,11 +6,11 @@
       :dataset="treeData"
       :config="treeConfig"
       :collapse-enabled="false"
-      :linkStyle="(isStraight) ? 'straight' : 'curve'"
+      :linkStyle="(store.straightLinks) ? 'straight' : 'curve'"
       @scale="(val) => $emit('scale', val)"
       v-if="treeIsReady"
     >
-      <template v-slot:node="{ node, collapsed }">
+      <template v-slot:node="{ node }">
         <v-hover>
           <template v-slot:default="{ hover }">
             <!-- :to="{ path: 'clusters', params: { name: node.name, namespace: node.namespace }}" -->
@@ -23,18 +23,16 @@
               <v-card
                 class="node mx-auto transition-swing"
                 :elevation="hover ? 6 : 3"
-                :style="{ 
-                  border: collapsed ? '2px solid grey' : '',
-                  // height: (node.isManagement) ? '120px' : '140px',
-                  // 'background-color': hover ? '#f0f0f0' : '#fff'
-                }"
+                :style="($vuetify.theme.dark) ? { 
+                  'background-color': hover ? '#383838' : '#272727',
+                } : null"
               >
                 <v-card-title>
                   <span class="cardTitle">
                     {{ node.name }}
                   </span>
                   <v-spacer></v-spacer>
-                  <v-icon color="blue">
+                  <v-icon color="primary">
                     mdi-{{ getIcon(node.infrastructureProvider) }}
                   </v-icon>
                 </v-card-title>
@@ -83,6 +81,8 @@ import VueTree from "./VueTree.vue";
 import AlertError from "./AlertError.vue";
 import Phase from "./Phase.vue";
 
+import { useSettingsStore } from "../stores/settings.js";
+
 export default {
   name: "ManagementClusterTree",
   components: {
@@ -91,7 +91,6 @@ export default {
     Phase,
   },
   props: {
-    isStraight: Boolean,
     treeData: Object,
     treeConfig: Object,
     treeIsReady: Boolean,
@@ -101,6 +100,10 @@ export default {
       alert: false,
       errorMessage: "",
     };
+  },
+  setup() {
+    const store = useSettingsStore();
+    return { store };
   },
   methods: {
     getIcon(provider) {
@@ -125,7 +128,6 @@ export default {
 #overviewTree {
   width: 100%;
   height: 100%;
-  background-color: #f8f3f2;
 }
 
 .treeContainer {
@@ -138,7 +140,6 @@ export default {
 .node {
   width: 250px;
   height: 140px;
-  background-color: #fff;
 
   p {
     font-size: 12px;

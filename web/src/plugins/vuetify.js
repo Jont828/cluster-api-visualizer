@@ -8,12 +8,35 @@ Vue.use(Vuetify);
 
 export default new Vuetify({
   theme: {
+    options: { customProperties: true },
     themes: {
       light: {
-        primary: colors.blue.darken1,
-        secondary: colors.blue.lighten3,
-        accent: colors.lightBlue.base,
+        primary: colors.blue.darken2,
+        background: '#f8f3f2',
+        legend: {
+          cluster: colors.blue.darken1,
+          bootstrap: colors.amber.darken2,
+          controlplane: colors.purple.darken1,
+          infrastructure: colors.green.base,
+          addons: colors.red.darken1,
+          virtual: colors.grey.darken1,
+        }
       },
-    },
+      dark: {
+        primary: colors.blue.lighten3,
+        background: '#121212',
+        success: colors.green.lighten3,
+        warning: colors.orange.lighten2, // OG orange darken 1
+        error: colors.red.accent1,
+        legend: {
+          cluster: colors.blue.lighten3,
+          bootstrap: colors.amber.lighten3,
+          controlplane: colors.purple.lighten3,
+          infrastructure: colors.green.lighten3,
+          addons: colors.red.lighten2,
+          virtual: colors.grey.lighten1,
+        }
+      }
+    }
   },
 });

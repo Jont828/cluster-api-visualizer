@@ -1,5 +1,10 @@
 <template>
-  <div class="badge">
+  <div
+    class="badge"
+    :style="{
+      'border-color': $vuetify.theme.themes[theme].background,
+    }"
+  >
     <div
       class="topRight"
       :style="{
@@ -9,14 +14,24 @@
         'width': size + 'px',
       }"
     >
-      <StatusIcon
-        circle
-        spinner
-        class="readyWrap"
-        :type="type"
-        :size="size-4"
+      <div
+        class="border"
+        :style="{
+          'border-color': $vuetify.theme.themes[theme].background,
+          'height': (size-4) + 'px',
+          'width': (size-4) + 'px',
+        }"
       >
-      </StatusIcon>
+
+        <StatusIcon
+          circle
+          class="readyWrap"
+          spinner
+          :type="type"
+          :size="size-4"
+        >
+        </StatusIcon>
+      </div>
     </div>
 
   </div>
@@ -38,6 +53,11 @@ export default {
     size: {
       default: 16,
       type: Number,
+    },
+  },
+  computed: {
+    theme() {
+      return this.$vuetify.theme.dark ? "dark" : "light";
     },
   },
   methods: {
@@ -73,9 +93,17 @@ export default {
   display: inline-block;
 }
 
+.border {
+  position: relative;
+  border-radius: 50%;
+  border-width: 2px !important;
+  border-style: solid !important;
+}
+
 .badge .readyWrap {
   position: absolute;
-  border: 2px solid #f8f3f2 !important;
+  // border: 2px solid !important;
+
   // box-shadow: 0px 0px 10px rgba(0, 0, 0, 1);
 }
 
@@ -83,7 +111,6 @@ export default {
   display: inline-block;
   vertical-align: middle;
   text-align: center;
-  // border-radius: 50%;
   // padding: 2px;
 }
 

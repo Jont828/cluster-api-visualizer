@@ -1,17 +1,22 @@
 <template>
   <v-card class="resourceCard mx-auto">
     <v-sheet
-      :color="color"
+      :color="($vuetify.theme.dark) ? '#272727' : color"
       class="resourceSheet pa-4"
-      dark
     >
-      <v-card-title class="text-h5">
+      <v-card-title
+        class="text-h5"
+        :style="{
+          color: ($vuetify.theme.dark) ? color : 'white'
+          //color: 'white'
+        }"
+      >
         {{ name }}
         <v-spacer></v-spacer>
         <v-btn
           icon
           color="white"
-          @click="this.downloadYaml"
+          @click="this.downloadCRD"
         >
           <v-icon>mdi-download</v-icon>
         </v-btn>
@@ -42,12 +47,15 @@
                   :class="{
                     'conditionChip': true,
                   }"
-                  color="white"
-                  :text-color="(condition.status) ? 'success' : ((condition.isError) ? 'error' : 'warning')"
+                  :outlined="$vuetify.theme.dark"
+                  :color="($vuetify.theme.dark) ? getType(condition) : 'white'"
+                  :text-color="($vuetify.theme.dark) ? '' : getType(condition)"
                   @click="selectCondition(index)"
                   v-bind="attrs"
                   v-on="on"
                 >
+                  <!-- :color="($vuetify.theme.dark) ? getType(condition) : 'white'"
+                  :text-color="($vuetify.theme.dark) ? 'black' : getType(condition)" -->
                   <StatusIcon
                     :type="(condition.status) ? 'success' : condition.severity.toLowerCase()"
                     :spinnerWidth="2"
@@ -68,17 +76,19 @@
             label="Search Custom Resource Fields"
             dark
             flat
-            solo-inverted
+            :solo-inverted="!$vuetify.theme.dark"
+            :solo="$vuetify.theme.dark"
             hide-details
             clearable
             clear-icon="mdi-close-circle-outline"
-            :color="color"
+            :color="($vuetify.theme.dark) ? 'white' : color"
           ></v-text-field>
           <v-checkbox
             v-model="caseSensitive"
             dark
             hide-details
             label="Case sensitive search"
+            :color="($vuetify.theme.dark) ? 'white' : color"
           ></v-checkbox>
         </div>
 
@@ -110,6 +120,8 @@
 <script>
 import yaml from "js-yaml";
 import StatusIcon from "./StatusIcon.vue";
+import { useSettingsStore } from "../stores/settings.js";
+import colors from "vuetify/lib/util/colors";
 
 export default {
   name: "CustomResourceDefinition",
@@ -117,10 +129,16 @@ export default {
     StatusIcon,
   },
   props: {
+    downloadType: String,
     items: Array,
     jsonItems: Object,
     name: String,
     color: String,
+  },
+  setup() {
+    const store = useSettingsStore();
+
+    return { store };
   },
   data() {
     return {
@@ -134,20 +152,32 @@ export default {
   },
   mounted() {
     this.setConditions(this.jsonItems?.status?.conditions);
-    console.log("Scroll is", window.scrollY);
     window.addEventListener("scroll", this.onScroll);
   },
   methods: {
+    getType(condition) {
+      return condition.status
+        ? "success"
+        : condition.isError
+        ? "error"
+        : "warning";
+    },
     onScroll(e) {
       console.log("Scroll is", window.scrollY);
       this.scrollY = window.scrollY;
       // this.windowTop = window.top.scrollY /* or: e.target.documentElement.scrollTop */
     },
-    downloadYaml() {
-      const yamlCRD = yaml.dump(this.jsonItems);
+    downloadCRD() {
       const link = document.createElement("a");
-      link.href = `data:text/plain;charset=utf-8,${yamlCRD}`;
-      link.download = this.name + ".yaml";
+      let crdString = "";
+      if (this.store.selectedFileType === "JSON")
+        crdString = JSON.stringify(this.jsonItems, null, 2);
+      else if (this.store.selectedFileType === "YAML") {
+        crdString = yaml.dump(this.jsonItems);
+      }
+      link.href = `data:text/plain;charset=utf-8,${crdString}`;
+      link.download =
+        this.name + "." + this.store.selectedFileType.toLowerCase();
       link.click();
     },
     setConditions(conditions) {
