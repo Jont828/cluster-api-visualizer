@@ -7,6 +7,12 @@ module.exports = {
         args[0].title = 'Cluster API Visualizer'
         return args
       })
+    config.module
+      .rule("mjs")
+      .test(/\.mjs$/)
+      .type("javascript/auto")
+      .include.add(/node_modules/)
+      .end();
   },
   transpileDependencies: [
     'vuetify'

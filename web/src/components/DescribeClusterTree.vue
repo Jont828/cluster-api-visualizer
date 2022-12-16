@@ -6,7 +6,7 @@
       :dataset="treeData"
       :config="treeConfig"
       :collapse-enabled="true"
-      :linkStyle="(isStraight) ? 'straight' : 'curve'"
+      :linkStyle="(store.straightLinks) ? 'straight' : 'curve'"
       @scale="(val) => $emit('scale', val)"
     >
       <template v-slot:node="{ node, collapsed }">
@@ -14,33 +14,48 @@
           <template v-slot:default="{ hover }">
             <div class="card-wrap shadow">
 
-              <v-card
-                :class="[ 'node', 'mx-auto', 'transition-swing',  ]"
-                :elevation="hover ? 6 : 3"
-                :style="{ 
-                  background: legend[node.provider].color,
-                }"
-                v-on:click="selectNode(node)"
-              >
-                <p class="kind font-weight-medium text-truncate">{{ (node.collapsible) ? node.displayName : node.kind }}</p>
+              <!-- Wrapper card for Dark theme transparent background -->
+              <v-card elevation="0">
+                <v-card
+                  class="node mx-auto transition-swing"
+                  dark
+                  :elevation="hover ? 6 : 3"
+                  v-on:click="selectNode(node)"
+                  :style="($vuetify.theme.dark) ? {
+                    //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
+                    //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
+                    'background-color': hover ? '#383838' : '#272727',
+                    'color': $vuetify.theme.themes[theme].legend[node.provider],
+                    // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
+                  } : {
+                    'background-color': $vuetify.theme.themes[theme].legend[node.provider],
+                  }"
+                >
 
-                <p
-                  class="name font-italic text-truncate"
-                  v-if="!node.collapsible"
-                >{{ node.displayName }}</p>
-                <v-icon
-                  class="chevron"
-                  size="18"
-                  color="white"
-                  v-else-if="collapsed"
-                >mdi-chevron-down</v-icon>
-                <v-icon
-                  class="chevron"
-                  size="18"
-                  color="white"
-                  v-else
-                >mdi-chevron-up</v-icon>
+                  <p class="kind font-weight-medium text-truncate">{{ (node.collapsible) ? node.displayName : node.kind }}</p>
 
+                  <p
+                    class="name font-italic text-truncate"
+                    v-if="!node.collapsible"
+                  >{{ node.displayName }}</p>
+                  <v-icon
+                    class="chevron"
+                    size="18"
+                    :style="($vuetify.theme.dark) ? {
+                      'color': $vuetify.theme.themes[theme].legend[node.provider],
+                    } : null"
+                    v-else-if="collapsed"
+                  >mdi-chevron-down</v-icon>
+                  <v-icon
+                    class="chevron"
+                    size="18"
+                    :style="($vuetify.theme.dark) ? {
+                      'color': $vuetify.theme.themes[theme].legend[node.provider],
+                    } : null"
+                    v-else
+                  >mdi-chevron-up</v-icon>
+
+                </v-card>
               </v-card>
               <Badge
                 v-if="node.hasReady"
@@ -58,41 +73,18 @@
       <v-card class="legend-card">
         <div
           class="legend-entry"
-          v-for="(entry, provider) in legend"
+          v-for="(displayName, provider) in legend"
           :key="provider"
         >
           <div class="legend-entry-content">
             <v-icon
               class="legend-entry-icon"
-              :color="entry.color"
+              :color="$vuetify.theme.themes[theme].legend[provider]"
             >mdi-square-rounded</v-icon>
-            <!-- <div
-              class="legend-entry-icon"
-              :style="{
-                'background-color': entry.color
-              }"
-            /> -->
-            <div class="legend-entry-text">{{ entry.name }}</div>
+            <div class="legend-entry-text">{{ displayName }}</div>
           </div>
 
         </div>
-
-        <!-- <div class="legend-entry">
-          <div class="legend-entry-content">
-            <div class="overlapping-icon-wrapper">
-              <div
-                :key="i"
-                v-for="(entry, i) in Object.values(this.legend)"
-                class="legend-entry-icon animated overlapping-icon"
-                :style="{
-                    background: computeNotReadyGradient(entry.color, 3),
-                    opacity: (i == index) ? 1 : 0,
-                  }"
-              />
-            </div>
-            <span class="legend-entry-text">Resource Not Ready</span>
-          </div>
-        </div> -->
 
       </v-card>
     </div>
@@ -102,6 +94,8 @@
 <script>
 import VueTree from "../components/VueTree.vue";
 import Badge from "../components/Badge.vue";
+
+import { useSettingsStore } from "../stores/settings.js";
 
 export default {
   name: "DescribeClusterTree",
@@ -115,10 +109,18 @@ export default {
       index: 0,
     };
   },
+  setup() {
+    const store = useSettingsStore();
+    return { store };
+  },
+  computed: {
+    theme() {
+      return this.$vuetify.theme.dark ? "dark" : "light";
+    },
+  },
   props: {
     treeConfig: Object,
     treeData: Object,
-    isStraight: Boolean,
     selectedNode: Object,
     legend: Object,
   },
@@ -132,38 +134,6 @@ export default {
         // this.$emit("toggleNodeCollapse", node);
       }
     },
-    computeNotReadyGradient(color, width) {
-      return this.computeLinearGradient(
-        [color, this.adjustColor(color, 20)],
-        width
-      );
-    },
-    computeLinearGradient(colors, width) {
-      // console.log("colors", colors);
-      let result = "repeating-linear-gradient(135deg";
-      colors.forEach((color, i) => {
-        result += ", " + color + " " + width * i + "px,";
-        result += color + "  " + width * (i + 1) + "px";
-        // Alternate effect is (i) and (i+1)
-        // Alternate effect is (2*i) and (2*i+1)
-      });
-      result += ")";
-
-      return result;
-    },
-    iterateGradientColors() {
-      let legendColors = Object.values(this.legend);
-      // console.log("Color:", legendColors[this.index].color);
-      this.legendGradient = this.computeNotReadyGradient(
-        legendColors[this.index++].color,
-        4
-      );
-      this.index = this.index % legendColors.length;
-      // console.log("Gradient is", this.legendGradient);
-    },
-  },
-  mounted() {
-    setInterval(this.iterateGradientColors, 2000);
   },
 };
 </script>
@@ -177,7 +147,6 @@ export default {
     width: 100%;
     // height: 100%;
     height: 100%;
-    background-color: #f8f3f2;
     // border: 1px solid black;
   }
 }
@@ -227,7 +196,7 @@ export default {
 }
 
 .card-wrap {
-  background-color: #f8f3f2;
+  // background-color: #f8f3f2;
   position: relative;
 }
 
@@ -270,7 +239,6 @@ export default {
   // background-color: #dae8fc;
   // border-radius: 4px;
   // box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.3);
-  color: white;
 
   // display: flex;
   // flex-direction: row;

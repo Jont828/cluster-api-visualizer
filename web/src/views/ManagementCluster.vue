@@ -2,21 +2,31 @@
   <div id="overview">
     <AppBar
       title="Management Cluster Overview"
-      :isStraight="this.isStraight"
       :scale="scale"
       @togglePathStyle="linkHandler"
       @reload="fetchOverview(forceRedraw=true)"
       @zoomIn="() => { $refs.overviewTree.$refs.tree.zoomIn() }"
       @zoomOut="() => { $refs.overviewTree.$refs.tree.zoomOut() }"
+      @showSettings="() => { showSettingsOverlay = true }"
     />
     <ManagementClusterTree
       ref="overviewTree"
-      :isStraight="this.isStraight"
       :treeConfig="treeConfig"
       :treeData="treeData"
       :treeIsReady="treeIsReady"
       @scale="(val) => { scale = val }"
     />
+
+    <v-overlay
+      absolute
+      :value="showSettingsOverlay"
+      z-index="99999"
+    >
+      <SettingsCard
+        @close="() => { showSettingsOverlay = !showSettingsOverlay }"
+        class="settingsCard"
+      />
+    </v-overlay>
   </div>
 </template>
 
@@ -24,26 +34,32 @@
 import Vue from "vue";
 
 import ManagementClusterTree from "../components/ManagementClusterTree.vue";
+import SettingsCard from "../components/SettingsCard.vue";
 import AppBar from "../components/AppBar.vue";
+import { useSettingsStore } from "../stores/settings.js";
 
 export default {
   name: "ManagementCluster",
   components: {
     ManagementClusterTree,
+    SettingsCard,
     AppBar,
+  },
+  setup() {
+    const store = useSettingsStore();
+    return { store };
   },
   async beforeMount() {
     await this.fetchOverview();
   },
+  computed: {
+    theme() {
+      return this.$vuetify.theme.dark ? "dark" : "light";
+    },
+  },
   mounted() {
     document.title = "Management Cluster Overview";
-    const reloadTime = 60 * 1000;
-    this.polling = setInterval(
-      function () {
-        this.fetchOverview();
-      }.bind(this),
-      reloadTime
-    );
+    this.intervalHandler(this.store.selectedInterval);
   },
   beforeDestroy() {
     this.selected = {};
@@ -51,8 +67,7 @@ export default {
   },
   data() {
     return {
-      polling: null,
-      isStraight: false,
+      showSettingsOverlay: false,
       treeConfig: { nodeWidth: 300, nodeHeight: 140, levelHeight: 275 },
       treeData: {},
       cachedTreeString: "",
@@ -60,7 +75,38 @@ export default {
       scale: 1,
     };
   },
+  watch: {
+    "store.selectedInterval": function (val) {
+      console.log("Overview store.selectedInterval: " + val);
+      this.intervalHandler(val);
+    },
+  },
   methods: {
+    intervalHandler(val) {
+      console.log("Setting polling interval to " + val);
+      clearInterval(this.polling);
+      if (val === "Off") return;
+
+      let totalSeconds = 0;
+
+      let seconds = val.match(/(\d+)\s*s/);
+      let minutes = val.match(/(\d+)\s*m/);
+
+      if (seconds) {
+        totalSeconds += parseInt(seconds[1]);
+      }
+      if (minutes) {
+        totalSeconds += parseInt(minutes[1]) * 60;
+      }
+
+      console.log("Setting interval to " + totalSeconds + " seconds");
+      this.polling = setInterval(
+        function () {
+          this.fetchOverview();
+        }.bind(this),
+        totalSeconds * 1000
+      );
+    },
     linkHandler(val) {
       this.isStraight = val;
     },

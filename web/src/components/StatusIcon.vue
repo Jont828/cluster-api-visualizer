@@ -10,13 +10,13 @@
     <v-icon
       v-if="type==='success'"
       class="readyIcon"
-      color="white"
+      :color="$vuetify.theme.dark ? 'black' : 'white'"
       :size="size-2"
     > mdi-check</v-icon>
     <v-icon
       v-else-if="type==='error'"
       class="readyIcon"
-      color="white"
+      :color="$vuetify.theme.dark ? 'black' : 'white'"
       :size="size-2"
     > mdi-exclamation</v-icon>
     <v-progress-circular
@@ -25,19 +25,19 @@
       indeterminate
       :size="spinnerSize"
       :width="spinnerWidth"
-      color="white"
+      :color="$vuetify.theme.dark ? 'black' : 'white'"
     >
     </v-progress-circular>
     <v-icon
       v-else-if="type==='warning'"
       class="readyIcon"
-      color="white"
+      :color="$vuetify.theme.dark ? 'black' : 'white'"
       :size="size-2"
     > mdi-exclamation</v-icon>
     <v-icon
       v-else-if="type==='info'"
       class="readyIcon"
-      color="white"
+      :color="$vuetify.theme.dark ? 'black' : 'white'"
       :size="size-2"
     > mdi-information-variant</v-icon>
   </v-avatar>

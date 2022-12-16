@@ -4,12 +4,12 @@
     <AppBar
       :title="'Cluster Resources: ' + getTitle()"
       :showBack="true"
-      :isStraight="isStraight"
       :scale="scale"
       @togglePathStyle="linkHandler"
       @reload="() => { fetchCluster(forceRedraw=true); fetchCRD(selected, true) }"
       @zoomIn="() => { $refs.targetTree.$refs.tree.zoomIn() }"
       @zoomOut="() => { $refs.targetTree.$refs.tree.zoomOut() }"
+      @showSettings="() => { showSettingsOverlay = true }"
     />
     <div
       id="chartLoadWrapper"
@@ -20,7 +20,7 @@
         ref="targetTree"
         :treeConfig="treeConfig"
         :treeData="treeData"
-        :isStraight="isStraight"
+        :isStraight="store.straightLinks"
         :legend="legend"
         @selectNode="fetchCRD"
         @scale="(val) => { scale = val }"
@@ -38,7 +38,7 @@
           :items="treeviewResource"
           :jsonItems="resource"
           :name="selected.kind + '/' + selected.name"
-          :color="legend[selected.provider].color"
+          :color="$vuetify.theme.themes[theme].legend[selected.provider]"
           @unselectNode="(val) => { this.selected=val; }"
         />
       </div>
@@ -59,6 +59,18 @@
       v-model="alert"
       :message="errorMessage"
     />
+
+    <v-overlay
+      class="overlay"
+      :value="showSettingsOverlay"
+      z-index="99999"
+      light
+    >
+      <SettingsCard
+        @close="() => { showSettingsOverlay = !showSettingsOverlay }"
+        class="settingsCard"
+      />
+    </v-overlay>
   </div>
 </template>
 
@@ -69,8 +81,11 @@ import DescribeClusterTree from "../components/DescribeClusterTree.vue";
 import AppBar from "../components/AppBar.vue";
 import CustomResourceDefinition from "../components/CustomResourceDefinition.vue";
 import AlertError from "../components/AlertError.vue";
-import _ from "lodash";
+import SettingsCard from "../components/SettingsCard.vue";
 
+import { useSettingsStore } from "../stores/settings.js";
+
+import _ from "lodash";
 import colors from "vuetify/lib/util/colors";
 
 export default {
@@ -78,28 +93,35 @@ export default {
   components: {
     DescribeClusterTree,
     AppBar,
+    SettingsCard,
     CustomResourceDefinition,
     AlertError,
+  },
+  setup() {
+    const store = useSettingsStore();
+    return { store };
   },
   async beforeMount() {
     await this.fetchCluster();
   },
+  computed: {
+    theme() {
+      return this.$vuetify.theme.dark ? "dark" : "light";
+    },
+  },
   mounted() {
     document.title = "Cluster Resources: " + this.getTitle();
-    const reloadTime = 60 * 1000; // 1 minute
-    this.polling = setInterval(
-      function () {
-        this.fetchCluster();
-        if (Object.keys(this.selected).length > 0) {
-          this.fetchCRD(this.selected, true);
-        }
-      }.bind(this),
-      reloadTime
-    );
+    this.intervalHandler(this.store.selectedInterval);
   },
   beforeDestroy() {
     this.selected = {};
     clearInterval(this.polling);
+  },
+  watch: {
+    "store.selectedInterval": function (val) {
+      console.log("DescribeCluster store.selectedInterval: " + val);
+      this.intervalHandler(val);
+    },
   },
   methods: {
     getTitle() {
@@ -109,6 +131,34 @@ export default {
         return namespace + "/" + name;
       }
       return name;
+    },
+    intervalHandler(val) {
+      console.log("Setting polling interval to " + val);
+      clearInterval(this.polling);
+      if (val === "Off") return;
+
+      let totalSeconds = 0;
+
+      let seconds = val.match(/(\d+)\s*s/);
+      let minutes = val.match(/(\d+)\s*m/);
+
+      if (seconds) {
+        totalSeconds += parseInt(seconds[1]);
+      }
+      if (minutes) {
+        totalSeconds += parseInt(minutes[1]) * 60;
+      }
+
+      console.log("Setting interval to " + totalSeconds + " seconds");
+      this.polling = setInterval(
+        function () {
+          this.fetchCluster();
+          if (Object.keys(this.selected).length > 0) {
+            this.fetchCRD(this.selected, true);
+          }
+        }.bind(this),
+        totalSeconds * 1000
+      );
     },
     linkHandler(val) {
       this.isStraight = val;
@@ -258,49 +308,25 @@ export default {
   },
   data() {
     return {
-      polling: null,
+      showSettingsOverlay: false,
+      showAboutOverlay: false,
       alert: false,
       errorMessage: "",
       treeIsReady: false,
       resourceIsReady: false,
       resource: {},
       selected: {},
-      isStraight: false,
       treeData: {},
       cachedTreeString: "",
       treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
       scale: 1,
       legend: {
-        cluster: {
-          name: "Cluster API",
-          color: colors.blue.darken1,
-          // altColor: colors.blue.lighten1,
-        },
-        bootstrap: {
-          name: "Bootstrap Provider",
-          color: colors.amber.darken2,
-          // altColor: colors.amber.darken1,
-        },
-        controlplane: {
-          name: "Control Plane Provider",
-          color: colors.purple.darken1,
-          // altColor: colors.purple.lighten1,
-        },
-        infrastructure: {
-          name: "Infrastructure Provider",
-          color: colors.green.base,
-          // altColor: colors.green.lighten1,
-        },
-        addons: {
-          name: "Add-ons",
-          color: colors.red.darken1,
-          // altColor: colors.red.lighten2,
-        },
-        virtual: {
-          name: "None",
-          color: colors.grey.darken1,
-          // altColor: colors.grey.base,
-        },
+        cluster: "Cluster API",
+        bootstrap: "Bootstrap Provider",
+        controlplane: "Control Plane Provider",
+        infrastructure: "Infrastructure Provider",
+        addons: "Add-ons",
+        virtual: "None",
       },
     };
   },
@@ -351,6 +377,10 @@ export default {
 </style>
 
 <style lang="less">
+.overlay {
+  position: fixed;
+}
+
 .spinner {
   display: flex;
   flex-direction: column;

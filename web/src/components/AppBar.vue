@@ -1,8 +1,8 @@
 <template>
   <v-app-bar
     id="appBar"
-    color="blue darken-2"
     app
+    :color="($vuetify.theme.dark ? null: 'primary')"
     dark
   >
     <router-link
@@ -85,16 +85,17 @@
           icon
           text
           class="ma-2"
-          @click="$emit('togglePathStyle', !isStraight);"
+          @click="$emit('showSettings', true)"
           v-bind="attrs"
           v-on="on"
         >
+          <!-- TODO: should it be showSettings or toggleSettings, i.e. should clicking again close the overlay -->
           <v-icon color="white">
-            {{ isStraight ? 'mdi-sine-wave' : 'mdi-square-wave' }}
+            mdi-cog
           </v-icon>
         </v-btn>
       </template>
-      <span>Toggle link style</span>
+      <span>Show settings</span>
     </v-tooltip>
 
   </v-app-bar>
