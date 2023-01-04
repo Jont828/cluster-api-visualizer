@@ -31,22 +31,9 @@
           <v-list-item-title>Version</v-list-item-title>
         </v-list-item-content>
         <v-list-item-action>
-          v1.0.2
+          v1.1.0
         </v-list-item-action>
       </v-list-item>
-
-      <!-- <v-list-item>
-        <v-list-item-icon>
-          <v-icon>mdi-account-circle</v-icon>
-        </v-list-item-icon>
-
-        <v-list-item-content>
-          <v-list-item-title>Author</v-list-item-title>
-        </v-list-item-content>
-        <v-list-item-action>
-          Jonathan Tong
-        </v-list-item-action>
-      </v-list-item> -->
       <v-list-item
         href="https://github.com/Jont828/cluster-api-visualizer"
         target="_blank"
@@ -81,7 +68,6 @@
             v-model="store.darkTheme"
             @change="toggleDarkTheme"
           >
-            <!-- <v-switch v-model="store.darkTheme"> -->
           </v-switch>
         </v-list-item-action>
       </v-list-item>
