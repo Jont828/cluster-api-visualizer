@@ -16,6 +16,7 @@
     "js-yaml": "^4.1.0",
     "less-loader": "7.3.0",
     "pinia": "^2.0.28",
+    "pinia-plugin-persistedstate": "^3.0.2",
     "roboto-fontface": "*",
     "sass-loader": "^10.1.1",
     "vnodes": "^1.1.9",
