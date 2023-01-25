@@ -42,7 +42,7 @@ body {
 }
 
 #app {
-  font-family: Roboto;
+  font-family: Roboto, serif;
   /* text-align: center; */
   height: 100%;
   /* height: -webkit-fill-available; */
