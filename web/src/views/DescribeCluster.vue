@@ -325,7 +325,7 @@ export default {
         bootstrap: "Bootstrap Provider",
         controlplane: "Control Plane Provider",
         infrastructure: "Infrastructure Provider",
-        addons: "Add-ons",
+        addons: "Add-Ons",
         virtual: "None",
       },
     };
