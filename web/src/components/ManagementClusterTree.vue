@@ -28,7 +28,7 @@
                 } : null"
               >
                 <v-card-title>
-                  <span class="cardTitle">
+                  <span class="cardTitle text-truncate">
                     {{ node.name }}
                   </span>
                   <v-spacer></v-spacer>
@@ -37,7 +37,7 @@
                   </v-icon>
                 </v-card-title>
                 <!-- <v-card-subtitle class="cardSubtitle">{{ (node.isManagement) ? "Management Cluster" : "Target Cluster" }}</v-card-subtitle> -->
-                <v-card-subtitle class="pb-1">{{ (node.namespace == "") ? "default" : node.namespace }}</v-card-subtitle>
+                <v-card-subtitle class="pb-1 text-truncate">{{ (node.namespace == "") ? "default" : node.namespace }}</v-card-subtitle>
 
                 <!-- <v-card-subtitle v-if="node.isManagement">Management Cluster</v-card-subtitle> -->
                 <Phase
@@ -148,10 +148,7 @@ export default {
 
   .cardTitle {
     max-width: 194px;
-    white-space: nowrap;
     display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .cardSubtitle {
