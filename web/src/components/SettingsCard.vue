@@ -31,7 +31,7 @@
           <v-list-item-title>Version</v-list-item-title>
         </v-list-item-content>
         <v-list-item-action>
-          v1.1.0
+          v1.1.1
         </v-list-item-action>
       </v-list-item>
       <v-list-item
