@@ -15,7 +15,7 @@ RUN npm run build
 # Build the Go binary.
 # Alpine is chosen for its small footprint
 # compared to Ubuntu
-FROM golang:1.17-alpine as builder
+FROM golang:1.20-alpine as builder
 
 # Set working directory
 WORKDIR /app
@@ -26,7 +26,6 @@ COPY go.sum ./
 
 RUN --mount=type=cache,target=/go/pkg/mod \
 go mod download
-
 
 COPY ./main.go /app/
 COPY ./internal /app/internal
