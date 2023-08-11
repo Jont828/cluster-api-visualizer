@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/config"
+	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	configclient "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
@@ -106,6 +107,7 @@ func main() {
 	flag.Parse()
 
 	log := klogr.New()
+	ctrl.SetLogger(log)
 
 	if generateConfig {
 		log.V(2).Info("Generating kubeconfig file")
