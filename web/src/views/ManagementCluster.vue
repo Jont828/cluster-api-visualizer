@@ -60,6 +60,7 @@ export default {
   mounted() {
     document.title = "Management Cluster Overview";
     this.intervalHandler(this.store.selectedInterval);
+    console.log("App version", GIT_DESCRIBE);
   },
   beforeDestroy() {
     this.selected = {};
