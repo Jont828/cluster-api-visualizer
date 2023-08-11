@@ -31,7 +31,7 @@
           <v-list-item-title>Version</v-list-item-title>
         </v-list-item-content>
         <v-list-item-action>
-          v1.1.1
+          {{ version }}
         </v-list-item-action>
       </v-list-item>
       <v-list-item
@@ -155,6 +155,7 @@ export default {
     return {
       fileTypes: ["YAML", "JSON"],
       pollingInterval: ["1s", "5s", "10s", "30s", "1m", "5m", "Off"],
+      version: GIT_DESCRIBE.tag,
     };
   },
 };
