@@ -14,11 +14,9 @@ module.exports = {
       .include.add(/node_modules/)
       .end();
   },
-
   transpileDependencies: [
     'vuetify'
   ],
-
   devServer: {
     proxy: {
       "^/api": {
@@ -28,10 +26,4 @@ module.exports = {
       },
     },
   },
-
-  pluginOptions: {
-    gitDescribe: {
-      variableName: 'GIT_DESCRIBE'
-    }
-  }
 }
