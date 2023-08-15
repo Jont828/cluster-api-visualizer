@@ -25,6 +25,7 @@
       <SettingsCard
         @close="() => { showSettingsOverlay = !showSettingsOverlay }"
         class="settingsCard"
+        :version="gitVersion"
       />
     </v-overlay>
   </div>
@@ -60,7 +61,6 @@ export default {
   mounted() {
     document.title = "Management Cluster Overview";
     this.intervalHandler(this.store.selectedInterval);
-    console.log("App version", GIT_DESCRIBE);
   },
   beforeDestroy() {
     this.selected = {};
@@ -74,6 +74,7 @@ export default {
       cachedTreeString: "",
       treeIsReady: false,
       scale: 1,
+      gitVersion: "",
     };
   },
   watch: {
@@ -116,8 +117,7 @@ export default {
         const response = await Vue.axios.get("/management-cluster");
 
         if (response.data == null) {
-          this.errorMessage =
-            "Couldn't find a management cluster from default kubeconfig";
+          this.errorMessage = "Couldn't find a management cluster from default kubeconfig";
           return;
         }
 
