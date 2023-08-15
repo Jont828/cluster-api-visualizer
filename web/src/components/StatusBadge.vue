@@ -43,7 +43,7 @@ import colors from "vuetify/lib/util/colors";
 import StatusIcon from "./StatusIcon.vue";
 
 export default {
-  name: "Badge",
+  name: "StatusBadge",
   components: {
     StatusIcon,
   },

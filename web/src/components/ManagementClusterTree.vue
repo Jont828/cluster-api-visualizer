@@ -40,7 +40,7 @@
                 <v-card-subtitle class="pb-1 text-truncate">{{ (node.namespace == "") ? "default" : node.namespace }}</v-card-subtitle>
 
                 <!-- <v-card-subtitle v-if="node.isManagement">Management Cluster</v-card-subtitle> -->
-                <Phase
+                <ClusterPhase
                   v-if="!node.isManagement"
                   :phase="node.phase"
                 />
@@ -79,7 +79,7 @@
 <script>
 import VueTree from "./VueTree.vue";
 import AlertError from "./AlertError.vue";
-import Phase from "./Phase.vue";
+import ClusterPhase from "./ClusterPhase.vue";
 
 import { useSettingsStore } from "../stores/settings.js";
 
@@ -88,7 +88,7 @@ export default {
   components: {
     VueTree,
     AlertError,
-    Phase,
+    ClusterPhase,
   },
   props: {
     treeData: Object,
