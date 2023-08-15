@@ -69,6 +69,7 @@
       <SettingsCard
         @close="() => { showSettingsOverlay = !showSettingsOverlay }"
         class="settingsCard"
+        :version="gitVersion"
       />
     </v-overlay>
   </div>
@@ -84,6 +85,7 @@ import AlertError from "../components/AlertError.vue";
 import SettingsCard from "../components/SettingsCard.vue";
 
 import { useSettingsStore } from "../stores/settings.js";
+import { setVersion } from "../mixins/setVersion.js";
 
 import _ from "lodash";
 import colors from "vuetify/lib/util/colors";
@@ -97,12 +99,39 @@ export default {
     CustomResourceDefinition,
     AlertError,
   },
+  mixins: [setVersion],
+  data() {
+    return {
+      showSettingsOverlay: false,
+      showAboutOverlay: false,
+      alert: false,
+      errorMessage: "",
+      treeIsReady: false,
+      resourceIsReady: false,
+      resource: {},
+      selected: {},
+      treeData: {},
+      cachedTreeString: "",
+      treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
+      scale: 1,
+      legend: {
+        cluster: "Cluster API",
+        bootstrap: "Bootstrap Provider",
+        controlplane: "Control Plane Provider",
+        infrastructure: "Infrastructure Provider",
+        addons: "Add-ons",
+        virtual: "None",
+      },
+      gitVersion: ""
+    };
+  },
   setup() {
     const store = useSettingsStore();
     return { store };
   },
   async beforeMount() {
     await this.fetchCluster();
+    await this.fetchVersion();
   },
   computed: {
     theme() {
@@ -305,30 +334,6 @@ export default {
         this.resource?.status?.conditions.length > 0
       );
     },
-  },
-  data() {
-    return {
-      showSettingsOverlay: false,
-      showAboutOverlay: false,
-      alert: false,
-      errorMessage: "",
-      treeIsReady: false,
-      resourceIsReady: false,
-      resource: {},
-      selected: {},
-      treeData: {},
-      cachedTreeString: "",
-      treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
-      scale: 1,
-      legend: {
-        cluster: "Cluster API",
-        bootstrap: "Bootstrap Provider",
-        controlplane: "Control Plane Provider",
-        infrastructure: "Infrastructure Provider",
-        addons: "Add-Ons",
-        virtual: "None",
-      },
-    };
   },
 };
 </script>
