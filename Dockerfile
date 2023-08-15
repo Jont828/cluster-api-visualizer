@@ -17,6 +17,8 @@ RUN npm run build
 # compared to Ubuntu
 FROM golang:1.20-alpine as builder
 
+# Need to redeclare ARCH to use in Go build stage
+ARG ARCH
 ARG ldflags
 
 # Set working directory
