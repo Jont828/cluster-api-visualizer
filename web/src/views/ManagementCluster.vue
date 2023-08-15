@@ -37,7 +37,9 @@ import Vue from "vue";
 import ManagementClusterTree from "../components/ManagementClusterTree.vue";
 import SettingsCard from "../components/SettingsCard.vue";
 import AppBar from "../components/AppBar.vue";
+
 import { useSettingsStore } from "../stores/settings.js";
+import { setVersion } from "../mixins/setVersion.js";
 
 export default {
   name: "ManagementCluster",
@@ -45,6 +47,17 @@ export default {
     ManagementClusterTree,
     SettingsCard,
     AppBar,
+  },
+  mixins: [setVersion],
+  data() {
+    return {
+      showSettingsOverlay: false,
+      treeConfig: { nodeWidth: 300, nodeHeight: 140, levelHeight: 275 },
+      treeData: {},
+      cachedTreeString: "",
+      treeIsReady: false,
+      scale: 1,
+    };
   },
   setup() {
     const store = useSettingsStore();
@@ -65,17 +78,6 @@ export default {
   beforeDestroy() {
     this.selected = {};
     clearInterval(this.polling);
-  },
-  data() {
-    return {
-      showSettingsOverlay: false,
-      treeConfig: { nodeWidth: 300, nodeHeight: 140, levelHeight: 275 },
-      treeData: {},
-      cachedTreeString: "",
-      treeIsReady: false,
-      scale: 1,
-      gitVersion: "",
-    };
   },
   watch: {
     "store.selectedInterval": function (val) {
