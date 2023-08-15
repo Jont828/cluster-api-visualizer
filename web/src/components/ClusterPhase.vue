@@ -25,7 +25,7 @@
 
 <script>
 export default {
-  name: "Phase",
+  name: "ClusterPhase",
   props: {
     phase: String,
   },

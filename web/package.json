@@ -25,13 +25,13 @@
     "vuetify": "^2.5.10"
   },
   "devDependencies": {
+    "@babel/core": "^7.22.10",
+    "@babel/eslint-parser": "^7.22.10",
     "@mdi/font": "^7.0.96",
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^6.2.2",
+    "@vue/cli-plugin-babel": "~5.0.8",
+    "@vue/cli-plugin-eslint": "^5.0.8",
+    "@vue/cli-service": "~5.0.8",
+    "eslint-plugin-vue": "^9.17.0",
     "less": "^4.1.1",
     "less-loader": "7.3.0",
     "sass": "~1.32.0",
@@ -49,7 +49,7 @@
       "eslint:recommended"
     ],
     "parserOptions": {
-      "parser": "babel-eslint"
+      "parser": "@babel/eslint-parser"
     },
     "rules": {
       "no-unused-vars": "off"

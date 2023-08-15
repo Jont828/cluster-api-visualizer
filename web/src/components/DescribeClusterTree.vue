@@ -57,11 +57,11 @@
 
                 </v-card>
               </v-card>
-              <Badge
+              <StatusBadge
                 v-if="node.hasReady"
                 :type="(node.ready) ? 'success' : node.severity.toLowerCase()"
                 :size="18"
-              ></Badge>
+              ></StatusBadge>
 
             </div>
           </template>
@@ -93,7 +93,7 @@
 
 <script>
 import VueTree from "../components/VueTree.vue";
-import Badge from "../components/Badge.vue";
+import StatusBadge from "./StatusBadge.vue";
 
 import { useSettingsStore } from "../stores/settings.js";
 
@@ -101,7 +101,7 @@ export default {
   name: "DescribeClusterTree",
   components: {
     VueTree,
-    Badge,
+    StatusBadge,
   },
   data() {
     return {
