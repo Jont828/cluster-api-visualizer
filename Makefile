@@ -16,6 +16,9 @@ ARCH ?= $(shell go env GOARCH)
 # ALL_ARCH = amd64 arm64
 ALL_ARCH = amd64 arm arm64 ppc64le s390x
 
+# Build time versioning details.
+LDFLAGS := $(shell hack/version.sh)
+
 ## --------------------------------------
 ## All
 ## --------------------------------------
@@ -57,7 +60,7 @@ clean-dist:
 
 .PHONY: build-go
 build-go:
-	go build -o $(GO_BIN_OUT)
+	go build -ldflags "$(LDFLAGS)" -o $(GO_BIN_OUT)
 
 .PHONY: run
 run: $(GO_BIN_OUT) $(DIST_FOLDER)
@@ -95,7 +98,7 @@ docker-build-%:
 
 .PHONY: docker-build
 docker-build: 
-	docker build --no-cache --build-arg ARCH=$(ARCH) -t $(DOCKER_IMAGE)-$(ARCH):$(TAG) .
+	docker build --no-cache --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" -t $(DOCKER_IMAGE)-$(ARCH):$(TAG) .
 
 .PHONY: docker-push
 docker-push: 

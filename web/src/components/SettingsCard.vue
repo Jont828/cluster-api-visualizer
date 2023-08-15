@@ -31,7 +31,7 @@
           <v-list-item-title>Version</v-list-item-title>
         </v-list-item-content>
         <v-list-item-action>
-          {{ version }}
+          {{ gitVersion }}
         </v-list-item-action>
       </v-list-item>
       <v-list-item
@@ -136,15 +136,30 @@
 </template>
 
 <script>
+import Vue from "vue";
+
 import { useSettingsStore } from "../stores/settings.js";
 
 export default {
   name: "SettingsCard",
   components: {},
+  async beforeMount() {
+    await this.fetchVersion();
+  },
   methods: {
     toggleDarkTheme(val) {
       this.$vuetify.theme.dark = val;
     },
+    async fetchVersion() {
+      const response = await Vue.axios.get("/version");
+      if (response.data == null) {
+        console.error("failed getting git version info");
+        return;
+      }
+
+      console.log("Git version is", response.data);
+      this.gitVersion = response.data.gitVersion;
+    }
   },
   setup() {
     const store = useSettingsStore();
@@ -155,7 +170,7 @@ export default {
     return {
       fileTypes: ["YAML", "JSON"],
       pollingInterval: ["1s", "5s", "10s", "30s", "1m", "5m", "Off"],
-      version: GIT_DESCRIBE.tag,
+      gitVersion: "",
     };
   },
 };

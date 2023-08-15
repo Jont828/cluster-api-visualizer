@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/Jont828/cluster-api-visualizer/internal"
+	"github.com/Jont828/cluster-api-visualizer/version"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
@@ -109,6 +110,8 @@ func main() {
 	log := klogr.New()
 	ctrl.SetLogger(log)
 
+	log.Info("Starting app with version", "version", version.Get().String())
+
 	if generateConfig {
 		log.V(2).Info("Generating kubeconfig file")
 		restConfig := configclient.GetConfigOrDie()
@@ -136,6 +139,7 @@ func main() {
 	http.Handle("/api/v1/management-cluster/", http.HandlerFunc(handleManagementClusterTree))
 	http.Handle("/api/v1/custom-resource-definition/", http.HandlerFunc(handleCustomResourceDefinitionTree))
 	http.Handle("/api/v1/describe-cluster/", http.HandlerFunc(handleDescribeClusterTree))
+	http.Handle("/api/v1/version/", http.HandlerFunc(handleGetVersion))
 
 	var frontend fs.FS = os.DirFS("web/dist")
 	httpFS := http.FS(frontend)
@@ -325,6 +329,23 @@ func handleCustomResourceDefinitionTree(w http.ResponseWriter, r *http.Request) 
 	}
 
 	data, err := object.MarshalJSON()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	io.Copy(w, bytes.NewReader(data))
+}
+
+func handleGetVersion(w http.ResponseWriter, r *http.Request) {
+	log := klogr.New()
+
+	log.V(2).Info("GET call to url", "url", r.URL.Path)
+
+	versionInfo := version.Get()
+
+	data, err := json.MarshalIndent(versionInfo, "", "  ")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

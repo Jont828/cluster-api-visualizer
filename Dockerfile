@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Build architecture
+# Build
 ARG ARCH
 
 # Build the web app.
@@ -17,6 +17,8 @@ RUN npm run build
 # compared to Ubuntu
 FROM golang:1.20-alpine as builder
 
+ARG ldflags
+
 # Set working directory
 WORKDIR /app
 
@@ -29,8 +31,9 @@ go mod download
 
 COPY ./main.go /app/
 COPY ./internal /app/internal
+COPY ./version /app/version
 
-RUN CGO_ENABLED=0 GOARCH=${ARCH} go build -trimpath -ldflags "-extldflags '-static'" -o main
+RUN CGO_ENABLED=0 GOARCH=${ARCH} go build -trimpath -ldflags "${ldflags} -extldflags '-static'" -o main
 
 # Build production image
 FROM gcr.io/distroless/static:nonroot-${ARCH}
