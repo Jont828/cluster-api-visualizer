@@ -3,7 +3,7 @@ tmp_dir = "tmp"
 
 [build]
   bin = "./tmp/main"
-  cmd = "go build -o ./tmp/main ."
+  cmd = "make build-go GO_BIN_OUT=./tmp/main"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "web/node_modules"]
   exclude_file = []

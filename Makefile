@@ -68,7 +68,7 @@ run: $(GO_BIN_OUT) $(DIST_FOLDER)
 
 .PHONY: go-run
 go-run: $(DIST_FOLDER)
-	go run main.go
+	go run -ldflags "$(LDFLAGS)" main.go 
 
 .PHONY: air
 air: .air.toml
