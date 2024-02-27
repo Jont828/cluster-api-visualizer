@@ -1,19 +1,27 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
+	visualizerv1 "github.com/Jont828/cluster-api-visualizer/api/v1"
 	"github.com/gobuffalo/flect"
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2/klogr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
+	"sigs.k8s.io/cluster-api/controllers/external"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// ClusterResourceNode represents a node in the Cluster API resource tree and is used to configure the frontend with additional
+// options like collapsibility and provider.
 type ClusterResourceNode struct {
 	Name        string                 `json:"name"`
 	Namespace   string                 `json:"namespace"`
@@ -38,8 +46,9 @@ type ClusterResourceTreeOptions struct {
 	VNodesToInheritChildProvider map[string]struct{}
 }
 
+// ConstructClusterResourceTree returns a tree with nodes representing the Cluster API resources in the Cluster.
 // Note: ObjectReferenceObjects do not have the virtual annotation so we can assume that all virtual objects are collapsible
-func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
+func ConstructClusterResourceTree(defaultClient client.Client, runtimeClient ctrlclient.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
 	objTree, err := defaultClient.DescribeCluster(dcOptions)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "not found") {
@@ -61,11 +70,17 @@ func ConstructClusterResourceTree(defaultClient client.Client, dcOptions client.
 			// "WorkerGroup":             {},
 		},
 	}
+
+	if err := injectCustomResourcesToObjectTree(runtimeClient, dcOptions, objTree); err != nil {
+		return nil, NewInternalError(err)
+	}
+
 	resourceTree := objectTreeToResourceTree(objTree, objTree.GetRoot(), treeOptions)
 
 	return resourceTree, nil
 }
 
+// objectTreeToResourceTree converts an clusterctl ObjectTree to a ClusterResourceNode tree.
 func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object, treeOptions ClusterResourceTreeOptions) *ClusterResourceNode {
 	log := klogr.New()
 
@@ -104,6 +119,9 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 
 	childTrees := []*ClusterResourceNode{}
 	for _, child := range children {
+		// log.Info("Child UID is ", "UID", child.GetUID())
+		// obj := objTree.GetObject(child.GetUID())
+		// log.Info("Obj is", "obj", obj)
 		childTrees = append(childTrees, objectTreeToResourceTree(objTree, child, treeOptions))
 	}
 
@@ -143,14 +161,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	return node
 }
 
-func getSortKeys(node *ClusterResourceNode) []string {
-	if node.Group == "virtual.cluster.x-k8s.io" {
-		return []string{node.DisplayName, ""}
-	}
-	return []string{node.Kind, node.DisplayName}
-}
-
-// Find all objects in children with `kind` and create a parent node for them
+// createKindGroupNode finds all objects in children with `kind` and create a parent node for them.
 func createKindGroupNode(namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool) []*ClusterResourceNode {
 	log := klogr.New()
 
@@ -204,97 +215,98 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 	return resultChildren
 }
 
-func updateSeverityIfMoreSevere(existingSev string, newSev string) string {
-	switch {
-	case existingSev == "":
-		return newSev
-	case existingSev == "Info":
-		if newSev == "Error" || newSev == "Warning" {
-			return newSev
-		}
-		return existingSev
-	case existingSev == "Warning":
-		if newSev == "Error" {
-			return newSev
-		}
-		return existingSev
-	case existingSev == "Error":
-		return existingSev
+// injectCustomResourcesToObjectTree amends the clusterctl ObjectTree with custom CRDs that are not included in the clusterctl resource discovery.
+// It queries all CRD types and their instances containing the visualizer label and the cluster name label.
+func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.DescribeClusterOptions, objTree *tree.ObjectTree) error {
+	ctx := context.Background()
+
+	crds, err := getCRDList(ctx, c)
+	if err != nil {
+		return err
 	}
 
-	return existingSev
+	namespace := dcOptions.Namespace
+	clusterName := dcOptions.ClusterName
+
+	clusterObjects := map[types.UID]unstructured.Unstructured{}
+
+	for _, crd := range crds {
+		for _, version := range crd.Spec.Versions {
+			typeMeta := metav1.TypeMeta{
+				Kind: crd.Spec.Names.Kind,
+				APIVersion: metav1.GroupVersion{
+					Group:   crd.Spec.Group,
+					Version: version.Name,
+				}.String(),
+			}
+
+			clusterObjList := new(unstructured.UnstructuredList)
+			clusterObjSelector := []ctrlclient.ListOption{
+				ctrlclient.InNamespace(namespace),
+				ctrlclient.HasLabels{visualizerv1.VisualizeResourceLabel},
+				ctrlclient.MatchingLabels{clusterv1.ClusterNameLabel: clusterName},
+			}
+			if err := getObjList(ctx, c, typeMeta, clusterObjSelector, clusterObjList); err != nil {
+				return err
+			}
+
+			for _, obj := range clusterObjList.Items {
+				clusterObjects[obj.GetUID()] = obj
+			}
+
+		}
+	}
+
+	for i := range clusterObjects {
+		object := clusterObjects[i]
+		// Make sure not to implicitly reference loop variable!
+		if err := ensureObjConnectedTotree(c, objTree, &object); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOptions ClusterResourceTreeOptions) (string, error) {
+// ensureObjConnectedTotree ensures that the object is connected to the tree by adding it and its parents until a parent is owned by the Cluster (root node).
+// If a parent has no owner, it is set as a child of the Cluster.
+// Note: At the moment, this only supports a use case where an object has only one owner which is also set the controller.
+func ensureObjConnectedTotree(c ctrlclient.Client, objTree *tree.ObjectTree, object ctrlclient.Object) error {
 	log := klogr.New()
+	if objTree.GetObject(object.GetUID()) != nil || objTree.GetRoot().GetUID() == object.GetUID() {
+		log.V(4).Info("Object already in tree", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "namespace", object.GetNamespace())
+		return nil
+	}
 
-	if tree.IsVirtualObject(object) {
-		_, inherit := treeOptions.VNodesToInheritChildProvider[object.GetObjectKind().GroupVersionKind().Kind]
-		if !inherit {
-			return "virtual", nil
+	log.V(4).Info("Adding object to tree", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "namespace", object.GetNamespace())
+	var parent ctrlclient.Object
+	// TODO: handle case where there is no controllerRef or how to resolve multiple owners.
+	controllerRef := metav1.GetControllerOf(object)
+	if controllerRef != nil {
+		ref := &corev1.ObjectReference{
+			APIVersion: controllerRef.APIVersion,
+			Kind:       controllerRef.Kind,
+			Name:       controllerRef.Name,
+			Namespace:  object.GetNamespace(),
 		}
-		log.V(4).Info("Aggregating object w/ kind, name, and metaName", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
-
-		prev := ""
-		for i, child := range children {
-			provider, err := lookUpProvider(child)
-			if err != nil {
-				return "", err
-			}
-			log.V(4).Info("Child object w/ kind, name, and provider", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "metaName", tree.GetMetaName(object))
-
-			if provider == "virtual" { // Do not inherit virtual provider
-				return "virtual", nil
-			}
-			if i > 0 && provider != prev { // If two children have different providers, don't inherit
-				return "virtual", nil
-			}
-			prev = provider
+		// We could instead try to cache the list of objects from earlier, but that gets complicated when trying to deal with non-cluster objects.
+		if p, err := external.Get(context.Background(), c, ref, object.GetNamespace()); err != nil {
+			return err
+		} else {
+			parent = p
 		}
-
-		return prev, nil
 	} else {
-		return lookUpProvider(object)
-	}
-}
-
-func lookUpProvider(object ctrlclient.Object) (string, error) {
-	group := object.GetObjectKind().GroupVersionKind().Group
-	providerIndex := strings.IndexByte(group, '.')
-	if tree.IsVirtualObject(object) {
-		return "virtual", nil
-	} else if providerIndex > -1 {
-		return group[:providerIndex], nil
-	} else {
-		return "", errors.Errorf("No provider found for object %s of %s \n", object.GetName(), object.GetObjectKind().GroupVersionKind().String())
-	}
-}
-
-func getDisplayName(object ctrlclient.Object) string {
-	metaName := tree.GetMetaName(object)
-	displayName := object.GetName()
-	if metaName != "" {
-		if object.GetName() == "" || tree.IsVirtualObject(object) {
-			displayName = metaName
-		}
+		// If no ownerRef, set to root.
+		parent = objTree.GetRoot()
+		// TODO: look into creating an add-ons virtual node.
 	}
 
-	return displayName
-}
+	ensureObjConnectedTotree(c, objTree, parent)
 
-func setReadyFields(object ctrlclient.Object, node *ClusterResourceNode) {
-	if readyCondition := tree.GetReadyCondition(object); readyCondition != nil {
-		node.HasReady = true
-		node.Ready = readyCondition.Status == corev1.ConditionTrue
-		node.Severity = string(readyCondition.Severity)
-	}
-}
-
-func nodeArrayNames(nodes []*ClusterResourceNode) string {
-	result := ""
-	for _, node := range nodes {
-		result += node.Kind + "/" + node.Name + " "
+	added, _ := objTree.Add(parent, object)
+	if !added {
+		return fmt.Errorf("failed to add object %s to tree", object.GetName())
 	}
 
-	return result
+	return nil
 }

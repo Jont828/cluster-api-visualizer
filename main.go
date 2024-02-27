@@ -136,6 +136,10 @@ func main() {
 		log.Error(httpErr, "failed to initialize client, will allow frontend to start") // Try to initialize client but allow GUI to start anyway even if it fails
 	}
 
+	// if _, err := internal.FetchLabeledCustomResources(c.ControllerRuntimeClient); err != nil {
+	// 	log.Error(err, "failed to fetch labeled custom resources")
+	// }
+
 	http.Handle("/api/v1/management-cluster/", http.HandlerFunc(handleManagementClusterTree))
 	http.Handle("/api/v1/custom-resource-definition/", http.HandlerFunc(handleCustomResourceDefinitionTree))
 	http.Handle("/api/v1/describe-cluster/", http.HandlerFunc(handleDescribeClusterTree))
@@ -290,7 +294,7 @@ func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {
 		ShowTemplates:           true,
 	}
 
-	tree, httpErr := internal.ConstructClusterResourceTree(c.ClusterctlClient, dcOptions)
+	tree, httpErr := internal.ConstructClusterResourceTree(c.ClusterctlClient, c.ControllerRuntimeClient, dcOptions)
 	if httpErr != nil {
 		log.Error(httpErr, "failed to construct resource tree for target cluster", "clusterName", name)
 		http.Error(w, httpErr.Error(), httpErr.Status)
