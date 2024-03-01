@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	visualizerv1 "github.com/Jont828/cluster-api-visualizer/api/v1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -17,9 +16,9 @@ import (
 )
 
 // getCRDList is a helper function to list all CRDs with the visualize label for constructing the DescribeCluster resource tree.
-func getCRDList(ctx context.Context, c ctrlclient.Client) ([]apiextensionsv1.CustomResourceDefinition, error) {
+func getCRDList(ctx context.Context, c ctrlclient.Client, opts ...ctrlclient.ListOption) ([]apiextensionsv1.CustomResourceDefinition, error) {
 	crdList := &apiextensionsv1.CustomResourceDefinitionList{}
-	if err := c.List(ctx, crdList, ctrlclient.HasLabels{visualizerv1.VisualizeResourceLabel}); err != nil {
+	if err := c.List(ctx, crdList, opts...); err != nil {
 		return nil, errors.Wrap(err, "failed to get the list of CRDs required for the move discovery phase")
 	}
 
@@ -27,18 +26,19 @@ func getCRDList(ctx context.Context, c ctrlclient.Client) ([]apiextensionsv1.Cus
 }
 
 // getObjList is a helper function to list objects of a specific type for constructing the DescribeCluster resource tree.
-func getObjList(ctx context.Context, c ctrlclient.Client, typeMeta metav1.TypeMeta, selectors []ctrlclient.ListOption, objList *unstructured.UnstructuredList) error {
+func getObjList(ctx context.Context, c ctrlclient.Client, typeMeta metav1.TypeMeta, selectors []ctrlclient.ListOption) (*unstructured.UnstructuredList, error) {
+	objList := new(unstructured.UnstructuredList)
 	objList.SetAPIVersion(typeMeta.APIVersion)
 	objList.SetKind(typeMeta.Kind)
 
 	if err := c.List(ctx, objList, selectors...); err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil
+			return nil, nil
 		}
-		return errors.Wrapf(err, "failed to list %q resources", objList.GroupVersionKind())
+		return nil, errors.Wrapf(err, "failed to list %q resources", objList.GroupVersionKind())
 	}
 
-	return nil
+	return objList, nil
 }
 
 // updateSeverityIfMoreSevere takes an existing severity and a new severity and returns the more severe of the two based on the rule that Error > Warning > Info > None.
@@ -69,6 +69,10 @@ func updateSeverityIfMoreSevere(existingSev string, newSev string) string {
 // same provider type, the provider type is inherited. If the object is not a virtual object, the provider type is looked up directly.
 func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOptions ClusterResourceTreeOptions) (string, error) {
 	log := klogr.New()
+
+	if override, ok := treeOptions.providerTypeOverrideMap[object.GetObjectKind().GroupVersionKind().Kind]; ok {
+		return override, nil
+	}
 
 	if tree.IsVirtualObject(object) {
 		_, inherit := treeOptions.VNodesToInheritChildProvider[object.GetObjectKind().GroupVersionKind().Kind]

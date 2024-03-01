@@ -6,12 +6,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Jont828/cluster-api-visualizer/api/v1"
 	visualizerv1 "github.com/Jont828/cluster-api-visualizer/api/v1"
 	"github.com/gobuffalo/flect"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2/klogr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
@@ -44,6 +44,7 @@ type ClusterResourceTreeOptions struct {
 	AddControlPlaneVirtualNode   bool
 	KindsToCollapse              map[string]struct{}
 	VNodesToInheritChildProvider map[string]struct{}
+	providerTypeOverrideMap      map[string]string
 }
 
 // ConstructClusterResourceTree returns a tree with nodes representing the Cluster API resources in the Cluster.
@@ -71,9 +72,11 @@ func ConstructClusterResourceTree(defaultClient client.Client, runtimeClient ctr
 		},
 	}
 
-	if err := injectCustomResourcesToObjectTree(runtimeClient, dcOptions, objTree); err != nil {
+	overrides, err := injectCustomResourcesToObjectTree(runtimeClient, dcOptions, objTree)
+	if err != nil {
 		return nil, NewInternalError(err)
 	}
+	treeOptions.providerTypeOverrideMap = overrides
 
 	resourceTree := objectTreeToResourceTree(objTree, objTree.GetRoot(), treeOptions)
 
@@ -217,20 +220,46 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 
 // injectCustomResourcesToObjectTree amends the clusterctl ObjectTree with custom CRDs that are not included in the clusterctl resource discovery.
 // It queries all CRD types and their instances containing the visualizer label and the cluster name label.
-func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.DescribeClusterOptions, objTree *tree.ObjectTree) error {
+func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.DescribeClusterOptions, objTree *tree.ObjectTree) (map[string]string, error) {
 	ctx := context.Background()
 
-	crds, err := getCRDList(ctx, c)
+	crds, err := getCRDList(ctx, c, ctrlclient.MatchingLabels{visualizerv1.VisualizeResourceLabel: ""})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	namespace := dcOptions.Namespace
 	clusterName := dcOptions.ClusterName
 
-	clusterObjects := map[types.UID]unstructured.Unstructured{}
+	clusterObjSelector := []ctrlclient.ListOption{
+		ctrlclient.InNamespace(namespace),
+		ctrlclient.MatchingLabels{clusterv1.ClusterNameLabel: clusterName},
+	}
 
+	providerTypeOverrideMap := make(map[string]string)
 	for _, crd := range crds {
+		crdLabels := crd.GetLabels()
+		if crdLabels != nil {
+			if provider, ok := crdLabels[api.ProviderTypeLabel]; ok {
+				switch provider {
+				case "cluster":
+					fallthrough
+				case "bootstrap":
+					fallthrough
+				case "controlplane":
+					fallthrough
+				case "infrastructure":
+					fallthrough
+				case "addons":
+					fallthrough
+				case "virtual":
+					providerTypeOverrideMap[crd.Spec.Names.Kind] = provider
+				default:
+					return nil, errors.Errorf("Invalid provider type %s for CRD type %s \n", provider, crd.GetName())
+				}
+			}
+		}
+
 		for _, version := range crd.Spec.Versions {
 			typeMeta := metav1.TypeMeta{
 				Kind: crd.Spec.Names.Kind,
@@ -240,32 +269,23 @@ func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.Des
 				}.String(),
 			}
 
-			clusterObjList := new(unstructured.UnstructuredList)
-			clusterObjSelector := []ctrlclient.ListOption{
-				ctrlclient.InNamespace(namespace),
-				ctrlclient.HasLabels{visualizerv1.VisualizeResourceLabel},
-				ctrlclient.MatchingLabels{clusterv1.ClusterNameLabel: clusterName},
-			}
-			if err := getObjList(ctx, c, typeMeta, clusterObjSelector, clusterObjList); err != nil {
-				return err
+			clusterObjList, err := getObjList(ctx, c, typeMeta, clusterObjSelector)
+			if err != nil {
+				return nil, err
 			}
 
-			for _, obj := range clusterObjList.Items {
-				clusterObjects[obj.GetUID()] = obj
+			for i := range clusterObjList.Items {
+				object := clusterObjList.Items[i]
+				// Make sure not to implicitly reference loop variable!
+				if err := ensureObjConnectedTotree(c, objTree, &object); err != nil {
+					return nil, err
+				}
 			}
 
 		}
 	}
 
-	for i := range clusterObjects {
-		object := clusterObjects[i]
-		// Make sure not to implicitly reference loop variable!
-		if err := ensureObjConnectedTotree(c, objTree, &object); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return providerTypeOverrideMap, nil
 }
 
 // ensureObjConnectedTotree ensures that the object is connected to the tree by adding it and its parents until a parent is owned by the Cluster (root node).
