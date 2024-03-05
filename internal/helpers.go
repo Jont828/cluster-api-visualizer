@@ -161,3 +161,55 @@ func getSortKeys(node *ClusterResourceNode) []string {
 	}
 	return []string{node.Kind, node.DisplayName}
 }
+
+// OwnerRefToObjectRef returns an object reference to the ownerRef of an object.
+func OwnerRefToObjectRef(ownerRef metav1.OwnerReference, namespace string) *corev1.ObjectReference {
+	return &corev1.ObjectReference{
+		APIVersion: ownerRef.APIVersion,
+		Kind:       ownerRef.Kind,
+		Name:       ownerRef.Name,
+		Namespace:  namespace,
+	}
+}
+
+// pickOwner returns an object reference to the ownerRef of an object. If the object has multiple ownerRefs, it will attempt to pick the most appropriate one.
+func pickOwner(c ctrlclient.Client, object ctrlclient.Object) *corev1.ObjectReference {
+	log := klogr.New()
+
+	graph := NewOwnershipGraph(c, object)
+
+	// Remove transitive owners from the graph to simplify the case where an object is owned by multiple objects, and one of the owners is owned by another owner.
+	RemoveTransitiveOwners(object.GetUID(), graph)
+	// Now that the graph is simplified, find the owners of the object.
+	owners := graph.OwnerRefs[object.GetUID()]
+
+	if len(owners) == 0 {
+		log.V(4).Info("No owners found for object", "object", object.GetName())
+		return nil
+	}
+
+	if len(owners) == 1 {
+		for ownerUID := range owners {
+			owner := graph.Objects[ownerUID]
+			log.V(4).Info("Owner found for object", "ownerKind", owner.GetObjectKind().GroupVersionKind().Kind, "ownerName", owner.GetName(), "object", object.GetName())
+			return &corev1.ObjectReference{
+				APIVersion: owner.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+				Kind:       owner.GetObjectKind().GroupVersionKind().Kind,
+				Name:       owner.GetName(),
+				Namespace:  owner.GetNamespace(),
+			}
+		}
+	}
+
+	if len(owners) > 1 {
+		log.V(4).Info("Found multiple owners for object", "numOwners", len(owners), "object", object.GetName())
+		controllerRef := metav1.GetControllerOf(object)
+		if controllerRef != nil {
+			return OwnerRefToObjectRef(*controllerRef, object.GetNamespace())
+		}
+
+		return nil
+	}
+
+	return nil
+}
