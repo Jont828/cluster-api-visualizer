@@ -6,11 +6,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Jont828/cluster-api-visualizer/api/v1"
 	visualizerv1 "github.com/Jont828/cluster-api-visualizer/api/v1"
 	"github.com/gobuffalo/flect"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2/klogr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -237,10 +235,11 @@ func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.Des
 	}
 
 	providerTypeOverrideMap := make(map[string]string)
+	clusterObjects := []ctrlclient.Object{}
 	for _, crd := range crds {
 		crdLabels := crd.GetLabels()
 		if crdLabels != nil {
-			if provider, ok := crdLabels[api.ProviderTypeLabel]; ok {
+			if provider, ok := crdLabels[visualizerv1.ProviderTypeLabel]; ok {
 				switch provider {
 				case "cluster":
 					fallthrough
@@ -275,13 +274,20 @@ func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.Des
 			}
 
 			for i := range clusterObjList.Items {
-				object := clusterObjList.Items[i]
-				// Make sure not to implicitly reference loop variable!
-				if err := ensureObjConnectedTotree(c, objTree, &object); err != nil {
-					return nil, err
-				}
+				clusterObj := &clusterObjList.Items[i]
+				clusterObjects = append(clusterObjects, clusterObj)
+
+				// Add the CRD to the object tree
 			}
 
+		}
+	}
+
+	for i := range clusterObjects {
+		object := clusterObjects[i]
+		// Make sure not to implicitly reference loop variable!
+		if err := ensureObjConnectedTotree(c, objTree, object); err != nil {
+			return nil, err
 		}
 	}
 
@@ -301,15 +307,8 @@ func ensureObjConnectedTotree(c ctrlclient.Client, objTree *tree.ObjectTree, obj
 	log.V(4).Info("Adding object to tree", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "namespace", object.GetNamespace())
 	var parent ctrlclient.Object
 	// TODO: handle case where there is no controllerRef or how to resolve multiple owners.
-	controllerRef := metav1.GetControllerOf(object)
-	if controllerRef != nil {
-		ref := &corev1.ObjectReference{
-			APIVersion: controllerRef.APIVersion,
-			Kind:       controllerRef.Kind,
-			Name:       controllerRef.Name,
-			Namespace:  object.GetNamespace(),
-		}
-		// We could instead try to cache the list of objects from earlier, but that gets complicated when trying to deal with non-cluster objects.
+	ref := pickOwner(c, object)
+	if ref != nil {
 		if p, err := external.Get(context.Background(), c, ref, object.GetNamespace()); err != nil {
 			return err
 		} else {
