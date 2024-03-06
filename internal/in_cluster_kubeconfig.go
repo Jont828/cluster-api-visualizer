@@ -12,8 +12,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
-	"k8s.io/klog/v2/klogr"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func GetKubeadmClusterName(restConfig *rest.Config, namespace string, name string) (string, error) {
@@ -46,8 +45,8 @@ func GetKubeadmClusterName(restConfig *rest.Config, namespace string, name strin
 	return clusterName, nil
 }
 
-func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*clientcmdapi.Config, error) {
-	log := klogr.New()
+func ConstructInClusterKubeconfig(ctx context.Context, restConfig *rest.Config, namespace string) (*clientcmdapi.Config, error) {
+	log := ctrl.LoggerFrom(ctx)
 
 	log.V(2).Info("Constructing kubeconfig file from rest.Config")
 
@@ -94,8 +93,8 @@ func ConstructInClusterKubeconfig(restConfig *rest.Config, namespace string) (*c
 	}, nil
 }
 
-func WriteKubeconfigToFile(filePath string, clientConfig clientcmdapi.Config) error {
-	log := klogr.New()
+func WriteKubeconfigToFile(ctx context.Context, filePath string, clientConfig clientcmdapi.Config) error {
+	log := ctrl.LoggerFrom(ctx)
 
 	dir := filepath.Dir(filePath)
 	if _, err := os.Stat(dir); errors.Is(err, os.ErrNotExist) {

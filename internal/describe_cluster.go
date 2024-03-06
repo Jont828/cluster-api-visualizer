@@ -10,11 +10,11 @@ import (
 	"github.com/gobuffalo/flect"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog/v2/klogr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
 	"sigs.k8s.io/cluster-api/controllers/external"
+	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -47,8 +47,8 @@ type ClusterResourceTreeOptions struct {
 
 // ConstructClusterResourceTree returns a tree with nodes representing the Cluster API resources in the Cluster.
 // Note: ObjectReferenceObjects do not have the virtual annotation so we can assume that all virtual objects are collapsible
-func ConstructClusterResourceTree(defaultClient client.Client, runtimeClient ctrlclient.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
-	objTree, err := defaultClient.DescribeCluster(dcOptions)
+func ConstructClusterResourceTree(ctx context.Context, defaultClient client.Client, runtimeClient ctrlclient.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
+	objTree, err := defaultClient.DescribeCluster(ctx, dcOptions)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "not found") {
 			return nil, &HTTPError{Status: 404, Message: err.Error()}
@@ -70,20 +70,20 @@ func ConstructClusterResourceTree(defaultClient client.Client, runtimeClient ctr
 		},
 	}
 
-	overrides, err := injectCustomResourcesToObjectTree(runtimeClient, dcOptions, objTree)
+	overrides, err := injectCustomResourcesToObjectTree(ctx, runtimeClient, dcOptions, objTree)
 	if err != nil {
 		return nil, NewInternalError(err)
 	}
 	treeOptions.providerTypeOverrideMap = overrides
 
-	resourceTree := objectTreeToResourceTree(objTree, objTree.GetRoot(), treeOptions)
+	resourceTree := objectTreeToResourceTree(ctx, objTree, objTree.GetRoot(), treeOptions)
 
 	return resourceTree, nil
 }
 
 // objectTreeToResourceTree converts an clusterctl ObjectTree to a ClusterResourceNode tree.
-func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object, treeOptions ClusterResourceTreeOptions) *ClusterResourceNode {
-	log := klogr.New()
+func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, object ctrlclient.Object, treeOptions ClusterResourceTreeOptions) *ClusterResourceNode {
+	log := ctrl.LoggerFrom(ctx)
 
 	if object == nil {
 		return nil
@@ -110,7 +110,7 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 	}
 
 	children := objTree.GetObjectsByParent(object.GetUID())
-	provider, err := getProvider(object, children, treeOptions)
+	provider, err := getProvider(ctx, object, children, treeOptions)
 	if err != nil {
 		log.Error(err, "failed to get provider for object", "kind", kind, "name", object.GetName())
 	}
@@ -123,12 +123,12 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 		// log.Info("Child UID is ", "UID", child.GetUID())
 		// obj := objTree.GetObject(child.GetUID())
 		// log.Info("Obj is", "obj", obj)
-		childTrees = append(childTrees, objectTreeToResourceTree(objTree, child, treeOptions))
+		childTrees = append(childTrees, objectTreeToResourceTree(ctx, objTree, child, treeOptions))
 	}
 
 	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
 	if treeOptions.GroupMachines {
-		node.Children = createKindGroupNode(object.GetNamespace(), "Machine", "cluster", childTrees, false)
+		node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, false)
 	} else {
 		node.Children = childTrees
 	}
@@ -163,8 +163,8 @@ func objectTreeToResourceTree(objTree *tree.ObjectTree, object ctrlclient.Object
 }
 
 // createKindGroupNode finds all objects in children with `kind` and create a parent node for them.
-func createKindGroupNode(namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool) []*ClusterResourceNode {
-	log := klogr.New()
+func createKindGroupNode(ctx context.Context, namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool) []*ClusterResourceNode {
+	log := ctrl.LoggerFrom(ctx)
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
 
@@ -218,8 +218,10 @@ func createKindGroupNode(namespace string, kind string, provider string, childre
 
 // injectCustomResourcesToObjectTree amends the clusterctl ObjectTree with custom CRDs that are not included in the clusterctl resource discovery.
 // It queries all CRD types and their instances containing the visualizer label and the cluster name label.
-func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.DescribeClusterOptions, objTree *tree.ObjectTree) (map[string]string, error) {
-	ctx := context.Background()
+func injectCustomResourcesToObjectTree(ctx context.Context, c ctrlclient.Client, dcOptions client.DescribeClusterOptions, objTree *tree.ObjectTree) (map[string]string, error) {
+	log := ctrl.LoggerFrom(ctx)
+
+	log.V(4).Info("Adding user specified custom resources to object tree", "namespace", dcOptions.Namespace, "clusterName", dcOptions.ClusterName)
 
 	crds, err := getCRDList(ctx, c, ctrlclient.MatchingLabels{visualizerv1.VisualizeResourceLabel: ""})
 	if err != nil {
@@ -286,7 +288,7 @@ func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.Des
 	for i := range clusterObjects {
 		object := clusterObjects[i]
 		// Make sure not to implicitly reference loop variable!
-		if err := ensureObjConnectedTotree(c, objTree, object); err != nil {
+		if err := ensureObjConnectedTotree(ctx, c, objTree, object); err != nil {
 			return nil, err
 		}
 	}
@@ -297,8 +299,9 @@ func injectCustomResourcesToObjectTree(c ctrlclient.Client, dcOptions client.Des
 // ensureObjConnectedTotree ensures that the object is connected to the tree by adding it and its parents until a parent is owned by the Cluster (root node).
 // If a parent has no owner, it is set as a child of the Cluster.
 // Note: At the moment, this only supports a use case where an object has only one owner which is also set the controller.
-func ensureObjConnectedTotree(c ctrlclient.Client, objTree *tree.ObjectTree, object ctrlclient.Object) error {
-	log := klogr.New()
+func ensureObjConnectedTotree(ctx context.Context, c ctrlclient.Client, objTree *tree.ObjectTree, object ctrlclient.Object) error {
+	log := ctrl.LoggerFrom(ctx)
+
 	if objTree.GetObject(object.GetUID()) != nil || objTree.GetRoot().GetUID() == object.GetUID() {
 		log.V(4).Info("Object already in tree", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "namespace", object.GetNamespace())
 		return nil
@@ -307,9 +310,9 @@ func ensureObjConnectedTotree(c ctrlclient.Client, objTree *tree.ObjectTree, obj
 	log.V(4).Info("Adding object to tree", "kind", object.GetObjectKind().GroupVersionKind().Kind, "name", object.GetName(), "namespace", object.GetNamespace())
 	var parent ctrlclient.Object
 	// TODO: handle case where there is no controllerRef or how to resolve multiple owners.
-	ref := pickOwner(c, object)
+	ref := pickOwner(ctx, c, object)
 	if ref != nil {
-		if p, err := external.Get(context.Background(), c, ref, object.GetNamespace()); err != nil {
+		if p, err := external.Get(ctx, c, ref, object.GetNamespace()); err != nil {
 			return err
 		} else {
 			parent = p
@@ -320,7 +323,7 @@ func ensureObjConnectedTotree(c ctrlclient.Client, objTree *tree.ObjectTree, obj
 		// TODO: look into creating an add-ons virtual node.
 	}
 
-	ensureObjConnectedTotree(c, objTree, parent)
+	ensureObjConnectedTotree(ctx, c, objTree, parent)
 
 	added, _ := objTree.Add(parent, object)
 	if !added {

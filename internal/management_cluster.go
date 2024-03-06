@@ -6,9 +6,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"k8s.io/klog/v2/klogr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -23,8 +23,8 @@ type MultiClusterTreeNode struct {
 }
 
 // ConstructMultiClusterTree returns a tree representing the workload cluster discovered in the management cluster.
-func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *api.Config) (*MultiClusterTreeNode, *HTTPError) {
-	log := klogr.New()
+func ConstructMultiClusterTree(ctx context.Context, ctrlClient ctrlclient.Client, k8sConfigClient *api.Config) (*MultiClusterTreeNode, *HTTPError) {
+	log := ctrl.LoggerFrom(ctx)
 
 	currentContextName := k8sConfigClient.CurrentContext
 	currentContext, ok := k8sConfigClient.Contexts[currentContextName]
@@ -45,7 +45,7 @@ func ConstructMultiClusterTree(ctrlClient ctrlclient.Client, k8sConfigClient *ap
 	clusterList := &clusterv1.ClusterList{}
 
 	// TODO: should we use ctrlClient.MatchingLabels or try to use the labelSelector itself?
-	if err := ctrlClient.List(context.TODO(), clusterList); err != nil {
+	if err := ctrlClient.List(ctx, clusterList); err != nil {
 		return nil, NewInternalError(err)
 	}
 

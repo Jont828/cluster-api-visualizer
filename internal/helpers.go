@@ -10,8 +10,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
+	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -67,8 +67,8 @@ func updateSeverityIfMoreSevere(existingSev string, newSev string) string {
 // getProvider returns the provider type for an object in the Cluster resource tree. If the object is a virtual object and its kind is
 // listed in treeOptions.VNodesToInheritChildProvider, the provider type of the object's children is checked. If all children have the
 // same provider type, the provider type is inherited. If the object is not a virtual object, the provider type is looked up directly.
-func getProvider(object ctrlclient.Object, children []ctrlclient.Object, treeOptions ClusterResourceTreeOptions) (string, error) {
-	log := klogr.New()
+func getProvider(ctx context.Context, object ctrlclient.Object, children []ctrlclient.Object, treeOptions ClusterResourceTreeOptions) (string, error) {
+	log := ctrl.LoggerFrom(ctx)
 
 	if override, ok := treeOptions.providerTypeOverrideMap[object.GetObjectKind().GroupVersionKind().Kind]; ok {
 		return override, nil
@@ -173,10 +173,10 @@ func OwnerRefToObjectRef(ownerRef metav1.OwnerReference, namespace string) *core
 }
 
 // pickOwner returns an object reference to the ownerRef of an object. If the object has multiple ownerRefs, it will attempt to pick the most appropriate one.
-func pickOwner(c ctrlclient.Client, object ctrlclient.Object) *corev1.ObjectReference {
-	log := klogr.New()
+func pickOwner(ctx context.Context, c ctrlclient.Client, object ctrlclient.Object) *corev1.ObjectReference {
+	log := ctrl.LoggerFrom(ctx)
 
-	graph := NewOwnershipGraph(c, object)
+	graph := NewOwnershipGraph(ctx, c, object)
 
 	// Remove transitive owners from the graph to simplify the case where an object is owned by multiple objects, and one of the owners is owned by another owner.
 	RemoveTransitiveOwners(object.GetUID(), graph)

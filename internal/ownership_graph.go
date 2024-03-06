@@ -20,12 +20,12 @@ type OwnershipGraph struct {
 }
 
 // NewOwnershipGraph returns a new OwnershipGraph by recursively traversing the ownerRefs of the given object.
-func NewOwnershipGraph(c ctrlclient.Client, object ctrlclient.Object) *OwnershipGraph {
+func NewOwnershipGraph(ctx context.Context, c ctrlclient.Client, object ctrlclient.Object) *OwnershipGraph {
 	ownershipGraph := &OwnershipGraph{
 		Objects:   make(map[types.UID]ctrlclient.Object),
 		OwnerRefs: make(map[types.UID]map[types.UID]struct{}),
 	}
-	constructOwnershipGraph(c, object, ownershipGraph)
+	constructOwnershipGraph(ctx, c, object, ownershipGraph)
 
 	return ownershipGraph
 }
@@ -35,11 +35,11 @@ func NewOwnershipGraph(c ctrlclient.Client, object ctrlclient.Object) *Ownership
 // 1. Add the given object to the graph.
 // 2. For each ownerRef of the given object, add the owner to the graph and add an edge from the given object to the owner.
 // 3. Recursively call constructOwnershipGraph for each owner.
-func constructOwnershipGraph(c ctrlclient.Client, object ctrlclient.Object, ownershipGraph *OwnershipGraph) error {
+func constructOwnershipGraph(ctx context.Context, c ctrlclient.Client, object ctrlclient.Object, ownershipGraph *OwnershipGraph) error {
 	ownershipGraph.Objects[object.GetUID()] = object
 	for _, ownerRef := range object.GetOwnerReferences() {
 		ref := OwnerRefToObjectRef(ownerRef, object.GetNamespace())
-		owner, err := external.Get(context.Background(), c, ref, object.GetNamespace())
+		owner, err := external.Get(ctx, c, ref, object.GetNamespace())
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func constructOwnershipGraph(c ctrlclient.Client, object ctrlclient.Object, owne
 			ownershipGraph.OwnerRefs[object.GetUID()] = map[types.UID]struct{}{}
 		}
 		ownershipGraph.OwnerRefs[object.GetUID()][owner.GetUID()] = struct{}{}
-		constructOwnershipGraph(c, owner, ownershipGraph)
+		constructOwnershipGraph(ctx, c, owner, ownershipGraph)
 	}
 
 	return nil
