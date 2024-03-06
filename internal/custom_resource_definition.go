@@ -9,14 +9,14 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetCustomResource(runtimeClient ctrlclient.Client, kind string, apiVersion string, namespace string, name string) (*unstructured.Unstructured, *HTTPError) {
+func GetCustomResource(ctx context.Context, runtimeClient ctrlclient.Client, kind string, apiVersion string, namespace string, name string) (*unstructured.Unstructured, *HTTPError) {
 	objectRef := corev1.ObjectReference{
 		Kind:       kind,
 		Namespace:  namespace,
 		Name:       name,
 		APIVersion: apiVersion,
 	}
-	object, err := external.Get(context.TODO(), runtimeClient, &objectRef, namespace)
+	object, err := external.Get(ctx, runtimeClient, &objectRef, namespace)
 	if err != nil {
 		return nil, &HTTPError{404, err.Error()}
 	}
