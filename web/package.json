@@ -8,10 +8,12 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@highlightjs/vue-plugin": "^1.0.2",
     "@vue/composition-api": "^1.7.1",
     "axios": "^0.24.0",
     "core-js": "^3.6.5",
     "d3": "^7.1.1",
+    "highlight.js": "^10.7.2",
     "js-yaml": "^4.1.0",
     "less-loader": "7.3.0",
     "pinia": "^2.0.28",
@@ -22,6 +24,7 @@
     "vue": "^2.6.11",
     "vue-axios": "^3.4.0",
     "vue-router": "^3.5.2",
+    "vue-virtual-scroller": "^1.1.2",
     "vuetify": "^2.5.10"
   },
   "devDependencies": {

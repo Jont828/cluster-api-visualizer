@@ -67,7 +67,6 @@
           </template>
         </v-hover>
       </template>
-
     </vue-tree>
     <div class="legend">
       <v-card class="legend-card">

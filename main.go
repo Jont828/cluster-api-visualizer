@@ -29,6 +29,7 @@ import (
 
 type Client struct {
 	ClusterctlClient        client.Client     // The clusterctl client needed to run clusterctl operations like `c.DescribeCluster()`
+	ClusterClient           cluster.Client    // The client used by clusterctl to interact with the management cluster
 	ControllerRuntimeClient ctrlclient.Client // The Kubernetes controller-runtime client needed to run `external.Get()` to fetch any CRD as a JSON object
 	K8sConfigClient         *api.Config       // This is the Kubernetes config client needed to access information from the kubeconfig like the namespace and context
 	CurrentNamespace        string
@@ -61,6 +62,7 @@ func newClient(ctx context.Context) (*Client, *internal.HTTPError) {
 	}
 
 	clusterClient := cluster.New(clusterKubeconfig, configClient)
+	c.ClusterClient = clusterClient
 
 	err = clusterClient.Proxy().CheckClusterAvailable()
 	if err != nil {
@@ -141,6 +143,7 @@ func main() {
 
 	http.Handle("/api/v1/management-cluster/", http.HandlerFunc(handleManagementClusterTree))
 	http.Handle("/api/v1/custom-resource-definition/", http.HandlerFunc(handleCustomResourceDefinitionTree))
+	http.Handle("/api/v1/resource-logs/", http.HandlerFunc(handleGetResourceLogs))
 	http.Handle("/api/v1/describe-cluster/", http.HandlerFunc(handleDescribeClusterTree))
 	http.Handle("/api/v1/version/", http.HandlerFunc(handleGetVersion))
 
@@ -338,6 +341,37 @@ func handleCustomResourceDefinitionTree(w http.ResponseWriter, r *http.Request) 
 	}
 
 	data, err := object.MarshalJSON()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	io.Copy(w, bytes.NewReader(data))
+}
+
+func handleGetResourceLogs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := ctrl.LoggerFrom(ctx)
+
+	log.V(2).Info("GET call to url", "url", r.URL.Path)
+	log.V(2).Info("GET call params are", "params", r.URL.Query())
+
+	kind := r.URL.Query().Get("kind")
+	name := r.URL.Query().Get("name")
+	namespace := r.URL.Query().Get("namespace")
+
+	config, err := c.ClusterClient.Proxy().GetConfig()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	}
+	logs, err := internal.GetPodLogsForResource(ctx, c.ControllerRuntimeClient, config, kind, namespace, name)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	data, err := json.Marshal(logs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
