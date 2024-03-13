@@ -5,21 +5,17 @@
     :color="($vuetify.theme.dark ? null: 'primary')"
     dark
   >
-    <router-link
-      :to="'/'"
-      class="router-link"
-      v-if="showBack"
+    <v-btn
+      icon
+      text
+      class="ma-2"
+      @click="() => { router.back() }"
+    v-if="showBack"
     >
-      <v-btn
-        icon
-        text
-        class="ma-2"
-      >
-        <v-icon color="white">
-          mdi-chevron-left
-        </v-icon>
-      </v-btn>
-    </router-link>
+      <v-icon color="white">
+        mdi-chevron-left
+      </v-icon>
+    </v-btn>
     <v-app-bar-nav-icon
       class="ma-2"
       v-else
@@ -61,7 +57,11 @@
       </template>
       <span>Zoom out</span>
     </v-tooltip>
-    <span>{{ Math.round(scale*100) }}%</span>
+    <v-icon
+      v-if="scaleIcon"
+      color="white"
+    > mdi-{{ scaleIcon }}</v-icon>
+    <span v-else>{{ scale }}</span>
     <v-tooltip bottom>
       <template v-slot:activator="{ on, attrs }">
         <v-btn
@@ -102,13 +102,22 @@
 </template>
 
 <script>
+import router from '../router';
+
 export default {
   name: "AppBar",
   props: {
     title: String,
     showBack: Boolean,
     isStraight: Boolean,
-    scale: Number,
+    scale: String,
+    scaleIcon: String,
+    backURL: String,
+  },
+  data() {
+    return {
+      router: router,
+    };
   },
 };
 </script>

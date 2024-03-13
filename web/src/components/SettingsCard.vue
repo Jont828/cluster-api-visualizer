@@ -130,6 +130,26 @@
           </v-select>
         </v-list-item-action>
       </v-list-item>
+
+      <v-list-item class="listRow">
+        <v-list-item-icon>
+          <v-icon>mdi-file-document</v-icon>
+        </v-list-item-icon>
+
+        <v-list-item-content>
+          <v-list-item-title>Max Log Lines</v-list-item-title>
+        </v-list-item-content>
+        <v-list-item-action>
+          <div class="relWrap">
+            <v-text-field
+              :rules="rules"
+              v-model="maxLogLines"
+              height="25"
+              class="textInput"
+            ></v-text-field>
+          </div>
+        </v-list-item-action>
+      </v-list-item>
     </v-list>
   </v-card>
 
@@ -146,11 +166,25 @@ export default {
   props: {
     version: String,
   },
+  watch: {
+    maxLogLines: function() {
+      if (this.positiveInteger.test(this.maxLogLines)) {
+        this.store.maxLogLines = this.maxLogLines;
+      }
+    }
+  },
   methods: {
     toggleDarkTheme(val) {
       this.$vuetify.theme.dark = val;
     },
     // TODO: Do this once on page load so this doesn't take a minute and lag.
+    ensurePositiveInt(val) {
+      if (this.positiveInteger.test(val)) {
+        return true;
+      } else {
+        return "Must be a positive integer.";
+      }
+    },
   },
   setup() {
     const store = useSettingsStore();
@@ -159,8 +193,16 @@ export default {
   },
   data() {
     return {
+      positiveInteger: /^[1-9]\d*$/,
+      maxLogLines: this.store.maxLogLines,
       fileTypes: ["YAML", "JSON"],
       pollingInterval: ["1s", "5s", "10s", "30s", "1m", "5m", "Off"],
+      rules: [
+        value => {
+          const pattern = /^[1-9]\d*$/
+          return pattern.test(value) || 'Must be positive integer'
+        },
+      ],
     };
   },
 };
@@ -169,5 +211,17 @@ export default {
 <style lang="less" scoped>
 .selectBox {
   width: 100px;
+}
+
+.textInput {
+  position: absolute;
+  top: 0;
+  width: 100px;
+}
+
+.relWrap {
+  width: 100px;
+  height: 30px;
+  position: relative;
 }
 </style>

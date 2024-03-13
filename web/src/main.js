@@ -4,10 +4,27 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
+
 import axios from "axios";
 import VueAxios from "vue-axios";
+
 import { createPinia, PiniaVuePlugin } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+
+import hljs from 'highlight.js/lib/core';
+import json from 'highlight.js/lib/languages/json';
+import hljsVuePlugin from "@highlightjs/vue-plugin";
+import "highlight.js/styles/stackoverflow-dark.css";
+
+import VueVirtualScroller from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+
+
+Vue.use(VueVirtualScroller)
+
+hljs.registerLanguage('json', json);
+
+Vue.use(hljsVuePlugin);
 
 Vue.use(PiniaVuePlugin)
 const pinia = createPinia()

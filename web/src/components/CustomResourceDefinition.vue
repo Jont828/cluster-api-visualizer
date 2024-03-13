@@ -13,6 +13,23 @@
       >
         {{ name }}
         <v-spacer></v-spacer>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on, attrs }">
+            <router-link
+              :to="url"
+            >
+              <v-btn
+                icon
+                color="white"
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon>mdi-file-document</v-icon>
+              </v-btn>
+            </router-link>
+          </template>
+          <span>Open logs</span>
+        </v-tooltip>
         <v-btn
           icon
           color="white"
@@ -147,12 +164,19 @@ export default {
       search: null,
       caseSensitive: false,
       conditions: [],
+      url: "",
       scrollY: 0,
     };
   },
   mounted() {
     this.setConditions(this.jsonItems?.status?.conditions);
     window.addEventListener("scroll", this.onScroll);
+    console.log("JSON items are", this.jsonItems);
+    let kind = this.jsonItems.kind;
+    let name = this.jsonItems.metadata.name;
+    let namespace = this.jsonItems.metadata.namespace;
+    this.url = "/logs?kind=" + kind + "&name=" + name + "&namespace=" + namespace;
+    console.log("URL is", this.url);
   },
   methods: {
     getType(condition) {
@@ -163,7 +187,6 @@ export default {
         : "warning";
     },
     onScroll(e) {
-      console.log("Scroll is", window.scrollY);
       this.scrollY = window.scrollY;
       // this.windowTop = window.top.scrollY /* or: e.target.documentElement.scrollTop */
     },
@@ -242,14 +265,6 @@ export default {
   flex-wrap: wrap;
   gap: 8px;
 }
-// .conditionChip {
-//   .loading {
-//     height: 20px !important;
-//     width: 20px !important;
-//     min-height: 20px !important;
-//     min-width: 20px !important;
-//   }
-// }
 </style>
 
 <style lang="less">

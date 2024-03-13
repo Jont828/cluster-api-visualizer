@@ -7,6 +7,7 @@ export const useSettingsStore = defineStore('settings-store', {
     darkTheme: false,
     selectedFileType: 'YAML',
     selectedInterval: '1m',
+    maxLogLines: '1000',
   }),
   persist: true,
 })

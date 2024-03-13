@@ -4,7 +4,7 @@
     <AppBar
       :title="'Cluster Resources: ' + getTitle()"
       :showBack="true"
-      :scale="scale"
+      :scale="Math.round(scale*100) + '%'"
       @togglePathStyle="linkHandler"
       @reload="() => { fetchCluster(forceRedraw=true); fetchCRD(selected, true) }"
       @zoomIn="() => { $refs.targetTree.$refs.tree.zoomIn() }"

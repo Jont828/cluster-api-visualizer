@@ -2,7 +2,7 @@
   <div id="overview">
     <AppBar
       title="Management Cluster Overview"
-      :scale="scale"
+      :scale="Math.round(scale*100) + '%'"
       @togglePathStyle="linkHandler"
       @reload="fetchOverview(forceRedraw=true)"
       @zoomIn="() => { $refs.overviewTree.$refs.tree.zoomIn() }"
