@@ -68,7 +68,7 @@
     </div>
     
     <v-overlay
-      absolute
+      id="settingsOverlay"
       :value="showSettingsOverlay"
       z-index="99999"
     >
@@ -248,6 +248,15 @@ code {
 </style>
 
 <style lang="less" scoped>
+#settingsOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+}
+
 #overview {
   height: 100%;
 }
