@@ -346,45 +346,6 @@ func handleCustomResourceDefinitionTree(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// config, err := c.ClusterClient.Proxy().GetConfig()
-	// if err != nil {
-	// 	log.Error(err, "failed to get cluster config")
-	// }
-	// if err := internal.GetPodLogsForResource(ctx, config, kind, namespace, name); err != nil {
-	// 	log.Error(err, "failed to get all pod logs")
-	// }
-
-	w.Header().Set("Content-Type", "application/json")
-	io.Copy(w, bytes.NewReader(data))
-}
-
-func handleGetResourceLogs(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	log := ctrl.LoggerFrom(ctx)
-
-	log.V(2).Info("GET call to url", "url", r.URL.Path)
-	log.V(2).Info("GET call params are", "params", r.URL.Query())
-
-	kind := r.URL.Query().Get("kind")
-	name := r.URL.Query().Get("name")
-	namespace := r.URL.Query().Get("namespace")
-
-	config, err := c.ClusterClient.Proxy().GetConfig()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-
-	}
-	logs, err := internal.GetPodLogsForResource(ctx, c.ControllerRuntimeClient, config, kind, namespace, name)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	data, err := json.Marshal(logs)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	io.Copy(w, bytes.NewReader(data))
 }
