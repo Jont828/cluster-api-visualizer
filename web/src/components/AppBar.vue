@@ -10,7 +10,7 @@
       text
       class="ma-2"
       @click="() => { router.back() }"
-    v-if="showBack"
+      v-if="showBack"
     >
       <v-icon color="white">
         mdi-chevron-left
