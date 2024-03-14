@@ -1,7 +1,7 @@
 <template>
   <div id="overview">
     <AppBar
-      title="Management Cluster"
+      title="Management Cluster Overview"
       :scale="Math.round(scale*100) + '%'"
       @togglePathStyle="linkHandler"
       @reload="fetchOverview(forceRedraw=true)"
@@ -72,7 +72,7 @@ export default {
     },
   },
   mounted() {
-    document.title = "Management Cluster";
+    document.title = "Management Cluster Overview";
     this.intervalHandler(this.store.selectedInterval);
   },
   beforeDestroy() {

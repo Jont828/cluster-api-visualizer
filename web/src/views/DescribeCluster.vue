@@ -2,7 +2,7 @@
   <div class="wrapper">
     <!-- :title="'Cluster Resources: ' + this.$route.query.namespace + '/' + this.$route.query.name" -->
     <AppBar
-      :title="'Cluster: ' + getTitle()"
+      :title="'Cluster Resources: ' + getTitle()"
       :showBack="true"
       :scale="Math.round(scale*100) + '%'"
       @togglePathStyle="linkHandler"
@@ -72,7 +72,6 @@
         :version="gitVersion"
       />
     </v-overlay>
-    <ScrollButton />
   </div>
 </template>
 
@@ -84,7 +83,6 @@ import AppBar from "../components/AppBar.vue";
 import CustomResourceDefinition from "../components/CustomResourceDefinition.vue";
 import AlertError from "../components/AlertError.vue";
 import SettingsCard from "../components/SettingsCard.vue";
-import ScrollButton from "../components/ScrollButton.vue";
 
 import { useSettingsStore } from "../stores/settings.js";
 import { setVersion } from "../mixins/setVersion.js";
@@ -100,7 +98,6 @@ export default {
     SettingsCard,
     CustomResourceDefinition,
     AlertError,
-    ScrollButton,
   },
   mixins: [setVersion],
   data() {
@@ -142,7 +139,7 @@ export default {
     },
   },
   mounted() {
-    document.title = "Cluster: " + this.getTitle();
+    document.title = "Cluster Resources: " + this.getTitle();
     this.intervalHandler(this.store.selectedInterval);
   },
   beforeDestroy() {
@@ -200,7 +197,7 @@ export default {
         console.log("Node missing required fields:", node);
         if (closeOnFailure) {
           this.resourceIsReady = false;
-          this.selected = {}; // TODO: do we want to reset the selected variable or is "this.resourceIsReady = false" enough?
+          this.selected = {}; // TODO: do we want to reset the selected variable or is `this.resourceIsReady = false` enough?
         }
         return;
       }

@@ -78,7 +78,6 @@
         :version="gitVersion"
       />
     </v-overlay>
-    <ScrollButton />
   </div>
 </template>
 
@@ -87,7 +86,6 @@ import Vue from "vue";
 
 import SettingsCard from "../components/SettingsCard.vue";
 import AppBar from "../components/AppBar.vue";
-import ScrollButton from "../components/ScrollButton.vue";
 
 import { useSettingsStore } from "../stores/settings.js";
 import { setVersion } from "../mixins/setVersion.js";
@@ -97,7 +95,6 @@ export default {
   components: {
     SettingsCard,
     AppBar,
-    ScrollButton,
   },
   mixins: [setVersion],
   data() {
