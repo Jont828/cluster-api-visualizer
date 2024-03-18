@@ -12,7 +12,6 @@
         }"
       >
         {{ name }}
-        <v-spacer></v-spacer>
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
             <router-link
@@ -23,20 +22,29 @@
                 color="white"
                 v-bind="attrs"
                 v-on="on"
+                class="ml-1"
               >
-                <v-icon>mdi-file-document</v-icon>
+                <v-icon>mdi-open-in-new</v-icon>
               </v-btn>
             </router-link>
           </template>
           <span>Open logs</span>
         </v-tooltip>
-        <v-btn
-          icon
-          color="white"
-          @click="this.downloadCRD"
-        >
-          <v-icon>mdi-download</v-icon>
-        </v-btn>
+        <v-spacer></v-spacer>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn
+              icon
+              color="white"
+              v-bind="attrs"
+              v-on="on"
+              @click="downloadCRD"
+            >
+              <v-icon>mdi-download</v-icon>
+            </v-btn>
+            </template>
+          <span>Download CRD</span>
+        </v-tooltip>
         <v-btn
           icon
           color="white"
@@ -190,7 +198,7 @@ export default {
       this.scrollY = window.scrollY;
       // this.windowTop = window.top.scrollY /* or: e.target.documentElement.scrollTop */
     },
-    downloadCRD() {
+  downloadCRD() {
       const link = document.createElement("a");
       let crdString = "";
       if (this.store.selectedFileType === "JSON")
