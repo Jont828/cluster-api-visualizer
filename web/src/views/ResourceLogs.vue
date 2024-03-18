@@ -66,7 +66,12 @@
         color="primary"
       ></v-progress-circular>
     </div>
-    
+    <AlertMessage
+      v-model="alert"
+      :type="alertType"
+      :message="errorMessage"
+    />
+
     <v-overlay
       id="settingsOverlay"
       :value="showSettingsOverlay"
@@ -88,6 +93,7 @@ import Vue from "vue";
 import SettingsCard from "../components/SettingsCard.vue";
 import AppBar from "../components/AppBar.vue";
 import ScrollButton from "../components/ScrollButton.vue";
+import AlertMessage from "../components/AlertMessage.vue";
 
 import { useSettingsStore } from "../stores/settings.js";
 import { setVersion } from "../mixins/setVersion.js";
@@ -97,6 +103,7 @@ export default {
   components: {
     SettingsCard,
     AppBar,
+    AlertMessage,
     ScrollButton,
   },
   mixins: [setVersion],
@@ -110,6 +117,8 @@ export default {
       cachedLogString: [],
       logsReady: false,
       fontSize: 16,
+      alert: false,
+      errorMessage: "",
     };
   },
   setup() {
@@ -192,7 +201,7 @@ export default {
         });
         
         if (response.data == null) {
-          this.errorMessage = "No log data found";
+          this.errorMessage = "Failed to fetch log data";
           return;
         }
 
@@ -216,7 +225,13 @@ export default {
           this.logsReady = true;
         }
 
+        if (this.logData.length === 0) {
+          this.errorMessage = "Resource has no associated logs";
+          this.alert = true;
+          this.alertType = "info";
+        }
       } catch (error) {
+        this.alertType = "error";
         console.log("Error:", error.toJSON());
         this.alert = true;
         if (error.response) {
@@ -225,7 +240,7 @@ export default {
               "Logs not found";
           } else {
             this.errorMessage =
-              "Failed to get logs";
+              "Failed to fetch resource logs";
           }
         } else if (error.request) {
           this.errorMessage = "No server response received";

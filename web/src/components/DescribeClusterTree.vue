@@ -79,7 +79,9 @@
             <v-icon
               class="legend-entry-icon"
               :color="$vuetify.theme.themes[theme].legend[provider]"
-            >mdi-square-rounded</v-icon>
+            >
+              mdi-square-rounded
+            </v-icon>
             <div class="legend-entry-text">{{ displayName }}</div>
           </div>
 

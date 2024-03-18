@@ -1,10 +1,10 @@
 <template>
-  <div class="alertWrapper">
+  <div class="alert-wrapper">
     <v-alert
       :value="value"
       @input="update"
-      class="alertError"
-      type="error"
+      class="alert-message"
+      :type="type"
       dismissible
       border="left"
       elevation="2"
@@ -18,10 +18,11 @@
 
 <script>
 export default {
-  name: "AlertError",
+  name: "AlertMessage",
   props: {
     value: Boolean, // v-model
     message: String,
+    type: String
   },
   methods: {
     update(val) {
@@ -33,13 +34,13 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.alertError {
+.alert-message {
   min-width: 500px;
   text-align: left;
   display: inline-block;
 }
 
-.alertWrapper {
+.alert-wrapper {
   text-align: center;
   width: 100%;
   position: fixed;

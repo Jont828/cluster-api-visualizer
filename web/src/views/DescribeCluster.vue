@@ -55,7 +55,8 @@
         color="primary"
       ></v-progress-circular>
     </div>
-    <AlertError
+    <AlertMessage
+      type="error"
       v-model="alert"
       :message="errorMessage"
     />
@@ -82,7 +83,7 @@ import Vue from "vue";
 import DescribeClusterTree from "../components/DescribeClusterTree.vue";
 import AppBar from "../components/AppBar.vue";
 import CustomResourceDefinition from "../components/CustomResourceDefinition.vue";
-import AlertError from "../components/AlertError.vue";
+import AlertMessage from "../components/AlertMessage.vue";
 import SettingsCard from "../components/SettingsCard.vue";
 import ScrollButton from "../components/ScrollButton.vue";
 
@@ -99,7 +100,7 @@ export default {
     AppBar,
     SettingsCard,
     CustomResourceDefinition,
-    AlertError,
+    AlertMessage,
     ScrollButton,
   },
   mixins: [setVersion],
