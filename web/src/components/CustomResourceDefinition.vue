@@ -8,7 +8,6 @@
         class="text-h5"
         :style="{
           color: ($vuetify.theme.dark) ? color : 'white'
-          //color: 'white'
         }"
       >
         {{ name }}
@@ -28,7 +27,7 @@
               </v-btn>
             </router-link>
           </template>
-          <span>Open logs</span>
+          <span>Open logs for CRD</span>
         </v-tooltip>
         <v-spacer></v-spacer>
         <v-tooltip bottom>

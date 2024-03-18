@@ -28,6 +28,11 @@
         :version="gitVersion"
       />
     </v-overlay>
+    <AlertMessage
+      type="error"
+      v-model=alert
+      :message="errorMessage"
+    />
   </div>
 </template>
 
@@ -37,6 +42,7 @@ import Vue from "vue";
 import ManagementClusterTree from "../components/ManagementClusterTree.vue";
 import SettingsCard from "../components/SettingsCard.vue";
 import AppBar from "../components/AppBar.vue";
+import AlertMessage from "../components/AlertMessage.vue";
 
 import { useSettingsStore } from "../stores/settings.js";
 import { setVersion } from "../mixins/setVersion.js";
@@ -46,6 +52,7 @@ export default {
   components: {
     ManagementClusterTree,
     SettingsCard,
+    AlertMessage,
     AppBar,
   },
   mixins: [setVersion],
@@ -57,6 +64,8 @@ export default {
       cachedTreeString: "",
       treeIsReady: false,
       scale: 1,
+      alert: false,
+      errorMessage: "",
     };
   },
   setup() {

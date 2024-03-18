@@ -69,16 +69,11 @@
         color="primary"
       ></v-progress-circular>
     </div>
-    <AlertError
-      v-model=alert
-      :message="errorMessage"
-    />
   </div>
 </template>
 
 <script>
 import VueTree from "./VueTree.vue";
-import AlertError from "./AlertError.vue";
 import ClusterPhase from "./ClusterPhase.vue";
 
 import { useSettingsStore } from "../stores/settings.js";
@@ -87,7 +82,6 @@ export default {
   name: "ManagementClusterTree",
   components: {
     VueTree,
-    AlertError,
     ClusterPhase,
   },
   props: {
