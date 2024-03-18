@@ -13,3 +13,16 @@ metadata:
 The instances of the CRD must also have the `cluster.x-k8s.io/cluster-name: <cluster-name>` label in order to be affiliated with a Cluster. 
 
 The CRD instance will then be displayed in the Cluster view such that it will be listed as a child of its controller reference. If the controller reference is not in the tree, it will be added as well, and if there is no controller reference, it will be a child of the Cluster object at the root of the tree.
+
+In order for the visualizer to find the logs for a resource, the logs must be in a pod with the `cluster.x-k8s.io/provider` label. The logs must be in a JSON format such that, for a CRD `SomeName` in `SomeNamespace` of `SomeKind`, they have a key in the following format:
+
+```json
+{
+  "ts": "some-time",
+  "SomeKind": {
+    "namespace": "SomeNamespace",
+    "name": "SomeName"
+  },
+  "msg": "some-message"
+}
+```
