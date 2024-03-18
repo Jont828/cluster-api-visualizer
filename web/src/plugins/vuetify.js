@@ -12,6 +12,7 @@ export default new Vuetify({
     themes: {
       light: {
         primary: colors.blue.darken2,
+        accent: colors.blue.darken1,
         background: '#f8f3f2',
         legend: {
           cluster: colors.blue.darken1,
@@ -25,6 +26,8 @@ export default new Vuetify({
       dark: {
         primary: colors.blue.lighten3,
         background: '#121212',
+        info: colors.blue.lighten2,
+        accent: colors.blue.lighten2,
         success: colors.green.lighten3,
         warning: colors.orange.lighten2, // OG orange darken 1
         error: colors.red.accent1,

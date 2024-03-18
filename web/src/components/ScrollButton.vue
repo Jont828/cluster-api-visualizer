@@ -4,7 +4,7 @@
       <v-btn
         v-show="scrollY > 20"
         ref="button"
-        color="primary"
+        color="accent"
         medium
         fab
         @click="$vuetify.goTo(0, {
@@ -13,7 +13,7 @@
           easing: 'easeInOutCubic',
         })"
       >
-        <v-icon color="white">
+        <v-icon :color="$vuetify.theme.dark ? 'black' : 'white'">
           mdi-chevron-up
         </v-icon>
       </v-btn>
