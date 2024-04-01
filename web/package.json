@@ -21,7 +21,7 @@
     "roboto-fontface": "*",
     "sass-loader": "^10.1.1",
     "vnodes": "^1.1.9",
-    "vue": "^2.6.11",
+    "vue": "2.6.14",
     "vue-axios": "^3.4.0",
     "vue-router": "^3.5.2",
     "vue-virtual-scroller": "^1.1.2",
@@ -39,8 +39,8 @@
     "less-loader": "7.3.0",
     "sass": "~1.32.0",
     "vue-cli-plugin-vuetify": "~2.4.3",
-    "vue-template-compiler": "^2.6.11",
-    "vuetify-loader": "^1.7.0"
+    "vue-template-compiler": "2.6.14",
+    "vuetify-loader": "1.7.3"
   },
   "eslintConfig": {
     "root": true,

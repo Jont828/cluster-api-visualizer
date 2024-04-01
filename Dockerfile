@@ -4,18 +4,20 @@
 ARG ARCH
 
 # Build the web app.
-FROM node:16 as web-builder
+FROM node:20 as web-builder
 
 WORKDIR /app
 COPY ./web /app
-RUN npm install
+
+RUN npm config set registry http://registry.npmjs.org/
+RUN npm install --verbose
 RUN npm run build
 
 
 # Build the Go binary.
 # Alpine is chosen for its small footprint
 # compared to Ubuntu
-FROM golang:1.20-alpine as builder
+FROM golang:1.21-alpine as builder
 
 # Need to redeclare ARCH to use in Go build stage
 ARG ARCH
@@ -34,6 +36,7 @@ go mod download
 COPY ./main.go /app/
 COPY ./internal /app/internal
 COPY ./version /app/version
+COPY ./api /app/api
 
 RUN CGO_ENABLED=0 GOARCH=${ARCH} go build -trimpath -ldflags "${ldflags} -extldflags '-static'" -o main
 
