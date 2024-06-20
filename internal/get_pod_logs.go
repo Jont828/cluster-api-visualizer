@@ -81,6 +81,7 @@ func GetPodLogsForResource(ctx context.Context, c client.Client, restConfig *res
 			logs = strings.TrimSuffix(logs, "\n")
 			res := strings.Split(logs, "\n")
 			for _, line := range res {
+				// Note: this assumes a log line is a JSON object with a "ts" key.
 				searchString := "{\"ts\":"
 				if strings.Contains(line, searchString) {
 					jsonMap := make(map[string]interface{})
