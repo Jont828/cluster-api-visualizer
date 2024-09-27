@@ -1,5 +1,15 @@
 // vue.config.js
+
+const path = require('path')
+
 module.exports = {
+  css: {
+    loaderOptions: {
+      scss: {
+        additionalData: `@use "@/styles/test.scss" as *;`,
+      }
+    }
+  },
   chainWebpack: config => {
     config
       .plugin('html')

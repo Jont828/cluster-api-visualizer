@@ -9,13 +9,15 @@ import (
 	"io"
 	"io/fs"
 	"net"
-
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/Jont828/cluster-api-visualizer/internal"
 	"github.com/Jont828/cluster-api-visualizer/version"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
@@ -145,6 +147,7 @@ func main() {
 	http.Handle("/api/v1/custom-resource-definition/", http.HandlerFunc(handleCustomResourceDefinitionTree))
 	http.Handle("/api/v1/resource-logs/", http.HandlerFunc(handleGetResourceLogs))
 	http.Handle("/api/v1/describe-cluster/", http.HandlerFunc(handleDescribeClusterTree))
+	http.Handle("/api/v1/cluster-kubeconfig/", http.HandlerFunc(handleClusterKubeConfig))
 	http.Handle("/api/v1/version/", http.HandlerFunc(handleGetVersion))
 
 	var frontend fs.FS = os.DirFS("web/dist")
@@ -155,7 +158,7 @@ func main() {
 	http.Handle("/", intercept404(fileServer, serveIndex))
 
 	uri := fmt.Sprintf("%s:%d", host, port)
-	log.V(2).Info(fmt.Sprintf("Listening at http://%s", uri))
+	log.V(2).Info(fmt.Sprintf("KYLE Listening at http://%s", uri))
 	if host == "0.0.0.0" {
 		log.V(2).Info(fmt.Sprintf("View at http://localhost:%d in browser", port))
 	}
@@ -277,6 +280,75 @@ func handleManagementClusterTree(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		io.Copy(w, bytes.NewReader(marshalled))
 	}
+}
+
+func handleClusterKubeConfig(w http.ResponseWriter, r *http.Request) {
+	const ClusterNameLabelKey = "cluster.x-k8s.io/cluster-name"
+	ctx := r.Context()
+	log := ctrl.LoggerFrom(ctx)
+
+	log.V(2).Info("GET call to url", "url", r.URL.Path)
+	log.V(2).Info("GET call params are", "params", r.URL.Query())
+	name := r.URL.Query().Get("name")
+	namespace := r.URL.Query().Get("namespace")
+
+	/*_, err := kc.Client.CoreV1().Secrets(kc.Namespace).
+	Get(ctx, managedcluster.AWSCredentialsSecretName, metav1.GetOptions{})
+	*/
+	restConfig := configclient.GetConfigOrDie()
+	clientSet, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	secrets, err := clientSet.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{LabelSelector: labels.SelectorFromSet(map[string]string{ClusterNameLabelKey: name}).String()})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	for _, secret := range secrets.Items {
+		if strings.HasSuffix(secret.Name, "kubeconfig") {
+			w.Header().Set("Content-Type", "text/vnd.yaml")
+			io.Copy(w, bytes.NewReader(secret.Data["value"]))
+			return
+		}
+	}
+
+	http.Error(w, "not found", http.StatusNotFound)
+
+	/*
+		dcOptions := client.DescribeClusterOptions{
+			Kubeconfig:              client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
+			Namespace:               namespace,
+			ClusterName:             name,
+			ShowOtherConditions:     "",
+			ShowMachineSets:         true,
+			Echo:                    true,
+			Grouping:                false,
+			AddTemplateVirtualNode:  true,
+			ShowClusterResourceSets: true,
+			ShowTemplates:           true,
+		}
+
+		tree, httpErr := internal.ConstructClusterResourceTree(ctx, c.ClusterctlClient, c.ControllerRuntimeClient, dcOptions)
+		if httpErr != nil {
+			log.Error(httpErr, "failed to construct resource tree for target cluster", "clusterName", name)
+			http.Error(w, httpErr.Error(), httpErr.Status)
+			return
+		}
+
+		if tree != nil {
+			marshalled, err := json.MarshalIndent(*tree, "", "  ")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			io.Copy(w, bytes.NewReader(marshalled))
+		}
+
+	*/
 }
 
 func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {

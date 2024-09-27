@@ -14,14 +14,9 @@
         <v-hover>
           <template v-slot:default="{ hover }">
             <!-- :to="{ path: 'clusters', params: { name: node.name, namespace: node.namespace }}" -->
-            <router-link
-              :to="'/cluster?name=' + node.name + '&namespace=' + node.namespace"
-              :is="node.isManagement ? 'span' : 'router-link'"
-              :event="node.isManagement ? '' : 'click' /* disable link on management cluster */"
-              class="node-router-link"
-            >
+
               <v-card
-                class="node mx-auto transition-swing"
+                class="mx-auto transition-swing"
                 :elevation="hover ? 6 : 3"
                 :style="($vuetify.theme.dark) ? { 
                   'background-color': hover ? '#383838' : '#272727',
@@ -45,15 +40,26 @@
                   :phase="node.phase"
                 />
                 <v-card-actions :class="[ 'cardActions', (node.isManagement) ? 'pt-8' : 'pt-2' ]">
-                  <v-card-text class="card-bottom-text">{{ (node.isManagement) ? 'Management Cluster' : 'View Workload Cluster' }}</v-card-text>
-                  <span v-if="!node.isManagement">
-                    <v-spacer></v-spacer>
+                  <v-col>
+                  <router-link
+                      :to="'/cluster?name=' + node.name + '&namespace=' + node.namespace"
+                      :is="node.isManagement ? 'span' : 'router-link'"
+                      :event="node.isManagement ? '' : 'click' /* disable link on management cluster */"
+                      class="node-router-link"
+                  >
+                  <v-card-text class="card-bottom-text">{{ (node.isManagement) ? 'Management Cluster' : 'View Workload Cluster' }}
+                    <span v-if="!node.isManagement">
                     <v-icon>mdi-arrow-top-right</v-icon>
                   </span>
+                  </v-card-text>
+                  </router-link>
+                  </v-col>
+                  <v-col v-if="!node.isManagement">
+                    <span><a v-bind:href="'api/v1/cluster-kubeconfig/?name=' + node.name + '&namespace=' + node.namespace"
+                             v-bind:download="node.namespace + '.' + node.name + '.kubeconfig' ">Kubeconfig</a></span>
+                  </v-col>
                 </v-card-actions>
-
               </v-card>
-            </router-link>
           </template>
         </v-hover>
 

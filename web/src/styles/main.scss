@@ -1,0 +1,15 @@
+
+
+@use 'vuetify/settings' with (
+  $button-height: 40px,
+);
+
+@forward 'vuetify/settings' with (
+  $utilities: false,
+);
+
+@forward 'vuetify/settings' with (
+  $color-pack: false,
+);
+
+

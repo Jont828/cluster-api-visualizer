@@ -4,6 +4,21 @@ Cluster API developers and operators often need to quickly get insight multiclus
 
 ![Demo Recording](demo/demo.gif)
 
+
+### Quick start for local deployment 
+
+## 1. Prerequisites
+
+Install and set up [kind](https://kind.sigs.k8s.io/), [Docker](https://www.docker.com/), [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/), and [helm](https://helm.sh/). In addition, install any additional prerequisites needed for [Cluster API](https://cluster-api.sigs.k8s.io/).
+#### 2. Create a Cluster API management cluster
+
+Create a local management cluster with [kind](https://kind.sigs.k8s.io/) and a workload cluster by following the [Cluster API quick start guide](https://cluster-api.sigs.k8s.io/user/quick-start.html).
+
+##### 3. To deploy to a local kind cluster 
+```
+make build-and-deploy
+```
+
 ### Quick start
 
 #### 1. Prerequisites
