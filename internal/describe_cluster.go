@@ -95,7 +95,7 @@ func injectServiceTemplates(ctx context.Context, tree *ClusterResourceNode) erro
 			Version:     template.GroupVersionKind().Version,
 			Provider:    "",
 			UID:         string(template.GetUID()),
-			Collapsible: true,
+			Collapsible: false,
 			Collapsed:   false,
 			Ready:       true, // TODO
 			Severity:    "",

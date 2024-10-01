@@ -11,7 +11,7 @@ export default new Vuetify({
     options: { customProperties: true },
     themes: {
       light: {
-        primary: colors.blue.darken2,
+        primary: colors.shades.black,
         accent: colors.blue.darken1,
         background: '#f8f3f2',
         legend: {

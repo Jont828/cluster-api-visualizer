@@ -5,6 +5,7 @@
     :color="($vuetify.theme.dark ? null: 'primary')"
     dark
   >
+    <v-img src="../assets/mirantis-logo-inverted-horizontal-one-color.png" max-width="160"/>
     <v-btn
       icon
       text
