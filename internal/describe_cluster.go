@@ -3,6 +3,10 @@ package internal
 import (
 	"context"
 	"fmt"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 	"sort"
 	"strings"
 
@@ -45,9 +49,69 @@ type ClusterResourceTreeOptions struct {
 	providerTypeOverrideMap      map[string]string
 }
 
+func injectServiceTemplates(ctx context.Context, tree *ClusterResourceNode) error {
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get in cluster rest config %w", err)
+	}
+	dc, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to get in dynamic client %w", err)
+	}
+
+	resourceID := schema.GroupVersionResource{
+		Group:    "hmc.mirantis.com",
+		Version:  "v1alpha1",
+		Resource: "servicetemplates",
+	}
+
+	list, err := dc.Resource(resourceID).Namespace(tree.Namespace).List(ctx, metav1.ListOptions{})
+
+	if apierrors.IsNotFound(err) || len(list.Items) == 0 {
+		return nil
+	}
+
+	serviceTemplateNode := &ClusterResourceNode{
+		Name:        "ServiceTemplates",
+		Namespace:   tree.Namespace,
+		DisplayName: "ServiceTemplates",
+		Kind:        "ServiceTemplate",
+		Provider:    "",
+		Collapsible: true,
+		Collapsed:   false,
+		Ready:       true,
+		Severity:    "",
+		HasReady:    false,
+		Children:    nil,
+	}
+
+	for _, template := range list.Items {
+		serviceTemplateNode.Children = append(serviceTemplateNode.Children, &ClusterResourceNode{
+			Name:        template.GetName(),
+			Namespace:   template.GetNamespace(),
+			DisplayName: template.GetName(),
+			Kind:        template.GetKind(),
+			Group:       template.GroupVersionKind().Group,
+			Version:     template.GroupVersionKind().Version,
+			Provider:    "",
+			UID:         string(template.GetUID()),
+			Collapsible: true,
+			Collapsed:   false,
+			Ready:       true, // TODO
+			Severity:    "",
+			HasReady:    false,
+			Children:    nil,
+		})
+	}
+
+	tree.Children = append(tree.Children, serviceTemplateNode)
+	return nil
+}
+
 // ConstructClusterResourceTree returns a tree with nodes representing the Cluster API resources in the Cluster.
 // Note: ObjectReferenceObjects do not have the virtual annotation so we can assume that all virtual objects are collapsible
 func ConstructClusterResourceTree(ctx context.Context, defaultClient client.Client, runtimeClient ctrlclient.Client, dcOptions client.DescribeClusterOptions) (*ClusterResourceNode, *HTTPError) {
+
 	objTree, err := defaultClient.DescribeCluster(ctx, dcOptions)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "not found") {
@@ -77,7 +141,7 @@ func ConstructClusterResourceTree(ctx context.Context, defaultClient client.Clie
 	treeOptions.providerTypeOverrideMap = overrides
 
 	resourceTree := objectTreeToResourceTree(ctx, objTree, objTree.GetRoot(), treeOptions)
-
+	injectServiceTemplates(ctx, resourceTree)
 	return resourceTree, nil
 }
 
