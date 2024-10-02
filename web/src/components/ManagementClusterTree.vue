@@ -55,8 +55,12 @@
                   </router-link>
                   </v-col>
                   <v-col v-if="!node.isManagement">
-                    <span><a v-bind:href="'api/v1/cluster-kubeconfig/?name=' + node.name + '&namespace=' + node.namespace"
-                             v-bind:download="node.namespace + '.' + node.name + '.kubeconfig' ">Kubeconfig</a></span>
+                    <div>
+                      <a  v-on:click="console.log(node.clusterUrl);window.setTimeout(function() {window.open('lens://app/open/direct/e3b0c44298fc1c149afbf4c8996fb924/cluster/pods')}, 100)" v-bind:href="'api/v1/cluster-kubeconfig/?name=' + node.name + '&namespace=' + node.namespace"
+                             v-bind:download="node.namespace + '.' + node.name + '.kubeconfig' ">
+                      <v-img src="../assets/lens.png" max-width="130" />
+                    </a>
+                    </div>
                   </v-col>
                 </v-card-actions>
               </v-card>
@@ -86,6 +90,10 @@ import { useSettingsStore } from "../stores/settings.js";
 
 export default {
   name: "ManagementClusterTree",
+  computed: {
+    console: () => console,
+    window: () => window,
+  },
   components: {
     VueTree,
     ClusterPhase,
@@ -106,6 +114,17 @@ export default {
     return { store };
   },
   methods: {
+
+    getClusterHash(node) {
+      const textAsBuffer = new TextEncoder().encode(node.clusterUrl);
+      const hashBuffer = window.crypto.subtle.digest("SHA-256", textAsBuffer);
+      return hashBuffer.then((value) => {
+        const hashArray = Array.from(new Uint8Array(value));
+        return hashArray
+            .map((item) => item.toString(16).padStart(2, "0"))
+            .join("");
+      })
+    },
     getIcon(provider) {
       switch (provider) {
         case "AzureCluster":
