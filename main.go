@@ -15,9 +15,6 @@ import (
 
 	"github.com/Jont828/cluster-api-visualizer/internal"
 	"github.com/Jont828/cluster-api-visualizer/version"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
@@ -283,7 +280,6 @@ func handleManagementClusterTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleClusterKubeConfig(w http.ResponseWriter, r *http.Request) {
-	const ClusterNameLabelKey = "cluster.x-k8s.io/cluster-name"
 	ctx := r.Context()
 	log := ctrl.LoggerFrom(ctx)
 
@@ -292,63 +288,18 @@ func handleClusterKubeConfig(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	namespace := r.URL.Query().Get("namespace")
 
-	/*_, err := kc.Client.CoreV1().Secrets(kc.Namespace).
-	Get(ctx, managedcluster.AWSCredentialsSecretName, metav1.GetOptions{})
-	*/
-	restConfig := configclient.GetConfigOrDie()
-	clientSet, err := kubernetes.NewForConfig(restConfig)
+	found, secret, err := internal.GetKubeConfigSecret(ctx, name, namespace)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	secrets, err := clientSet.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{LabelSelector: labels.SelectorFromSet(map[string]string{ClusterNameLabelKey: name}).String()})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	for _, secret := range secrets.Items {
-		if strings.HasSuffix(secret.Name, "kubeconfig") {
-			w.Header().Set("Content-Type", "text/vnd.yaml")
-			io.Copy(w, bytes.NewReader(secret.Data["value"]))
-			return
-		}
+	if found {
+		w.Header().Set("Content-Type", "text/vnd.yaml")
+		io.Copy(w, bytes.NewReader(secret.Data["value"]))
+		return
 	}
 
 	http.Error(w, "not found", http.StatusNotFound)
-
-	/*
-		dcOptions := client.DescribeClusterOptions{
-			Kubeconfig:              client.Kubeconfig{Path: kubeconfigPath, Context: kubeContext},
-			Namespace:               namespace,
-			ClusterName:             name,
-			ShowOtherConditions:     "",
-			ShowMachineSets:         true,
-			Echo:                    true,
-			Grouping:                false,
-			AddTemplateVirtualNode:  true,
-			ShowClusterResourceSets: true,
-			ShowTemplates:           true,
-		}
-
-		tree, httpErr := internal.ConstructClusterResourceTree(ctx, c.ClusterctlClient, c.ControllerRuntimeClient, dcOptions)
-		if httpErr != nil {
-			log.Error(httpErr, "failed to construct resource tree for target cluster", "clusterName", name)
-			http.Error(w, httpErr.Error(), httpErr.Status)
-			return
-		}
-
-		if tree != nil {
-			marshalled, err := json.MarshalIndent(*tree, "", "  ")
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			io.Copy(w, bytes.NewReader(marshalled))
-		}
-
-	*/
 }
 
 func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {
