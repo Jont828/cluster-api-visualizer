@@ -4,6 +4,25 @@ Cluster API developers and operators often need to quickly get insight multiclus
 
 ![Demo Recording](demo/demo.gif)
 
+### Lens Integration Setup
+
+#### Prerequisites
+1 - Install and setup Lens version 2024.9.300059-latest (or later)
+Debian - https://api.k8slens.dev/binaries/Lens-2024.9.300059-latest.amd64.deb
+Mac - https://api.k8slens.dev/binaries/Lens-2024.9.300059-latest-arm64.dmg
+
+2 - Launch Lens
+
+3 - Click the menu button and select File->Preferences
+
+4 - In the preferences dialog click the Kubernetes menu item
+
+5 - Click the Sync Files and Folders button
+
+6 - Navigate to the current user's Downloads folder (where the browser to be used stores downloads) and click the Sync button
+
+#### Note that it's important to keep the download folder free from large files for Lens performance.
+
 
 ### Quick start for local deployment 
 
