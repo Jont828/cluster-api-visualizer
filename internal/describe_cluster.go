@@ -49,7 +49,7 @@ type ClusterResourceTreeOptions struct {
 	providerTypeOverrideMap      map[string]string
 }
 
-func injectServiceTemplates(ctx context.Context, tree *ClusterResourceNode) error {
+func injectClusterTemplates(ctx context.Context, tree *ClusterResourceNode) error {
 	cfg, err := rest.InClusterConfig()
 	if err != nil {
 		return fmt.Errorf("failed to get in cluster rest config %w", err)
@@ -62,7 +62,7 @@ func injectServiceTemplates(ctx context.Context, tree *ClusterResourceNode) erro
 	resourceID := schema.GroupVersionResource{
 		Group:    "hmc.mirantis.com",
 		Version:  "v1alpha1",
-		Resource: "servicetemplates",
+		Resource: "clustertemplates",
 	}
 
 	list, err := dc.Resource(resourceID).Namespace(tree.Namespace).List(ctx, metav1.ListOptions{})
@@ -72,13 +72,72 @@ func injectServiceTemplates(ctx context.Context, tree *ClusterResourceNode) erro
 	}
 
 	serviceTemplateNode := &ClusterResourceNode{
-		Name:        "ServiceTemplates",
+		Name:        "ClusterTemplates",
 		Namespace:   tree.Namespace,
-		DisplayName: "ServiceTemplates",
-		Kind:        "ServiceTemplate",
+		DisplayName: "ClusterTemplates",
+		Kind:        "ClusterTemplates",
 		Provider:    "",
 		Collapsible: true,
 		Collapsed:   false,
+		Ready:       true,
+		Severity:    "",
+		HasReady:    false,
+		Children:    nil,
+	}
+
+	for _, template := range list.Items {
+		serviceTemplateNode.Children = append(serviceTemplateNode.Children, &ClusterResourceNode{
+			Name:        template.GetName(),
+			Namespace:   template.GetNamespace(),
+			DisplayName: template.GetName(),
+			Kind:        template.GetKind(),
+			Group:       template.GroupVersionKind().Group,
+			Version:     template.GroupVersionKind().Version,
+			Provider:    "",
+			UID:         string(template.GetUID()),
+			Collapsible: false,
+			Collapsed:   false,
+			Ready:       true,
+			Severity:    "",
+			HasReady:    false,
+			Children:    nil,
+		})
+	}
+
+	tree.Children = append(tree.Children, serviceTemplateNode)
+	return nil
+}
+
+func injectHmcResources(ctx context.Context, resourceName string, displayName string, tree *ClusterResourceNode) error {
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get in cluster rest config %w", err)
+	}
+	dc, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to get in dynamic client %w", err)
+	}
+
+	resourceID := schema.GroupVersionResource{
+		Group:    "hmc.mirantis.com",
+		Version:  "v1alpha1",
+		Resource: resourceName,
+	}
+
+	list, err := dc.Resource(resourceID).Namespace(tree.Namespace).List(ctx, metav1.ListOptions{})
+
+	if apierrors.IsNotFound(err) || len(list.Items) == 0 {
+		return nil
+	}
+
+	serviceTemplateNode := &ClusterResourceNode{
+		Name:        displayName,
+		Namespace:   tree.Namespace,
+		DisplayName: displayName,
+		Kind:        displayName,
+		Provider:    "",
+		Collapsible: true,
+		Collapsed:   true,
 		Ready:       true,
 		Severity:    "",
 		HasReady:    false,
@@ -141,7 +200,9 @@ func ConstructClusterResourceTree(ctx context.Context, defaultClient client.Clie
 	treeOptions.providerTypeOverrideMap = overrides
 
 	resourceTree := objectTreeToResourceTree(ctx, objTree, objTree.GetRoot(), treeOptions)
-	injectServiceTemplates(ctx, resourceTree)
+	injectHmcResources(ctx, "clustertemplates", "ClusterTemplates", resourceTree)
+	injectHmcResources(ctx, "servicetemplates", "ServiceTemplates", resourceTree)
+	injectHmcResources(ctx, "credentials", "Credentials", resourceTree)
 	return resourceTree, nil
 }
 

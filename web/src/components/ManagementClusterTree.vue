@@ -12,13 +12,14 @@
     >
       <template v-slot:node="{ node }">
         <v-hover>
-          <template v-slot:default="{ hover }">
-            <!-- :to="{ path: 'clusters', params: { name: node.name, namespace: node.namespace }}" -->
 
+            <template v-slot:default="{ hover }">
+              <div style="padding-left: 10px; padding-right: 10px;">
+              <!-- :to="{ path: 'clusters', params: { name: node.name, namespace: node.namespace }}" -->
               <v-card
-                class="mx-auto transition-swing"
-                :elevation="hover ? 6 : 3"
-                :style="($vuetify.theme.dark) ? { 
+                  class="mx-auto transition-swing"
+                  :elevation="hover ? 6 : 3"
+                  :style="($vuetify.theme.dark) ? {
                   'background-color': hover ? '#383838' : '#272727',
                 } : null"
               >
@@ -36,37 +37,39 @@
 
                 <!-- <v-card-subtitle v-if="node.isManagement">Management Cluster</v-card-subtitle> -->
                 <ClusterPhase
-                  v-if="!node.isManagement"
-                  :phase="node.phase"
+                    v-if="!node.isManagement"
+                    :phase="node.phase"
                 />
                 <v-card-actions :class="[ 'cardActions', (node.isManagement) ? 'pt-8' : 'pt-2' ]">
                   <v-col>
-                  <router-link
-                      :to="'/cluster?name=' + node.name + '&namespace=' + node.namespace"
-                      :is="node.isManagement ? 'span' : 'router-link'"
-                      :event="node.isManagement ? '' : 'click' /* disable link on management cluster */"
-                      class="node-router-link"
-                  >
-                  <v-card-text class="card-bottom-text">{{ (node.isManagement) ? 'Management Cluster' : 'View Workload Cluster' }}
-                    <span v-if="!node.isManagement">
+                    <router-link
+                        :to="'/cluster?name=' + node.name + '&namespace=' + node.namespace"
+                        :is="node.isManagement ? 'span' : 'router-link'"
+                        :event="node.isManagement ? '' : 'click' /* disable link on management cluster */"
+                        class="node-router-link"
+                    >
+                      <v-card-text class="card-bottom-text">{{ (node.isManagement) ? 'Management Cluster' : 'View Workload Cluster' }}
+                        <span v-if="!node.isManagement">
                     <v-icon>mdi-arrow-top-right</v-icon>
                   </span>
-                  </v-card-text>
-                  </router-link>
+                      </v-card-text>
+                    </router-link>
                   </v-col>
                   <v-col v-if="!node.isManagement">
                     <div>
                       <a  v-on:click="openLens(node)" v-bind:href="'api/v1/cluster-kubeconfig/?name=' + node.name + '&namespace=' + node.namespace"
-                             v-bind:download="node.namespace + '.' + node.name + '.kubeconfig' ">
-                      <v-img src="../assets/lens.png" max-width="130" />
-                    </a>
+                          v-bind:download="node.namespace + '.' + node.name + '.kubeconfig' ">
+                        <v-img src="../assets/lens.png" max-width="130" />
+                      </a>
                     </div>
                   </v-col>
                 </v-card-actions>
-              </v-card>
-          </template>
-        </v-hover>
 
+              </v-card>
+              </div>
+            </template>
+
+        </v-hover>
       </template>
     </vue-tree>
     <div
@@ -151,6 +154,7 @@ export default {
 .node {
   width: 250px;
   height: 140px;
+  background: rgba(50, 52, 59, 1);
 
   p {
     font-size: 12px;

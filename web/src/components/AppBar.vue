@@ -3,6 +3,7 @@
     id="appBar"
     app
     :color="($vuetify.theme.dark ? null: 'primary')"
+    style="background: linear-gradient(104.44deg, #000000 25%, #32343B 67.88%);"
     dark
   >
     <v-img src="../assets/mirantis-logo-inverted-horizontal-one-color.png" max-width="160"/>

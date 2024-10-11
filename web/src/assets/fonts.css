@@ -1,86 +1,71 @@
 @import url('https://fonts.googleapis.com/css2?family=Overpass:wght@100;300;400;500;700;900');
 
-/* roboto-100 - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: normal;
     font-weight: 100;
-
 }
 
-/* roboto-100italic - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: italic;
     font-weight: 100;
-
 }
 
-/* roboto-300 - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: normal;
     font-weight: 300;
 }
 
-/* roboto-300italic - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: italic;
     font-weight: 300;
 }
 
-/* roboto-regular - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: normal;
     font-weight: 400;
 }
 
-/* roboto-italic - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: italic;
     font-weight: 400;
 }
 
-/* roboto-500 - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: normal;
     font-weight: 500;
 }
 
-
-/* roboto-500italic - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: italic;
     font-weight: 500;
 }
 
-/* roboto-700 - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: normal;
     font-weight: 700;
 }
 
-/* roboto-700italic - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: italic;
     font-weight: 700;
 }
 
-/* roboto-900 - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: normal;
     font-weight: 900;
 }
 
-/* roboto-900italic - latin */
 @font-face {
     font-family: 'Overpass';
     font-style: italic;
