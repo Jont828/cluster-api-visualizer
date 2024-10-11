@@ -8,12 +8,14 @@
       @zoomIn="() => { $refs.overviewTree.$refs.tree.zoomIn() }"
       @zoomOut="() => { $refs.overviewTree.$refs.tree.zoomOut() }"
       @showSettings="() => { showSettingsOverlay = true }"
+      @updateLens="(lens)=>{ showLens = lens }"
     />
     <ManagementClusterTree
       ref="overviewTree"
       :treeConfig="treeConfig"
       :treeData="treeData"
       :treeIsReady="treeIsReady"
+      :showLens="showLens"
       @scale="(val) => { scale = val }"
     />
 
@@ -58,8 +60,9 @@ export default {
   mixins: [setVersion],
   data() {
     return {
+      showLens: true,
       showSettingsOverlay: false,
-      treeConfig: { nodeWidth: 300, nodeHeight: 140, levelHeight: 275 },
+      treeConfig: { nodeWidth: 350, nodeHeight: 140, levelHeight: 275 },
       treeData: {},
       cachedTreeString: "",
       treeIsReady: false,
