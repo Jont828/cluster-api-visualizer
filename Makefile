@@ -90,6 +90,12 @@ go-fmt:
 ## Docker
 ## --------------------------------------
 
+.PHONY: build-and-deploy docker-build
+build-and-deploy:
+	docker image tag ghcr.io/jont828/cluster-api-visualizer-$(ARCH)\:v1.3.1 ghcr.io/jont828/cluster-api-visualizer\:v1.3.1
+	kind load docker-image -n hmc-dev ghcr.io/jont828/cluster-api-visualizer\:v1.3.1
+	./hack/deploy-local-to-kind.sh
+
 .PHONY: docker-build-all
 docker-build-all: $(addprefix docker-build-,$(ALL_ARCH)) 
 

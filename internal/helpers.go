@@ -10,10 +10,34 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	configclient "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
+
+func GetKubeConfigSecret(ctx context.Context, name string, namespace string) (bool, corev1.Secret, error) {
+	const ClusterNameLabelKey = "cluster.x-k8s.io/cluster-name"
+	restConfig := configclient.GetConfigOrDie()
+	clientSet, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return false, corev1.Secret{}, err
+	}
+
+	secrets, err := clientSet.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{LabelSelector: labels.SelectorFromSet(map[string]string{ClusterNameLabelKey: name}).String()})
+	if err != nil {
+		return false, corev1.Secret{}, err
+	}
+
+	for _, secret := range secrets.Items {
+		if strings.HasSuffix(secret.Name, "kubeconfig") {
+			return true, secret, nil
+		}
+	}
+	return false, corev1.Secret{}, nil
+}
 
 // getCRDList is a helper function to list all CRDs with the visualize label for constructing the DescribeCluster resource tree.
 func getCRDList(ctx context.Context, c ctrlclient.Client, opts ...ctrlclient.ListOption) ([]apiextensionsv1.CustomResourceDefinition, error) {
