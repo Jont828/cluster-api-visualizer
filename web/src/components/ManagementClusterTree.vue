@@ -56,11 +56,16 @@
                     </router-link>
                   </v-col>
                   <v-col v-if="!node.isManagement">
-                    <div>
-                      <a  v-on:click="openLens(node)" v-bind:href="'api/v1/cluster-kubeconfig/?name=' + node.name + '&namespace=' + node.namespace"
+                    <div v-if="showLens">
+                      <a v-on:click="openLens(node)" v-bind:href="'api/v1/cluster-kubeconfig/?name=' + node.name + '&namespace=' + node.namespace"
                           v-bind:download="node.namespace + '.' + node.name + '.kubeconfig' ">
-                        <v-img src="../assets/lens.png" max-width="130" />
+                        <v-img src="../assets/lens.png" max-width="120" />
                       </a>
+                    </div>
+                    <div v-if="!showLens">
+                      <a v-bind:href="'api/v1/cluster-kubeconfig/?name=' + node.name + '&namespace=' + node.namespace" v-bind:download="node.namespace + '.' + node.name + '.kubeconfig' ">
+                        <img src="../assets/download.png" width="19px"  style="float: left; padding-right: 5px" />
+                        Kubeconfig</a>
                     </div>
                   </v-col>
                 </v-card-actions>
@@ -105,6 +110,7 @@ export default {
     treeData: Object,
     treeConfig: Object,
     treeIsReady: Boolean,
+    showLens: Boolean,
   },
   data() {
     return {

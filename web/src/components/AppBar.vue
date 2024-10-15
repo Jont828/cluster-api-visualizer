@@ -42,6 +42,9 @@
     </v-tooltip>
 
     <v-spacer></v-spacer>
+    <div>
+        <v-switch label="Lens Integration" style="height: 25px;" v-model="lens" @change="lensChanged"></v-switch>
+    </div>
     <v-tooltip bottom>
       <template v-slot:activator="{ on, attrs }">
         <v-btn
@@ -116,9 +119,16 @@ export default {
     scaleIcon: String,
     backURL: String,
   },
+  methods: {
+    lensChanged(e) {
+      console.log("lens=", e)
+      this.$emit('updateLens', e)
+    },
+  },
   data() {
     return {
       router: router,
+      lens: true,
     };
   },
 };
