@@ -1,0 +1,95 @@
+# Please see the documentation for all configuration options: https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+
+  # github-actions
+  - directory: "/"
+    package-ecosystem: "github-actions"
+    open-pull-requests-limit: 5
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+      # Use America/New_York Standard Time (UTC -05:00)
+      timezone: "America/New_York"
+    groups:
+      all-github-actions:
+        patterns: [ "*" ]
+    commit-message:
+      prefix: "dependabot"
+      include: scope
+    labels:
+      - "ok-to-test"
+      - "kind/cleanup"
+      - "release-note-none"
+
+  # Go - root directory
+  - directory: "/"
+    package-ecosystem: "gomod"
+    open-pull-requests-limit: 5
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+      # Use America/New_York Standard Time (UTC -05:00)
+      timezone: "America/New_York"
+    commit-message:
+      prefix: "dependabot"
+      include: scope
+    ignore:
+      # Ignore controller-runtime as its upgraded manually.
+      - dependency-name: "sigs.k8s.io/controller-runtime"
+      # Ignore k8s and its transitives modules as they are upgraded manually together with controller-runtime.
+      - dependency-name: "k8s.io/*"
+      - dependency-name: "github.com/prometheus/*"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor"] # Consume only patch updates.
+      - dependency-name: "go.etcd.io/*"
+      - dependency-name: "google.golang.org/grpc"
+      - dependency-name: "sigs.k8s.io/cloud-provider-azure"
+      # Ignore subpackage releases of opentelemetry-go; just watch go.opentelemetry.io/otel.
+      - dependency-name: "go.opentelemetry.io/contrib/*"
+      - dependency-name: "go.opentelemetry.io/otel/exporters/*"
+      - dependency-name: "go.opentelemetry.io/otel/metric"
+      - dependency-name: "go.opentelemetry.io/otel/sdk*"
+      - dependency-name: "go.opentelemetry.io/otel/trace"
+    labels:
+      - "ok-to-test"
+      - "kind/cleanup"
+      - "release-note-none"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+      # Use America/New_York Standard Time (UTC -05:00)
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "dependabot"
+      include: scope
+    ignore:
+      - dependency-name: 'golang'
+    labels:
+      - "ok-to-test"
+      - "kind/cleanup"
+      - "release-note-none"
+
+  # npm
+  - directories:
+      - "/"
+      - "/web"
+    package-ecosystem: "npm"
+    open-pull-requests-limit: 5
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+      # Use America/New_York Standard Time (UTC -05:00)
+      timezone: "America/New_York"
+    commit-message:
+      prefix: "dependabot"
+      include: scope
+    labels:
+      - "ok-to-test"
+      - "kind/cleanup"
+      - "release-note-none"
