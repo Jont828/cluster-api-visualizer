@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"regexp"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -81,9 +85,12 @@ func GetPodLogsForResource(ctx context.Context, c client.Client, restConfig *res
 			logs = strings.TrimSuffix(logs, "\n")
 			res := strings.Split(logs, "\n")
 			for _, line := range res {
-				// Note: this assumes a log line is a JSON object with a "ts" key.
-				searchString := "{\"ts\":"
-				if strings.Contains(line, searchString) {
+				timeStampString := "{\"ts\":"
+				kindNamespaceNameString := fmt.Sprintf("%s=\"%s/%s\"", kind, namespace, name)
+				controllerKindString := fmt.Sprintf("controllerKind=\"%s\"", kind)
+				namespaceString := fmt.Sprintf("namespace=\"%s\"", namespace)
+				nameString := fmt.Sprintf("name=\"%s\"", name)
+				if strings.Contains(line, timeStampString) { // Try to parse string as a JSON object with a "ts" key.
 					jsonMap := make(map[string]interface{})
 					if err := json.Unmarshal([]byte(line), &jsonMap); err != nil {
 						log.Error(err, "Failed to parse log line", "line", line)
@@ -91,13 +98,26 @@ func GetPodLogsForResource(ctx context.Context, c client.Client, restConfig *res
 					} else {
 						ts, ok := jsonMap["ts"].(float64)
 						if !ok {
-							log.Info("Failed to parse timestamp", "line", line)
+							log.Error(errors.Errorf("Failed to parse timestamp"), "line", line)
 							continue
 						}
 						if logMatchesResource(jsonMap, kind, namespace, name) {
 							logEntries = append(logEntries, LogEntry{Timestamp: ts, Entry: line})
 						}
 					}
+				} else if strings.Contains(line, kindNamespaceNameString) ||
+					(strings.Contains(line, controllerKindString) && strings.Contains(line, namespaceString) && strings.Contains(line, nameString)) { // Otherwise try to parse as non-JSON log line.
+					// We expect the format to look like this:
+					// I1126 21:28:39.622231       1 some_controller.go:12] "some message" controllerKind="TestKind" TestKind="test-namespace/test-name" namespace="test-namespace" name="test-name"
+					re := regexp.MustCompile(`\d\d:\d\d:\d\d.\d*`)
+					timestamp := re.Find([]byte(line))
+					tm, err := time.Parse("15:04:05.000000", string(timestamp))
+					if err != nil {
+						log.Error(err, "Failed to parse timestamp", "line", line)
+						continue
+					}
+					ts := tm.UnixMicro()
+					logEntries = append(logEntries, LogEntry{Timestamp: float64(ts), Entry: line})
 				}
 			}
 		}
