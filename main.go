@@ -64,13 +64,13 @@ func newClient(ctx context.Context) (*Client, *internal.HTTPError) {
 	clusterClient := cluster.New(clusterKubeconfig, configClient)
 	c.ClusterClient = clusterClient
 
-	err = clusterClient.Proxy().CheckClusterAvailable()
+	err = clusterClient.Proxy().CheckClusterAvailable(ctx)
 	if err != nil {
 		log.Error(err, "failed to check cluster availability for cluster client")
 		return nil, &internal.HTTPError{Status: http.StatusNotFound, Message: err.Error()}
 	}
 
-	c.ControllerRuntimeClient, err = clusterClient.Proxy().NewClient()
+	c.ControllerRuntimeClient, err = clusterClient.Proxy().NewClient(ctx)
 	if err != nil {
 		log.Error(err, "failed to create client")
 		return nil, internal.NewInternalError(err)
