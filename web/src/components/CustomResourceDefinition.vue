@@ -125,6 +125,7 @@
         :search="search"
         :filter="filter"
         :open.sync="open"
+        open-all="true"
         :active.sync="active"
         activatable
         rounded
