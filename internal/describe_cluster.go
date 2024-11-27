@@ -29,6 +29,7 @@ type ClusterResourceNode struct {
 	Version     string                 `json:"version"`
 	Provider    string                 `json:"provider"`
 	UID         string                 `json:"uid"`
+	IsNamed     bool                   `json:"isNamed"`
 	Collapsible bool                   `json:"collapsible"`
 	Collapsed   bool                   `json:"collapsed"`
 	Ready       bool                   `json:"ready"`
@@ -63,6 +64,7 @@ func ConstructClusterResourceTree(ctx context.Context, defaultClient client.Clie
 		KindsToCollapse: map[string]struct{}{
 			"TemplateGroup":           {},
 			"ClusterResourceSetGroup": {},
+			"Machine":                 {},
 		},
 		VNodesToInheritChildProvider: map[string]struct{}{
 			"ClusterResourceSetGroup": {},
@@ -100,7 +102,8 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		Kind:        kind,
 		Group:       group,
 		Version:     version,
-		Collapsible: tree.IsVirtualObject(object),
+		IsNamed:     !tree.IsVirtualObject(object),
+		Collapsible: tree.IsVirtualObject(object) || kind == "Machine",
 		Collapsed:   collapsed,
 		Children:    []*ClusterResourceNode{},
 		UID:         string(object.GetUID()),
@@ -133,24 +136,24 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		node.Children = childTrees
 	}
 
-	// Be sure to add this part after node.Children is set
-	if node.Kind == "Machine" && node.Provider != "virtual" {
-		groupNode := &ClusterResourceNode{
-			Name:        "",
-			Namespace:   object.GetNamespace(),
-			DisplayName: "Resources",
-			Kind:        kind,
-			Provider:    "virtual", // TODO: should this be provider=controlplane or provider=virtual?
-			Group:       group,
-			Version:     version,
-			Collapsible: true,
-			Collapsed:   true,
-			Children:    node.Children,
-			UID:         fmt.Sprintf("%s: %s/%s", node.Kind, node.Namespace, node.Name),
-		}
+	// // Be sure to add this part after node.Children is set
+	// if node.Kind == "Machine" && node.Provider != "virtual" {
+	// 	groupNode := &ClusterResourceNode{
+	// 		Name:        "",
+	// 		Namespace:   object.GetNamespace(),
+	// 		DisplayName: "Resources",
+	// 		Kind:        kind,
+	// 		Provider:    "virtual", // TODO: should this be provider=controlplane or provider=virtual?
+	// 		Group:       group,
+	// 		Version:     version,
+	// 		Collapsible: true,
+	// 		Collapsed:   true,
+	// 		Children:    node.Children,
+	// 		UID:         fmt.Sprintf("%s: %s/%s", node.Kind, node.Namespace, node.Name),
+	// 	}
 
-		node.Children = []*ClusterResourceNode{groupNode}
-	}
+	// 	node.Children = []*ClusterResourceNode{groupNode}
+	// }
 
 	sort.Slice(node.Children, func(i, j int) bool {
 		// TODO: make sure this is deterministic!
@@ -194,6 +197,7 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 		DisplayName: "",
 		Kind:        kind,
 		Provider:    provider, // TODO: don't hardcode this
+		IsNamed:     false,
 		Collapsible: true,
 		Collapsed:   true,
 		Children:    []*ClusterResourceNode{},
