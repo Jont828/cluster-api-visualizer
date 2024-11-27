@@ -133,6 +133,25 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		node.Children = childTrees
 	}
 
+	// Be sure to add this part after node.Children is set
+	if node.Kind == "Machine" && node.Provider != "virtual" {
+		groupNode := &ClusterResourceNode{
+			Name:        "",
+			Namespace:   object.GetNamespace(),
+			DisplayName: "Resources",
+			Kind:        kind,
+			Provider:    "virtual", // TODO: should this be provider=controlplane or provider=virtual?
+			Group:       group,
+			Version:     version,
+			Collapsible: true,
+			Collapsed:   true,
+			Children:    node.Children,
+			UID:         fmt.Sprintf("%s: %s/%s", node.Kind, node.Namespace, node.Name),
+		}
+
+		node.Children = []*ClusterResourceNode{groupNode}
+	}
+
 	sort.Slice(node.Children, func(i, j int) bool {
 		// TODO: make sure this is deterministic!
 		if getSortKeys(node.Children[i])[0] == getSortKeys(node.Children[j])[0] {
