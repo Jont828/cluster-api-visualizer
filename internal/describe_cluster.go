@@ -29,7 +29,7 @@ type ClusterResourceNode struct {
 	Version     string                 `json:"version"`
 	Provider    string                 `json:"provider"`
 	UID         string                 `json:"uid"`
-	IsNamed     bool                   `json:"isNamed"`
+	IsNamed     bool                   `json:"isNamed"` // TODO rework this
 	Collapsible bool                   `json:"collapsible"`
 	Collapsed   bool                   `json:"collapsed"`
 	Ready       bool                   `json:"ready"`
@@ -103,7 +103,7 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		Group:       group,
 		Version:     version,
 		IsNamed:     !tree.IsVirtualObject(object),
-		Collapsible: tree.IsVirtualObject(object) || kind == "Machine",
+		Collapsible: tree.IsVirtualObject(object) || kind == "Machine" || kind == "KubeadmControlPlane",
 		Collapsed:   collapsed,
 		Children:    []*ClusterResourceNode{},
 		UID:         string(object.GetUID()),
@@ -163,23 +163,23 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		return getSortKeys(node.Children[i])[0] < getSortKeys(node.Children[j])[0]
 	})
 
-	if treeOptions.AddControlPlaneVirtualNode && tree.GetMetaName(object) == "ControlPlane" {
-		parent := &ClusterResourceNode{
-			Name:        "control-plane-parent",
-			Namespace:   object.GetNamespace(),
-			DisplayName: "ControlPlane",
-			Kind:        kind,
-			Provider:    "virtual", // TODO: should this be provider=controlplane or provider=virtual?
-			Group:       group,
-			Version:     version,
-			Collapsible: true,
-			Collapsed:   false,
-			Children:    []*ClusterResourceNode{node},
-			UID:         "control-plane-parent",
-		}
+	// if treeOptions.AddControlPlaneVirtualNode && tree.GetMetaName(object) == "ControlPlane" {
+	// 	parent := &ClusterResourceNode{
+	// 		Name:        "control-plane-parent",
+	// 		Namespace:   object.GetNamespace(),
+	// 		DisplayName: "ControlPlane",
+	// 		Kind:        kind,
+	// 		Provider:    "virtual", // TODO: should this be provider=controlplane or provider=virtual?
+	// 		Group:       group,
+	// 		Version:     version,
+	// 		Collapsible: true,
+	// 		Collapsed:   false,
+	// 		Children:    []*ClusterResourceNode{node},
+	// 		UID:         "control-plane-parent",
+	// 	}
 
-		return parent
-	}
+	// 	return parent
+	// }
 
 	return node
 }

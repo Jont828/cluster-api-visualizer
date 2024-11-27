@@ -21,7 +21,6 @@
         <div
           class="node-slot"
           v-for="(node, index) of nodeDataList"
-          @click="onClickNode(index)"
           :key="node.data._key"
           :style="{
             left: formatDimension(
@@ -38,6 +37,8 @@
             name="node"
             v-bind:node="node.data"
             v-bind:collapsed="node.data._collapsed"
+            v-bind:index="index"
+            v-bind:onClickNode="onClickNode"
           >
             <!-- 默认展示value字段 -->
             <span>{{ node.data.value }}</span>

@@ -52,7 +52,7 @@ build-web: $(NODE_MODULES) ## Build the Vue app.
 
 .PHONY: npm-serve
 serve: $(VUE_DIR)/package.json $(NODE_MODULES) ## Run the Vue app.
-	npm run --prefix ./$(VUE_DIR) serve
+	npm run --prefix ./$(VUE_DIR) serve -- --port 8080
 
 .PHONY: clean-dist
 clean-dist: ## Remove the dist folder.

@@ -116,7 +116,7 @@ export default {
       selected: {},
       treeData: {},
       cachedTreeString: "",
-      treeConfig: { nodeWidth: 180, nodeHeight: 70, levelHeight: 140 },
+      treeConfig: { nodeWidth: 180, nodeHeight: 90, levelHeight: 140 },
       scale: 1,
       legend: {
         cluster: "Cluster API",

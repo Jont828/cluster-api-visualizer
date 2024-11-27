@@ -9,18 +9,20 @@
       :linkStyle="(store.straightLinks) ? 'straight' : 'curve'"
       @scale="(val) => $emit('scale', val)"
     >
-      <template v-slot:node="{ node, collapsed }">
+      <template v-slot:node="{ node, collapsed, index, onClickNode }">
             <div class="card-wrap shadow">
               <!-- Wrapper card for Dark theme transparent background -->
-              <v-card elevation="0">
+              <!-- <v-card elevation="0"> -->
                 <v-card
                   class="collapse-node-wrap mx-auto transition-swing"
                   dark
+                  :elevation="!(node.collapsible && node.isNamed) ? 0 : 6"
                   :style="($vuetify.theme.dark) ? {
                       //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
                       //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
                       // 'background-color': hover ? '#424242' : '#383838', // TODO: solve issue with naming collision due to nested v-slot
-                      'height': (node.collapsible) ? '70 px' : '50px',
+                      'height': '70px',
+                      'background-color': !(node.collapsible && node.isNamed) ? 'transparent' : '',
                       // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
                     } : {
                       'background-color': '#aaffff', // TODO: add bg color
@@ -33,7 +35,7 @@
                         class="node mx-auto transition-swing"
                         dark
                         :elevation="hover ? 6 : 3"
-                        v-on:click="selectNode(node)"
+                        v-on:click="(!node.isNamed && node.collapsible) ? onClickNode(index) : selectNode(node)"
                         :style="($vuetify.theme.dark) ? {
                           //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
                           //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
@@ -79,11 +81,13 @@
                     </template>
                   </v-hover>
 
+                  <!-- TODO: fix corner from hover effect in the card -->
                   <v-hover
                     v-if="node.isNamed && node.collapsible"
                   >
                     <template v-slot:default="{ hover }">
-                      <div 
+                      <div
+                        v-on:click="onClickNode(index)"
                         class="chevron-wrap"
                         :style="($vuetify.theme.dark) ? {
                           //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
@@ -116,7 +120,7 @@
 
                 </v-card>
 
-              </v-card>
+              <!-- </v-card> -->
               <StatusBadge
                 v-if="node.hasReady"
                 :type="(node.ready) ? 'success' : node.severity.toLowerCase()"
@@ -295,6 +299,7 @@ export default {
 }
 
 .chevron-wrap {
+  line-height: 20px;
   width: 100%;
 }
 
