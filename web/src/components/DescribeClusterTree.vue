@@ -10,93 +10,57 @@
       @scale="(val) => $emit('scale', val)"
     >
       <template v-slot:node="{ node, collapsed, index, onClickNode }">
-            <div class="card-wrap shadow">
-              <!-- Wrapper card for Dark theme transparent background -->
-              <!-- <v-card elevation="0"> -->
-                <v-card
-                  class="collapse-node-wrap mx-auto transition-swing"
-                  dark
-                  :elevation="!(node.collapsible && node.isNamed) ? 0 : 6"
-                  :style="($vuetify.theme.dark) ? {
-                      //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
-                      //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
-                      // 'background-color': hover ? '#424242' : '#383838', // TODO: solve issue with naming collision due to nested v-slot
-                      'height': '70px',
-                      'background-color': !(node.collapsible && node.isNamed) ? 'transparent' : '',
-                      // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
-                    } : {
-                      'background-color': '#aaffff', // TODO: add bg color
-                      'height': (node.collapsible && node.isNamed) ? '70 px' : '60px',
-                    }"
-                >
-                  <v-hover>
-                    <template v-slot:default="{ hover }">
-                      <v-card
-                        class="node mx-auto transition-swing"
-                        dark
-                        :elevation="hover ? 6 : 3"
-                        v-on:click="(!node.isNamed && node.collapsible) ? onClickNode(index) : selectNode(node)"
-                        :style="($vuetify.theme.dark) ? {
-                          //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
-                          //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
-                          'background-color': hover ? '#383838' : '#272727',
-                          'color': $vuetify.theme.themes[theme].legend[node.provider],
-                          'height': '50px',
-                          // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
-                        } : {
-                          'background-color': $vuetify.theme.themes[theme].legend[node.provider],
-                        }"
-                        
-                      >
+        <div class="top-spacer-wrap">
+          <div class="top-spacer"></div> <!-- Spacer to center the nodes with the expandible arrow -->
+          <div class="card-wrap shadow">
+            <!-- Wrapper card for Dark theme transparent background -->
+            <!-- <v-card elevation="0"> -->
+              <v-card
+                class="collapse-node-wrap mx-auto transition-swing"
+                dark
+                :elevation="!(node.collapsible && node.isNamed) ? 0 : 6"
+                :style="($vuetify.theme.dark) ? {
+                    //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
+                    //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
+                    // 'background-color': hover ? '#424242' : '#383838', // TODO: solve issue with naming collision due to nested v-slot
+                    'height': '70px',
+                    'background-color': !(node.collapsible && node.isNamed) ? 'transparent' : '',
+                    // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
+                  } : {
+                    'background-color': '#aaffff', // TODO: add bg color
+                    'height': (node.collapsible && node.isNamed) ? '70 px' : '60px',
+                  }"
+              >
+                <v-hover>
+                  <template v-slot:default="{ hover }">
+                    <v-card
+                      class="node mx-auto transition-swing"
+                      dark
+                      :elevation="hover ? 6 : 3"
+                      v-on:click="(!node.isNamed && node.collapsible) ? onClickNode(index) : selectNode(node)"
+                      :style="($vuetify.theme.dark) ? {
+                        //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
+                        //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
+                        'background-color': hover ? '#383838' : '#272727',
+                        'color': $vuetify.theme.themes[theme].legend[node.provider],
+                        'height': '50px',
+                        // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
+                      } : {
+                        'background-color': $vuetify.theme.themes[theme].legend[node.provider],
+                      }"
+                      
+                    >
 
-                        <p class="kind font-weight-medium text-truncate">{{ (!node.isNamed) ? node.displayName : node.kind }}</p>
+                      <p class="kind font-weight-medium text-truncate">{{ (!node.isNamed) ? node.displayName : node.kind }}</p>
 
-                        <p
-                          class="name font-italic text-truncate"
-                          v-if="node.isNamed"
-                        >{{ node.displayName }}</p>
+                      <p
+                        class="name font-italic text-truncate"
+                        v-if="node.isNamed"
+                      >{{ node.displayName }}</p>
 
-                        <p 
-                          v-if="node.collapsible && !node.isNamed"
-                          class="chevron-wrap"
-                        >
-                          <v-icon
-                            class="chevron"
-                            size="18"
-                            :style="($vuetify.theme.dark) ? {
-                              'color': $vuetify.theme.themes[theme].legend[node.provider],
-                            } : null"
-                            v-if="collapsed && node.collapsible"
-                          >mdi-chevron-down</v-icon>
-                          <v-icon
-                            class="chevron"
-                            size="18"
-                            :style="($vuetify.theme.dark) ? {
-                              'color': $vuetify.theme.themes[theme].legend[node.provider],
-                            } : null"
-                            v-else-if="!collapsed && node.collapsible"
-                          >mdi-chevron-up</v-icon>
-                        </p>
-                      </v-card>
-                    </template>
-                  </v-hover>
-
-                  <!-- TODO: fix corner from hover effect in the card -->
-                  <v-hover
-                    v-if="node.isNamed && node.collapsible"
-                  >
-                    <template v-slot:default="{ hover }">
-                      <div
-                        v-on:click="onClickNode(index)"
-                        class="chevron-wrap"
-                        :style="($vuetify.theme.dark) ? {
-                          //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
-                          //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
-                          'background-color': hover ? '#424242' : '#383838', // TODO: solve issue with naming collision due to nested v-slot
-                          // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
-                        } : {
-                          'background-color': '#aaffff', // TODO: add bg color
-                        }"
+                      <div 
+                        v-if="node.collapsible && !node.isNamed"
+                        class="mini-chevron-wrap"
                       >
                         <v-icon
                           class="chevron"
@@ -115,19 +79,58 @@
                           v-else-if="!collapsed && node.collapsible"
                         >mdi-chevron-up</v-icon>
                       </div>
-                    </template>
-                  </v-hover>
+                    </v-card>
+                  </template>
+                </v-hover>
 
-                </v-card>
+                <!-- TODO: fix corner from hover effect in the card -->
+                <v-hover
+                  v-if="node.isNamed && node.collapsible"
+                >
+                  <template v-slot:default="{ hover }">
+                    <div
+                      v-on:click="onClickNode(index)"
+                      class="chevron-wrap"
+                      :style="($vuetify.theme.dark) ? {
+                        //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
+                        //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
+                        'background-color': hover ? '#424242' : '#383838', // TODO: solve issue with naming collision due to nested v-slot
+                        // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
+                      } : {
+                        'background-color': '#aaffff', // TODO: add bg color
+                      }"
+                    >
+                      <v-icon
+                        class="chevron"
+                        size="18"
+                        :style="($vuetify.theme.dark) ? {
+                          'color': $vuetify.theme.themes[theme].legend[node.provider],
+                        } : null"
+                        v-if="collapsed && node.collapsible"
+                      >mdi-chevron-down</v-icon>
+                      <v-icon
+                        class="chevron"
+                        size="18"
+                        :style="($vuetify.theme.dark) ? {
+                          'color': $vuetify.theme.themes[theme].legend[node.provider],
+                        } : null"
+                        v-else-if="!collapsed && node.collapsible"
+                      >mdi-chevron-up</v-icon>
+                    </div>
+                  </template>
+                </v-hover>
 
-              <!-- </v-card> -->
-              <StatusBadge
-                v-if="node.hasReady"
-                :type="(node.ready) ? 'success' : node.severity.toLowerCase()"
-                :size="18"
-              ></StatusBadge>
+              </v-card>
 
-            </div>
+            <!-- </v-card> -->
+            <StatusBadge
+              v-if="node.hasReady"
+              :type="(node.ready) ? 'success' : node.severity.toLowerCase()"
+              :size="18"
+            ></StatusBadge>
+
+          </div>
+        </div>
 
       </template>
     </vue-tree>
@@ -303,8 +306,17 @@ export default {
   width: 100%;
 }
 
+.mini-chevron-wrap {
+  line-height: 18px;
+}
+
 .chevron {
   margin: 0;
+}
+
+.top-spacer {
+  height: 20px;
+  line-height: 20px;
 }
 
 .node {
