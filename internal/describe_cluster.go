@@ -21,20 +21,22 @@ import (
 // ClusterResourceNode represents a node in the Cluster API resource tree and is used to configure the frontend with additional
 // options like collapsibility and provider.
 type ClusterResourceNode struct {
-	Name        string                 `json:"name"`
-	Namespace   string                 `json:"namespace"`
-	DisplayName string                 `json:"displayName"`
-	Kind        string                 `json:"kind"`
-	Group       string                 `json:"group"`
-	Version     string                 `json:"version"`
-	Provider    string                 `json:"provider"`
-	UID         string                 `json:"uid"`
-	Collapsible bool                   `json:"collapsible"`
-	Collapsed   bool                   `json:"collapsed"`
-	Ready       bool                   `json:"ready"`
-	Severity    string                 `json:"severity"`
-	HasReady    bool                   `json:"hasReady"`
-	Children    []*ClusterResourceNode `json:"children"`
+	Name            string                 `json:"name"`
+	Namespace       string                 `json:"namespace"`
+	DisplayName     string                 `json:"displayName"`
+	Kind            string                 `json:"kind"`
+	Group           string                 `json:"group"`
+	Version         string                 `json:"version"`
+	Provider        string                 `json:"provider"`
+	UID             string                 `json:"uid"`
+	CollapseWithTab bool                   `json:"collapseWithTab"`
+	CollapseOnClick bool                   `json:"collapseOnClick"`
+	Collapsible     bool                   `json:"collapsible"`
+	Collapsed       bool                   `json:"collapsed"`
+	Ready           bool                   `json:"ready"`
+	Severity        string                 `json:"severity"`
+	HasReady        bool                   `json:"hasReady"`
+	Children        []*ClusterResourceNode `json:"children"`
 }
 
 type ClusterResourceTreeOptions struct {
@@ -63,6 +65,7 @@ func ConstructClusterResourceTree(ctx context.Context, defaultClient client.Clie
 		KindsToCollapse: map[string]struct{}{
 			"TemplateGroup":           {},
 			"ClusterResourceSetGroup": {},
+			"Machine":                 {},
 		},
 		VNodesToInheritChildProvider: map[string]struct{}{
 			"ClusterResourceSetGroup": {},
@@ -100,7 +103,6 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		Kind:        kind,
 		Group:       group,
 		Version:     version,
-		Collapsible: tree.IsVirtualObject(object),
 		Collapsed:   collapsed,
 		Children:    []*ClusterResourceNode{},
 		UID:         string(object.GetUID()),
@@ -120,9 +122,6 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 
 	childTrees := []*ClusterResourceNode{}
 	for _, child := range children {
-		// log.Info("Child UID is ", "UID", child.GetUID())
-		// obj := objTree.GetObject(child.GetUID())
-		// log.Info("Obj is", "obj", obj)
 		childTrees = append(childTrees, objectTreeToResourceTree(ctx, objTree, child, treeOptions))
 	}
 
@@ -133,6 +132,11 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		node.Children = childTrees
 	}
 
+	// If the resource represents a real CRD we want to collapse, and it has children, we can collapse it with tab.
+	node.CollapseOnClick = tree.IsVirtualObject(object)
+	node.CollapseWithTab = len(node.Children) > 0 && !node.CollapseOnClick
+	node.Collapsible = node.CollapseWithTab || node.CollapseOnClick
+
 	sort.Slice(node.Children, func(i, j int) bool {
 		// TODO: make sure this is deterministic!
 		if getSortKeys(node.Children[i])[0] == getSortKeys(node.Children[j])[0] {
@@ -140,24 +144,6 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		}
 		return getSortKeys(node.Children[i])[0] < getSortKeys(node.Children[j])[0]
 	})
-
-	if treeOptions.AddControlPlaneVirtualNode && tree.GetMetaName(object) == "ControlPlane" {
-		parent := &ClusterResourceNode{
-			Name:        "control-plane-parent",
-			Namespace:   object.GetNamespace(),
-			DisplayName: "ControlPlane",
-			Kind:        kind,
-			Provider:    "virtual", // TODO: should this be provider=controlplane or provider=virtual?
-			Group:       group,
-			Version:     version,
-			Collapsible: true,
-			Collapsed:   false,
-			Children:    []*ClusterResourceNode{node},
-			UID:         "control-plane-parent",
-		}
-
-		return parent
-	}
 
 	return node
 }
@@ -170,18 +156,20 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 
 	resultChildren := []*ClusterResourceNode{}
 	groupNode := &ClusterResourceNode{
-		Name:        "",
-		Namespace:   namespace,
-		DisplayName: "",
-		Kind:        kind,
-		Provider:    provider, // TODO: don't hardcode this
-		Collapsible: true,
-		Collapsed:   true,
-		Children:    []*ClusterResourceNode{},
-		HasReady:    false,
-		Ready:       true,
-		Severity:    "",
-		UID:         kind + ": ",
+		Name:            "",
+		Namespace:       namespace,
+		DisplayName:     "",
+		Kind:            kind,
+		Provider:        provider, // TODO: don't hardcode this
+		CollapseWithTab: false,
+		CollapseOnClick: true,
+		Collapsible:     true,
+		Collapsed:       true,
+		Children:        []*ClusterResourceNode{},
+		HasReady:        false,
+		Ready:           true,
+		Severity:        "",
+		UID:             kind + ": ",
 	}
 
 	for _, child := range children {
@@ -211,7 +199,7 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 		resultChildren = append(resultChildren, groupNode.Children...)
 	}
 
-	log.V(4).Info("Result children are ", "children", nodeArrayNames(resultChildren))
+	log.V(4).Info("Result children are", "children", nodeArrayNames(resultChildren))
 
 	return resultChildren
 }

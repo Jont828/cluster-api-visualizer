@@ -9,63 +9,113 @@
       :linkStyle="(store.straightLinks) ? 'straight' : 'curve'"
       @scale="(val) => $emit('scale', val)"
     >
-      <template v-slot:node="{ node, collapsed }">
-        <v-hover>
-          <template v-slot:default="{ hover }">
-            <div class="card-wrap shadow">
+      <template v-slot:node="{ node, collapsed, index, collapseNode }">
+        <div class="top-spacer-wrap">
+          <div class="top-spacer"></div> <!-- Spacer to center the nodes with the expandible tab -->
 
-              <!-- Wrapper card for Dark theme transparent background -->
-              <v-card elevation="0">
+          <div class="card-wrap shadow">
+            <v-hover>
+              <template v-slot:default="hoverProps">
                 <v-card
-                  class="node mx-auto transition-swing"
+                  class="collapse-node-wrap mx-auto transition-swing"
+                  :elevation="!node.collapseWithTab ? 0 : (hoverProps.hover ? 6 : 3) /* Elevate even if node.tabHover is false */ "
                   dark
-                  :elevation="hover ? 6 : 3"
-                  v-on:click="selectNode(node)"
-                  :style="($vuetify.theme.dark) ? {
-                    //background: $vuetify.theme.themes[theme].legend[node.provider].background + (hover ? '55' : '44'),
-                    //color: hover ? '#fff' : $vuetify.theme.themes[theme].legend[node.provider].text,
-                    'background-color': hover ? '#383838' : '#272727',
-                    'color': $vuetify.theme.themes[theme].legend[node.provider],
-                    // 'border-color': $vuetify.theme.themes[theme].legend[node.provider],
-                  } : {
-                    'background-color': $vuetify.theme.themes[theme].legend[node.provider],
-                  }"
+                  :style="function () {
+                    if (node.collapseWithTab)
+                      if ($vuetify.theme.dark)
+                        return { 'background-color': (hoverProps.hover && node.tabHover) ? '#424242' : '#383838' }
+                      else // Light theme
+                        return { 'background-color': (hoverProps.hover && node.tabHover) ? $vuetify.theme.themes[theme].legendTabHover[node.provider] : $vuetify.theme.themes[theme].legendTab[node.provider] }
+                    else 
+                      return { 'background-color': 'transparent' }
+                  }()"
                 >
+                  <!-- Main card containing node's name and kind -->
+                  <v-hover>
+                    <template v-slot:default="{ hover }">
+                      <v-card
+                        class="node mx-auto transition-swing"
+                        dark
+                        :elevation="hover ? 6 : 3"
+                        v-on:click="node.collapseOnClick ? collapseNode(index) : $emit('selectNode', node)"
+                        :style="($vuetify.theme.dark) ? {
+                          'background-color': hover ? '#383838' : '#272727',
+                          'color': $vuetify.theme.themes[theme].legend[node.provider],
+                        } : {
+                          'background-color': $vuetify.theme.themes[theme].legend[node.provider],
+                        }"
+                      >
 
-                  <p class="kind font-weight-medium text-truncate">{{ (node.collapsible) ? node.displayName : node.kind }}</p>
+                        <p class="kind font-weight-medium text-truncate">{{ node.collapseOnClick ? node.displayName : node.kind }}</p>
 
-                  <p
-                    class="name font-italic text-truncate"
-                    v-if="!node.collapsible"
-                  >{{ node.displayName }}</p>
-                  <v-icon
-                    class="chevron"
-                    size="18"
-                    :style="($vuetify.theme.dark) ? {
-                      'color': $vuetify.theme.themes[theme].legend[node.provider],
-                    } : null"
-                    v-else-if="collapsed"
-                  >mdi-chevron-down</v-icon>
-                  <v-icon
-                    class="chevron"
-                    size="18"
-                    :style="($vuetify.theme.dark) ? {
-                      'color': $vuetify.theme.themes[theme].legend[node.provider],
-                    } : null"
-                    v-else
-                  >mdi-chevron-up</v-icon>
+                        <p
+                          class="name font-italic text-truncate"
+                          v-if="!node.collapseOnClick"
+                        >{{ node.displayName }}</p>
+                        <div 
+                          v-else
+                          class="mini-chevron-wrap"
+                        >
+                          <v-icon
+                            class="chevron"
+                            size="18"
+                            :style="($vuetify.theme.dark) ? {
+                              'color': $vuetify.theme.themes[theme].legend[node.provider],
+                            } : null"
+                            v-if="collapsed"
+                          >mdi-chevron-down</v-icon>
+                          <v-icon
+                            class="chevron"
+                            size="18"
+                            :style="($vuetify.theme.dark) ? {
+                              'color': $vuetify.theme.themes[theme].legend[node.provider],
+                            } : null"
+                            v-else
+                          >mdi-chevron-up</v-icon>
+                        </div>
+                      </v-card>
+                    </template>
+                  </v-hover>
+                  
+                  <!-- The expand tab for named resources -->
+                  <v-card
+                    v-if="node.collapseWithTab"
+                    v-on:click="collapseNode(index)"
+                    @mouseover="node.tabHover=true"
+                    @mouseleave="node.tabHover=false"
+                    color="transparent"
+                    class="chevron-wrap"
+                    elevation="0"
+                  >
+                    <v-icon
+                      class="chevron"
+                      size="18"
+                      :style="($vuetify.theme.dark) ? {
+                        'color': $vuetify.theme.themes[theme].legend[node.provider],
+                      } : null"
+                      v-if="collapsed"
+                    >mdi-chevron-down</v-icon>
+                    <v-icon
+                      class="chevron"
+                      size="18"
+                      :style="($vuetify.theme.dark) ? {
+                        'color': $vuetify.theme.themes[theme].legend[node.provider],
+                      } : null"
+                      v-else
+                    >mdi-chevron-up</v-icon>
+                  </v-card>
 
                 </v-card>
-              </v-card>
-              <StatusBadge
-                v-if="node.hasReady"
-                :type="(node.ready) ? 'success' : node.severity.toLowerCase()"
-                :size="18"
-              ></StatusBadge>
+              </template>
+            </v-hover>
 
-            </div>
-          </template>
-        </v-hover>
+            <StatusBadge
+              v-if="node.hasReady"
+              :type="(node.ready) ? 'success' : node.severity.toLowerCase()"
+              :size="18"
+            ></StatusBadge>
+          </div>
+        </div>
       </template>
     </vue-tree>
     <div class="legend">
@@ -124,17 +174,6 @@ export default {
     treeData: Object,
     selectedNode: Object,
     legend: Object,
-  },
-  methods: {
-    selectNode(node) {
-      if (!node.collapsible) {
-        this.$emit("selectNode", node);
-      } else {
-        // TODO: store info about which nodes are open or closed and on a reload, preserve the collapse state of nodes that still exist
-        // TODO: use a UID map and refactor GroupByKindNodes to have the same UID, i.e. make it dependent on the parent instead
-        // this.$emit("toggleNodeCollapse", node);
-      }
-    },
   },
 };
 </script>
@@ -230,6 +269,29 @@ export default {
   }
 }
 
+.collapse-node-wrap {
+  height: 70px;
+  text-align: center;
+}
+
+.chevron-wrap {
+  line-height: 20px;
+  width: 100%;
+}
+
+.mini-chevron-wrap {
+  line-height: 18px;
+}
+
+.chevron {
+  margin: 0;
+}
+
+.top-spacer {
+  height: 20px;
+  line-height: 20px;
+}
+
 .node {
   width: 170px;
   height: 50px;
@@ -250,9 +312,7 @@ export default {
     margin: 2px;
   }
 
-  .chevron {
-    margin: 0;
-  }
+
 
   .node-router-link {
     text-decoration: none;
