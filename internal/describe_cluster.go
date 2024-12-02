@@ -127,7 +127,7 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 
 	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
 	if treeOptions.GroupMachines {
-		node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, false, 10)
+		node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, 10)
 	} else {
 		node.Children = childTrees
 	}
@@ -149,14 +149,35 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 }
 
 // createKindGroupNode finds all objects in children with `kind` and create a parent node for them.
-func createKindGroupNode(ctx context.Context, namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool, maxGroupSize int) []*ClusterResourceNode {
+func createKindGroupNode(ctx context.Context, namespace string, kind string, provider string, children []*ClusterResourceNode, maxGroupSize int) []*ClusterResourceNode {
 	log := ctrl.LoggerFrom(ctx)
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
 
 	resultChildren := []*ClusterResourceNode{}
+
+	// Init a parent node, if the child groups need to be broken up. For example, if we have 100 machines, it would be
+	// [MachineSet] -> [30 Machines] -> [10 Machines, 10 Machines, 10 Machines]
+	groupParent := &ClusterResourceNode{
+		Name:            "",
+		Namespace:       namespace,
+		DisplayName:     "",
+		Kind:            kind,
+		Provider:        provider, // TODO: don't hardcode this
+		CollapseWithTab: false,
+		CollapseOnClick: true,
+		Collapsible:     true,
+		Collapsed:       true,
+		HasReady:        false,
+		Ready:           true,
+		Severity:        "",
+		UID:             kind + ": ",
+	}
+
+	groupNodes := []*ClusterResourceNode{}
 	groupNode := &ClusterResourceNode{}
 	kindCount := 0
+	totalKindCount := 0
 	for i, child := range children {
 		if kindCount == 0 {
 			groupNode = &ClusterResourceNode{
@@ -178,15 +199,23 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 		}
 		if child.Kind == kind {
 			kindCount++
+			totalKindCount++
 			groupNode.Group = child.Group
 			groupNode.Version = child.Version
 			groupNode.Children = append(groupNode.Children, child)
 			groupNode.UID += child.UID + " "
+
+			groupParent.Group = child.Group
+			groupParent.Version = child.Version
+			groupParent.UID += child.UID + " "
 			if child.HasReady {
 				groupNode.HasReady = true
 				groupNode.Ready = child.Ready && groupNode.Ready
 				groupNode.Severity = updateSeverityIfMoreSevere(groupNode.Severity, child.Severity)
 				// Set severity based on most severe child, i.e. Error > Warning > Info > Success
+				groupParent.HasReady = true
+				groupParent.Ready = child.Ready && groupParent.Ready
+				groupParent.Severity = updateSeverityIfMoreSevere(groupParent.Severity, child.Severity)
 			}
 		} else {
 			resultChildren = append(resultChildren, child)
@@ -194,11 +223,18 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 		if kindCount >= maxGroupSize || (i == len(children)-1 && kindCount > 0) {
 			// TODO: handle groupForOne?
 			groupNode.DisplayName = fmt.Sprintf("%d %s", kindCount, flect.Pluralize(kind))
-			resultChildren = append(resultChildren, groupNode)
+			groupNodes = append(groupNodes, groupNode)
 			kindCount = 0
 		}
 	}
 
+	if len(groupNodes) > 1 {
+		groupParent.DisplayName = fmt.Sprintf("%d %s", totalKindCount, flect.Pluralize(kind))
+		groupParent.Children = groupNodes
+		resultChildren = append(resultChildren, groupParent)
+	} else {
+		resultChildren = append(resultChildren, groupNodes...)
+	}
 	// if len(groupNode.Children) > 1 {
 	// 	groupNode.DisplayName = fmt.Sprintf("%d %s", len(groupNode.Children), flect.Pluralize(kind))
 	// 	resultChildren = append(resultChildren, groupNode)
