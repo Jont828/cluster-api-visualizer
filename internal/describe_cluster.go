@@ -127,7 +127,7 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 
 	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
 	if treeOptions.GroupMachines {
-		node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, false)
+		node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, false, 10)
 	} else {
 		node.Children = childTrees
 	}
@@ -149,31 +149,35 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 }
 
 // createKindGroupNode finds all objects in children with `kind` and create a parent node for them.
-func createKindGroupNode(ctx context.Context, namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool) []*ClusterResourceNode {
+func createKindGroupNode(ctx context.Context, namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool, maxGroupSize int) []*ClusterResourceNode {
 	log := ctrl.LoggerFrom(ctx)
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
 
 	resultChildren := []*ClusterResourceNode{}
-	groupNode := &ClusterResourceNode{
-		Name:            "",
-		Namespace:       namespace,
-		DisplayName:     "",
-		Kind:            kind,
-		Provider:        provider, // TODO: don't hardcode this
-		CollapseWithTab: false,
-		CollapseOnClick: true,
-		Collapsible:     true,
-		Collapsed:       true,
-		Children:        []*ClusterResourceNode{},
-		HasReady:        false,
-		Ready:           true,
-		Severity:        "",
-		UID:             kind + ": ",
-	}
-
-	for _, child := range children {
+	groupNode := &ClusterResourceNode{}
+	kindCount := 0
+	for i, child := range children {
+		if kindCount == 0 {
+			groupNode = &ClusterResourceNode{
+				Name:            "",
+				Namespace:       namespace,
+				DisplayName:     "",
+				Kind:            kind,
+				Provider:        provider, // TODO: don't hardcode this
+				CollapseWithTab: false,
+				CollapseOnClick: true,
+				Collapsible:     true,
+				Collapsed:       true,
+				Children:        []*ClusterResourceNode{},
+				HasReady:        false,
+				Ready:           true,
+				Severity:        "",
+				UID:             kind + ": ",
+			}
+		}
 		if child.Kind == kind {
+			kindCount++
 			groupNode.Group = child.Group
 			groupNode.Version = child.Version
 			groupNode.Children = append(groupNode.Children, child)
@@ -187,17 +191,23 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 		} else {
 			resultChildren = append(resultChildren, child)
 		}
+		if kindCount >= maxGroupSize || (i == len(children)-1 && kindCount > 0) {
+			// TODO: handle groupForOne?
+			groupNode.DisplayName = fmt.Sprintf("%d %s", kindCount, flect.Pluralize(kind))
+			resultChildren = append(resultChildren, groupNode)
+			kindCount = 0
+		}
 	}
 
-	if len(groupNode.Children) > 1 {
-		groupNode.DisplayName = fmt.Sprintf("%d %s", len(groupNode.Children), flect.Pluralize(kind))
-		resultChildren = append(resultChildren, groupNode)
-	} else if len(groupNode.Children) == 1 && groupForOne {
-		groupNode.DisplayName = fmt.Sprintf("1 %s", kind)
-		resultChildren = append(resultChildren, groupNode)
-	} else {
-		resultChildren = append(resultChildren, groupNode.Children...)
-	}
+	// if len(groupNode.Children) > 1 {
+	// 	groupNode.DisplayName = fmt.Sprintf("%d %s", len(groupNode.Children), flect.Pluralize(kind))
+	// 	resultChildren = append(resultChildren, groupNode)
+	// } else if len(groupNode.Children) == 1 && groupForOne {
+	// 	groupNode.DisplayName = fmt.Sprintf("1 %s", kind)
+	// 	resultChildren = append(resultChildren, groupNode)
+	// } else {
+	// 	resultChildren = append(resultChildren, groupNode.Children...)
+	// }
 
 	log.V(4).Info("Result children are", "children", nodeArrayNames(resultChildren))
 
