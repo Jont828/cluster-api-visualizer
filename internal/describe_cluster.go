@@ -18,6 +18,10 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	maxGroupSize = 10
+)
+
 // ClusterResourceNode represents a node in the Cluster API resource tree and is used to configure the frontend with additional
 // options like collapsibility and provider.
 type ClusterResourceNode struct {
@@ -127,7 +131,7 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 
 	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
 	if treeOptions.GroupMachines {
-		node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, false)
+		node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, maxGroupSize)
 	} else {
 		node.Children = childTrees
 	}
@@ -149,13 +153,16 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 }
 
 // createKindGroupNode finds all objects in children with `kind` and create a parent node for them.
-func createKindGroupNode(ctx context.Context, namespace string, kind string, provider string, children []*ClusterResourceNode, groupForOne bool) []*ClusterResourceNode {
+func createKindGroupNode(ctx context.Context, namespace string, kind string, provider string, children []*ClusterResourceNode, maxGroupSize int) []*ClusterResourceNode {
 	log := ctrl.LoggerFrom(ctx)
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
 
 	resultChildren := []*ClusterResourceNode{}
-	groupNode := &ClusterResourceNode{
+
+	// Init a parent node, if the child groups need to be broken up. For example, if we have 100 machines, it would be
+	// [MachineSet] -> [30 Machines] -> [10 Machines, 10 Machines, 10 Machines]
+	groupParent := &ClusterResourceNode{
 		Name:            "",
 		Namespace:       namespace,
 		DisplayName:     "",
@@ -165,38 +172,85 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 		CollapseOnClick: true,
 		Collapsible:     true,
 		Collapsed:       true,
-		Children:        []*ClusterResourceNode{},
 		HasReady:        false,
 		Ready:           true,
 		Severity:        "",
 		UID:             kind + ": ",
 	}
 
+	groupNodes := []*ClusterResourceNode{}
+	groupNode := &ClusterResourceNode{}
+	kindCount := 0
+	totalKindCount := 0
 	for _, child := range children {
+		if kindCount == 0 {
+			groupNode = &ClusterResourceNode{
+				Name:            "",
+				Namespace:       namespace,
+				DisplayName:     "",
+				Kind:            kind,
+				Provider:        provider, // TODO: don't hardcode this
+				CollapseWithTab: false,
+				CollapseOnClick: true,
+				Collapsible:     true,
+				Collapsed:       true,
+				Children:        []*ClusterResourceNode{},
+				HasReady:        false,
+				Ready:           true,
+				Severity:        "",
+				UID:             kind + ": ",
+			}
+		}
 		if child.Kind == kind {
+			kindCount++
+			totalKindCount++
 			groupNode.Group = child.Group
 			groupNode.Version = child.Version
 			groupNode.Children = append(groupNode.Children, child)
 			groupNode.UID += child.UID + " "
+
+			groupParent.Group = child.Group
+			groupParent.Version = child.Version
+			groupParent.UID += child.UID + " "
 			if child.HasReady {
 				groupNode.HasReady = true
 				groupNode.Ready = child.Ready && groupNode.Ready
 				groupNode.Severity = updateSeverityIfMoreSevere(groupNode.Severity, child.Severity)
 				// Set severity based on most severe child, i.e. Error > Warning > Info > Success
+				groupParent.HasReady = true
+				groupParent.Ready = child.Ready && groupParent.Ready
+				groupParent.Severity = updateSeverityIfMoreSevere(groupParent.Severity, child.Severity)
 			}
 		} else {
 			resultChildren = append(resultChildren, child)
 		}
+
+		if kindCount >= maxGroupSize {
+			groupNode.DisplayName = fmt.Sprintf("%d %s", kindCount, flect.Pluralize(kind))
+			groupNodes = append(groupNodes, groupNode)
+			kindCount = 0
+		}
 	}
 
-	if len(groupNode.Children) > 1 {
-		groupNode.DisplayName = fmt.Sprintf("%d %s", len(groupNode.Children), flect.Pluralize(kind))
-		resultChildren = append(resultChildren, groupNode)
-	} else if len(groupNode.Children) == 1 && groupForOne {
+	if totalKindCount == 1 {
+		// Don't group if there is only one, and there are no other groups.
+		groupNodes = append(groupNodes, groupNode.Children...)
+	} else if kindCount == 1 {
+		// If there is only one, and there are other groups, group it without pluralizing.
 		groupNode.DisplayName = fmt.Sprintf("1 %s", kind)
-		resultChildren = append(resultChildren, groupNode)
-	} else {
-		resultChildren = append(resultChildren, groupNode.Children...)
+		groupNodes = append(groupNodes, groupNode)
+	} else if kindCount > 1 {
+		// Otherwise, create a group for the remaining children, to account for remainders, i.e. 8 left overe in groups of 10.
+		groupNode.DisplayName = fmt.Sprintf("%d %s", kindCount, flect.Pluralize(kind))
+		groupNodes = append(groupNodes, groupNode)
+	}
+
+	if len(groupNodes) > 1 { // If we have multiple groups, add a parent node for them.
+		groupParent.DisplayName = fmt.Sprintf("%d %s", totalKindCount, flect.Pluralize(kind))
+		groupParent.Children = groupNodes
+		resultChildren = append(resultChildren, groupParent)
+	} else { // Otherwise, just add the single group node without a parent.
+		resultChildren = append(resultChildren, groupNodes...)
 	}
 
 	log.V(4).Info("Result children are", "children", nodeArrayNames(resultChildren))
