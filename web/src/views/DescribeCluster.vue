@@ -319,12 +319,12 @@ export default {
           if (typeof value == "string" || typeof value == "number") {
             name = key + ": " + value;
           } else {
-            name = key;
+            name = key + ":"; // Add colon for when the value is an object.
             children = this.formatToTreeview(value, path + "." + key);
           }
           result.push({
             id: path + "." + key,
-            name: name + ":",
+            name: name,
             children: children,
           });
         });
