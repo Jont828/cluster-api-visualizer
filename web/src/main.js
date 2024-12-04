@@ -13,8 +13,8 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 import hljs from 'highlight.js/lib/core';
 import json from 'highlight.js/lib/languages/json';
+import yaml from 'highlight.js/lib/languages/yaml';
 import hljsVuePlugin from "@highlightjs/vue-plugin";
-import "highlight.js/styles/stackoverflow-dark.css";
 
 import VueVirtualScroller from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
@@ -23,6 +23,7 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 Vue.use(VueVirtualScroller)
 
 hljs.registerLanguage('json', json);
+hljs.registerLanguage('yaml', yaml);
 
 Vue.use(hljsVuePlugin);
 

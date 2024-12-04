@@ -1,5 +1,16 @@
 <template>
-  <v-card class="resourceCard mx-auto">
+  <v-card class="resource-card mx-auto">
+    <link
+      v-if="$vuetify.theme.dark"
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/stackoverflow-dark.min.css"
+    >
+    <link
+      v-else
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/stackoverflow-light.min.css"
+    >
+
     <v-sheet
       :color="($vuetify.theme.dark) ? '#272727' : color"
       class="resourceSheet pa-4"
@@ -132,10 +143,12 @@
         class="text-wrap"
       >
         <template v-slot:label="{ item }">
-          <span
+          <highlightjs 
+            language="yaml" 
             :ref="item.id"
-            class="text-wrap"
-          >{{ item.name }}</span>
+            :code="item.name" 
+            class="text-wrap yaml-code" 
+          />
         </template>
       </v-treeview>
     </v-card-text>
@@ -278,5 +291,9 @@ export default {
 <style lang="less">
 .v-treeview-node__label {
   padding: 10px 0;
+}
+
+.resource-card .yaml-code code {
+  font-size: 100%;
 }
 </style>
