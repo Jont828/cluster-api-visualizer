@@ -73,7 +73,7 @@
             <v-tooltip
               :top="scrollY <= 20"
               :bottom="scrollY > 20"
-              :disabled="condition.status"
+              :disabled="condition.status === 'True'"
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-chip
@@ -89,18 +89,20 @@
                   v-bind="attrs"
                   v-on="on"
                 >
-                  <!-- :color="($vuetify.theme.dark) ? getType(condition) : 'white'"
-                  :text-color="($vuetify.theme.dark) ? 'black' : getType(condition)" -->
                   <StatusIcon
-                    :type="(condition.status) ? 'success' : condition.severity.toLowerCase()"
+                    :type="condition.status === 'True' ? 'success' : (condition.Status === 'Unknown' ? 'unknown' : (condition.severity ? condition.severity.toLowerCase() : 'unknown' ))"
                     :spinnerWidth="2"
                     left
                   >
+                  <!-- TODO: verify that StatusIcon works when passing in undefined as type, i.e. if condition.severity is undefined -->
                   </StatusIcon>
                   {{ condition.type }}
                 </v-chip>
               </template>
-              <span>{{ condition.severity }}: {{ condition.reason }}</span>
+              <span v-if="condition.severity && condition.reason">{{ condition.severity }}: {{ condition.reason }}</span>
+              <span v-else-if="condition.severity">{{ condition.severity }}</span>
+              <span v-else-if="condition.reason">{{ condition.reason }}</span>
+              <span v-else>Unknown</span>
             </v-tooltip>
           </div>
         </div>
@@ -201,11 +203,9 @@ export default {
   },
   methods: {
     getType(condition) {
-      return condition.status
-        ? "success"
-        : condition.isError
-        ? "error"
-        : "warning";
+      if (condition.status === "True") return "success";
+      else if (condition.isError || !condition.severity || condition.status === "Unknown") return "error"; // if severity is undefined, we assume it's an error
+      else return "warning";
     },
     onScroll(e) {
       this.scrollY = window.scrollY;
@@ -230,7 +230,7 @@ export default {
         conditions.forEach((e, i) => {
           this.conditions.push({
             type: e.type,
-            status: e.status === "True",
+            status: e.status,
             isError: e.severity === "Error",
             severity: e.severity,
             reason: e.reason,
@@ -258,6 +258,7 @@ export default {
   watch: {
     jsonItems: {
       handler(val, old) {
+        console.log("Val is", val);
         this.setConditions(val?.status?.conditions);
       },
     },
