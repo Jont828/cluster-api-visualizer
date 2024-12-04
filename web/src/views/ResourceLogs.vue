@@ -98,6 +98,8 @@ import AlertMessage from "../components/AlertMessage.vue";
 import { useSettingsStore } from "../stores/settings.js";
 import { setVersion } from "../mixins/setVersion.js";
 
+import "highlight.js/styles/stackoverflow-dark.css";
+
 export default {
   name: "ResourceLogs",
   components: {
