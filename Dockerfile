@@ -17,7 +17,7 @@ RUN npm run build
 # Build the Go binary.
 # Alpine is chosen for its small footprint
 # compared to Ubuntu
-FROM golang:1.21-alpine as builder
+FROM golang:1.22-alpine as builder
 
 # Need to redeclare ARCH to use in Go build stage
 ARG ARCH
