@@ -158,8 +158,17 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
 
+	sort.Slice(children, func(i, j int) bool {
+		// TODO: make sure this is deterministic!
+		if getSortKeys(children[i])[0] == getSortKeys(children[j])[0] {
+			return getSortKeys(children[i])[1] < getSortKeys(children[j])[1]
+		}
+		return getSortKeys(children[i])[0] < getSortKeys(children[j])[0]
+	})
+
 	resultChildren := []*ClusterResourceNode{}
 
+	// TODO: maybe in the future, we can group based on severity/error, but we'd still need a way to make sure the groups aren't too large.
 	// Init a parent node, if the child groups need to be broken up. For example, if we have 100 machines, it would be
 	// [MachineSet] -> [30 Machines] -> [10 Machines, 10 Machines, 10 Machines]
 	groupParent := &ClusterResourceNode{
