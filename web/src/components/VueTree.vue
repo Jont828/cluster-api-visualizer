@@ -77,6 +77,8 @@ const DEFAULT_HEIGHT_DECREMENT = 100;
 
 const ANIMATION_DURATION = 800;
 
+const ZOOM_INCREMENT = 0.1;
+
 function rotatePoint({ x, y }) {
   return {
     x: y,
@@ -164,12 +166,12 @@ export default {
     zoomIn() {
       const originTransformStr = this.$refs.domContainer.style.transform;
       // 如果已有scale属性, 在原基础上修改
-      let targetScale = 1.2;
+      let targetScale = 1;
       // let targetScale = 1 * 1.2;
       const scaleMatchResult = originTransformStr.match(MATCH_SCALE_REGEX);
       if (scaleMatchResult && scaleMatchResult.length > 0) {
         const originScale = parseFloat(scaleMatchResult[1]);
-        targetScale = originScale + 0.1;
+        targetScale = originScale + ZOOM_INCREMENT;
         // targetScale *= originScale;
       }
       this.setScale(targetScale);
@@ -177,12 +179,15 @@ export default {
     zoomOut() {
       const originTransformStr = this.$refs.domContainer.style.transform;
       // 如果已有scale属性, 在原基础上修改
-      let targetScale = 0.8;
+      let targetScale = 1;
       // let targetScale = 1 / 1.2;
       const scaleMatchResult = originTransformStr.match(MATCH_SCALE_REGEX);
       if (scaleMatchResult && scaleMatchResult.length > 0) {
         const originScale = parseFloat(scaleMatchResult[1]);
-        targetScale = originScale - 0.1;
+        if (originScale > ZOOM_INCREMENT) 
+          targetScale = originScale - 0.1;
+        else 
+          targetScale = originScale;
         // targetScale = originScale / 1.2;
       }
       this.setScale(targetScale);
