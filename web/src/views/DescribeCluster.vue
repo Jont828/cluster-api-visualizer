@@ -324,7 +324,7 @@ export default {
           }
           result.push({
             id: path + "." + key,
-            name: name,
+            name: name + ":",
             children: children,
           });
         });
