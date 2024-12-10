@@ -262,6 +262,21 @@ export default {
         this.setConditions(val?.status?.conditions);
       },
     },
+    items: {
+      handler(val, old) {
+        let recurse = function(items, open = []) {
+          items.forEach((item) => {
+            if (item.children) {
+              open = open.concat(recurse(item.children));
+            }
+            open.push(item.id);
+          });
+          return open;
+        };
+
+        this.open = recurse(val);
+      },
+    }
   },
   computed: {
     filter() {
