@@ -307,7 +307,7 @@ export default {
         resource.forEach((e, i) => {
           result.push({
             id: path + "[" + i + "]",
-            name: i.toString(),
+            name: i.toString() + ":", // Add colon for when we are just showing the index.
             children: this.formatToTreeview(e, path + "[" + i + "]"),
           });
         });
