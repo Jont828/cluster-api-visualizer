@@ -20,6 +20,8 @@ import (
 
 const (
 	maxGroupSize = 10
+
+	addonsAmountToCollapse = 4
 )
 
 // ClusterResourceNode represents a node in the Cluster API resource tree and is used to configure the frontend with additional
@@ -64,8 +66,7 @@ func ConstructClusterResourceTree(ctx context.Context, defaultClient client.Clie
 	}
 
 	treeOptions := ClusterResourceTreeOptions{
-		GroupMachines:              true,
-		AddControlPlaneVirtualNode: true,
+		GroupMachines: true,
 		KindsToCollapse: map[string]struct{}{
 			"TemplateGroup":           {},
 			"ClusterResourceSetGroup": {},
@@ -136,6 +137,10 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		node.Children = childTrees
 	}
 
+	if kind == "Cluster" {
+		node.Children = addAddonsGroupNode(ctx, node.Children)
+	}
+
 	// If the resource represents a real CRD we want to collapse, and it has children, we can collapse it with tab.
 	node.CollapseOnClick = tree.IsVirtualObject(object)
 	node.CollapseWithTab = len(node.Children) > 0 && !node.CollapseOnClick
@@ -150,6 +155,47 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 	})
 
 	return node
+}
+
+// addAddonsGroupNode finds all objects in children with `provider=addons` and create a parent node for them.
+func addAddonsGroupNode(_ context.Context, children []*ClusterResourceNode) []*ClusterResourceNode {
+	resultChildren := []*ClusterResourceNode{}
+
+	addonsParent := &ClusterResourceNode{
+		Name:            "",
+		DisplayName:     "Add-ons",
+		Kind:            "AddonsGroup",
+		Provider:        "addons",
+		CollapseWithTab: false,
+		CollapseOnClick: true,
+		Collapsible:     true,
+		Collapsed:       false,
+		HasReady:        false,
+		Ready:           true,
+		Severity:        "",
+		UID:             "addons",
+	}
+
+	for _, child := range children {
+		if child.Provider == "addons" {
+			addonsParent.Children = append(addonsParent.Children, child)
+		} else {
+			resultChildren = append(resultChildren, child)
+		}
+	}
+
+	if len(addonsParent.Children) == 1 && addonsParent.Children[0].Kind == "ClusterResourceSetGroup" && addonsParent.Children[0].Name == "ClusterResourceSets" {
+		// If the only add-ons are the CRS group node, just remove it and make the add-ons the new parent.
+		addonsParent.Children = addonsParent.Children[0].Children
+	}
+
+	if len(addonsParent.Children) >= addonsAmountToCollapse {
+		addonsParent.Collapsed = true
+	}
+
+	resultChildren = append(resultChildren, addonsParent)
+
+	return resultChildren
 }
 
 // createKindGroupNode finds all objects in children with `kind` and create a parent node for them.
@@ -176,7 +222,7 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 		Namespace:       namespace,
 		DisplayName:     "",
 		Kind:            kind,
-		Provider:        provider, // TODO: don't hardcode this
+		Provider:        provider,
 		CollapseWithTab: false,
 		CollapseOnClick: true,
 		Collapsible:     true,
