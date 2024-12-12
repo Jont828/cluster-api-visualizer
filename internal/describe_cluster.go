@@ -193,7 +193,9 @@ func addAddonsGroupNode(_ context.Context, children []*ClusterResourceNode) []*C
 		addonsParent.Collapsed = true
 	}
 
-	resultChildren = append(resultChildren, addonsParent)
+	if len(addonsParent.Children) > 0 {
+		resultChildren = append(resultChildren, addonsParent)
+	}
 
 	return resultChildren
 }
