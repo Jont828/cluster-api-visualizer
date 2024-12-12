@@ -3,7 +3,7 @@ module github.com/Jont828/cluster-api-visualizer
 go 1.22.0
 
 require (
-	github.com/gobuffalo/flect v1.0.2
+	github.com/gobuffalo/flect v1.0.3
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.30.3
