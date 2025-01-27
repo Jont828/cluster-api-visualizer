@@ -2,9 +2,12 @@ package internal
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"sort"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -20,6 +23,7 @@ type MultiClusterTreeNode struct {
 	Phase                  string                  `json:"phase"`
 	Ready                  bool                    `json:"ready"`
 	Children               []*MultiClusterTreeNode `json:"children"`
+	ClusterUrl             string                  `json:"clusterUrl"`
 }
 
 // ConstructMultiClusterTree returns a tree representing the workload cluster discovered in the management cluster.
@@ -71,6 +75,21 @@ func ConstructMultiClusterTree(ctx context.Context, ctrlClient ctrlclient.Client
 			Children:     []*MultiClusterTreeNode{},
 		}
 
+		found, secret, err := GetKubeConfigSecret(ctx, cluster.GetName(), cluster.GetNamespace())
+		if found && err == nil {
+			config, err := clientcmd.Load(secret.Data["value"])
+			if err != nil {
+				return nil, NewInternalError(err)
+			}
+
+			clusterCfg, ok := config.Clusters[cluster.GetName()]
+			if ok {
+				h := sha256.New()
+				h.Write([]byte(clusterCfg.Server))
+				workloadCluster.ClusterUrl = hex.EncodeToString(h.Sum(nil))
+				workloadCluster.ClusterUrl = workloadCluster.ClusterUrl[0:32]
+			}
+		}
 		// TODO: edge case in topology Clusters where infraRef is nil if it fails to create.
 		// In that case we can try to fetch the ClusterClass and read the infraRef from there and trim the output, i.e. DockerClusterTemplate => DockerCluster.
 		if cluster.Spec.InfrastructureRef != nil {

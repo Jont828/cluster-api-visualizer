@@ -3,7 +3,7 @@ replicas: 1
 image:
   repository: ghcr.io/jont828
   name: cluster-api-visualizer
-  imagePullPolicy: Always
+  imagePullPolicy: Never
 
 label: 
   key: app

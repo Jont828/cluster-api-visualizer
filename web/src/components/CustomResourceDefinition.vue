@@ -106,7 +106,7 @@
             </v-tooltip>
           </div>
         </div>
-
+<!--
         <div class="mt-4">
           <v-text-field
             v-model="search"
@@ -128,12 +128,13 @@
             :color="($vuetify.theme.dark) ? 'white' : color"
           ></v-checkbox>
         </div>
-
+-->
       </v-card-subtitle>
     </v-sheet>
     <v-card-text>
       <v-treeview
         hoverable
+        dense
         :items="items"
         :search="search"
         :filter="filter"
@@ -141,7 +142,6 @@
         :open-all="true"
         :active.sync="active"
         activatable
-        rounded
         class="text-wrap"
       >
         <template v-slot:label="{ item }">
@@ -302,9 +302,7 @@ export default {
   flex-wrap: wrap;
   gap: 8px;
 }
-</style>
 
-<style lang="less">
 .v-treeview-node__label {
   padding: 10px 0;
 }

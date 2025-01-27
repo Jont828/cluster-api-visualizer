@@ -3,8 +3,10 @@
     id="appBar"
     app
     :color="($vuetify.theme.dark ? null: 'primary')"
+    style="background: linear-gradient(104.44deg, #000000 25%, #32343B 67.88%);"
     dark
   >
+    <v-img src="../assets/mirantis-logo-inverted-horizontal-one-color.png" max-width="160"/>
     <v-btn
       icon
       text
@@ -40,6 +42,9 @@
     </v-tooltip>
 
     <v-spacer></v-spacer>
+    <div>
+        <v-switch label="Lens Integration" style="height: 25px;" v-model="lens" @change="lensChanged"></v-switch>
+    </div>
     <v-tooltip bottom>
       <template v-slot:activator="{ on, attrs }">
         <v-btn
@@ -114,9 +119,16 @@ export default {
     scaleIcon: String,
     backURL: String,
   },
+  methods: {
+    lensChanged(e) {
+      console.log("lens=", e)
+      this.$emit('updateLens', e)
+    },
+  },
   data() {
     return {
       router: router,
+      lens: true,
     };
   },
 };

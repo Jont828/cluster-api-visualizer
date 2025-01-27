@@ -4,6 +4,40 @@ Cluster API developers and operators often need to quickly get insight multiclus
 
 https://github.com/user-attachments/assets/f1d5c036-eaac-4dc4-a4c5-8de9b64ac3cd
 
+### Lens Integration Setup
+
+#### Prerequisites
+1 - Install and setup Lens version 2024.9.300059-latest (or later)
+Debian - https://api.k8slens.dev/binaries/Lens-2024.9.300059-latest.amd64.deb
+Mac - https://api.k8slens.dev/binaries/Lens-2024.9.300059-latest-arm64.dmg
+
+2 - Launch Lens
+
+3 - Click the menu button and select File->Preferences
+
+4 - In the preferences dialog click the Kubernetes menu item
+
+5 - Click the Sync Files and Folders button
+
+6 - Navigate to the current user's Downloads folder (where the browser to be used stores downloads) and click the Sync button
+
+#### Note that it's important to keep the download folder free from large files for Lens performance.
+
+
+### Quick start for local deployment 
+
+## 1. Prerequisites
+
+Install and set up [kind](https://kind.sigs.k8s.io/), [Docker](https://www.docker.com/), [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/), and [helm](https://helm.sh/). In addition, install any additional prerequisites needed for [Cluster API](https://cluster-api.sigs.k8s.io/).
+#### 2. Create a Cluster API management cluster
+
+Create a local management cluster with [kind](https://kind.sigs.k8s.io/) and a workload cluster by following the [Cluster API quick start guide](https://cluster-api.sigs.k8s.io/user/quick-start.html).
+
+##### 3. To deploy to a local kind cluster 
+```
+make build-and-deploy
+```
+
 ### Quick start
 
 #### 1. Prerequisites

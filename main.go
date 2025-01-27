@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/fs"
 	"net"
-
 	"net/http"
 	"os"
 	"strings"
@@ -145,6 +144,7 @@ func main() {
 	http.Handle("/api/v1/custom-resource-definition/", http.HandlerFunc(handleCustomResourceDefinitionTree))
 	http.Handle("/api/v1/resource-logs/", http.HandlerFunc(handleGetResourceLogs))
 	http.Handle("/api/v1/describe-cluster/", http.HandlerFunc(handleDescribeClusterTree))
+	http.Handle("/api/v1/cluster-kubeconfig/", http.HandlerFunc(handleClusterKubeConfig))
 	http.Handle("/api/v1/version/", http.HandlerFunc(handleGetVersion))
 
 	var frontend fs.FS = os.DirFS("web/dist")
@@ -155,7 +155,7 @@ func main() {
 	http.Handle("/", intercept404(fileServer, serveIndex))
 
 	uri := fmt.Sprintf("%s:%d", host, port)
-	log.V(2).Info(fmt.Sprintf("Listening at http://%s", uri))
+	log.V(2).Info(fmt.Sprintf("KYLE Listening at http://%s", uri))
 	if host == "0.0.0.0" {
 		log.V(2).Info(fmt.Sprintf("View at http://localhost:%d in browser", port))
 	}
@@ -277,6 +277,29 @@ func handleManagementClusterTree(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		io.Copy(w, bytes.NewReader(marshalled))
 	}
+}
+
+func handleClusterKubeConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := ctrl.LoggerFrom(ctx)
+
+	log.V(2).Info("GET call to url", "url", r.URL.Path)
+	log.V(2).Info("GET call params are", "params", r.URL.Query())
+	name := r.URL.Query().Get("name")
+	namespace := r.URL.Query().Get("namespace")
+
+	found, secret, err := internal.GetKubeConfigSecret(ctx, name, namespace)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	if found {
+		w.Header().Set("Content-Type", "text/vnd.yaml")
+		io.Copy(w, bytes.NewReader(secret.Data["value"]))
+		return
+	}
+
+	http.Error(w, "not found", http.StatusNotFound)
 }
 
 func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {

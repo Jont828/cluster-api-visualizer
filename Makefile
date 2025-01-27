@@ -96,8 +96,6 @@ go-fmt: ## Run `go fmt`.
 ## Docker
 ## --------------------------------------
 
-##@ Docker:
-
 .PHONY: docker-build-all
 docker-build-all: $(addprefix docker-build-,$(ALL_ARCH)) ## Build all the architecture docker images.
 
