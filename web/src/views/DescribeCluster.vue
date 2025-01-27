@@ -116,7 +116,7 @@ export default {
       selected: {},
       treeData: {},
       cachedTreeString: "",
-      treeConfig: { nodeWidth: 180, nodeHeight: 50, levelHeight: 120 },
+      treeConfig: { nodeWidth: 180, nodeHeight: 90, levelHeight: 140 },
       scale: 1,
       legend: {
         cluster: "Cluster API",
@@ -307,7 +307,7 @@ export default {
         resource.forEach((e, i) => {
           result.push({
             id: path + "[" + i + "]",
-            name: i.toString(),
+            name: i.toString() + ":", // Add colon for when we are just showing the index.
             children: this.formatToTreeview(e, path + "[" + i + "]"),
           });
         });
@@ -319,7 +319,7 @@ export default {
           if (typeof value == "string" || typeof value == "number") {
             name = key + ": " + value;
           } else {
-            name = key;
+            name = key + ":"; // Add colon for when the value is an object.
             children = this.formatToTreeview(value, path + "." + key);
           }
           result.push({

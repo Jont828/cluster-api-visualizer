@@ -2,7 +2,7 @@
 
 Cluster API developers and operators often need to quickly get insight multicluster configuration. This app provides that insight by making Cluster API significantly more accessible and easier to understand for both new and experienced users. It gives a bird’s eye view of a multicluster architecture, visualizes all the Cluster API custom resources for each cluster, and provides quick access to the specs and status of any resource.
 
-![Demo Recording](demo/demo.gif)
+https://github.com/user-attachments/assets/f1d5c036-eaac-4dc4-a4c5-8de9b64ac3cd
 
 ### Lens Integration Setup
 

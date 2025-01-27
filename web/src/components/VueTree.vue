@@ -21,7 +21,6 @@
         <div
           class="node-slot"
           v-for="(node, index) of nodeDataList"
-          @click="onClickNode(index)"
           :key="node.data._key"
           :style="{
             left: formatDimension(
@@ -38,6 +37,8 @@
             name="node"
             v-bind:node="node.data"
             v-bind:collapsed="node.data._collapsed"
+            v-bind:index="index"
+            v-bind:collapseNode="collapseNode"
           >
             <!-- 默认展示value字段 -->
             <span>{{ node.data.value }}</span>
@@ -75,6 +76,8 @@ const DEFAULT_LEVEL_HEIGHT = 200;
 const DEFAULT_HEIGHT_DECREMENT = 100;
 
 const ANIMATION_DURATION = 800;
+
+const ZOOM_INCREMENT = 0.1;
 
 function rotatePoint({ x, y }) {
   return {
@@ -163,12 +166,12 @@ export default {
     zoomIn() {
       const originTransformStr = this.$refs.domContainer.style.transform;
       // 如果已有scale属性, 在原基础上修改
-      let targetScale = 1.2;
+      let targetScale = 1;
       // let targetScale = 1 * 1.2;
       const scaleMatchResult = originTransformStr.match(MATCH_SCALE_REGEX);
       if (scaleMatchResult && scaleMatchResult.length > 0) {
         const originScale = parseFloat(scaleMatchResult[1]);
-        targetScale = originScale + 0.1;
+        targetScale = originScale + ZOOM_INCREMENT;
         // targetScale *= originScale;
       }
       this.setScale(targetScale);
@@ -176,12 +179,15 @@ export default {
     zoomOut() {
       const originTransformStr = this.$refs.domContainer.style.transform;
       // 如果已有scale属性, 在原基础上修改
-      let targetScale = 0.8;
+      let targetScale = 1;
       // let targetScale = 1 / 1.2;
       const scaleMatchResult = originTransformStr.match(MATCH_SCALE_REGEX);
       if (scaleMatchResult && scaleMatchResult.length > 0) {
         const originScale = parseFloat(scaleMatchResult[1]);
-        targetScale = originScale - 0.1;
+        if (originScale > ZOOM_INCREMENT) 
+          targetScale = originScale - 0.1;
+        else 
+          targetScale = originScale;
         // targetScale = originScale / 1.2;
       }
       this.setScale(targetScale);
@@ -485,9 +491,10 @@ export default {
         isDrag = false;
       };
     },
-    onClickNode(index) {
+    collapseNode(index) {
       if (this.collapseEnabled) {
         const curNode = this.nodeDataList[index];
+        // TODO: is this needed if we are not calling this on every node?
         if (!curNode.data.collapsible) return;
         if (curNode.data.children) {
           curNode.data._children = curNode.data.children;

@@ -40,6 +40,12 @@
       :color="$vuetify.theme.dark ? 'black' : 'white'"
       :size="size-2"
     > mdi-information-variant</v-icon>
+    <v-icon
+      v-else-if="type==='unknown' || !type"
+      class="readyIcon"
+      :color="$vuetify.theme.dark ? 'black' : 'white'"
+      :size="size-2"
+    > mdi-help</v-icon>
   </v-avatar>
   <v-avatar
     :size="size"
@@ -84,6 +90,12 @@
       :color="getColor(type)"
       :size="size"
     > mdi-information</v-icon>
+    <v-icon
+      v-else-if="type==='unknown' || !type"
+      class="readyIcon"
+      :color="getColor(type)"
+      :size="size"
+    > mdi-help-circle</v-icon>
   </v-avatar>
 </template>
 
@@ -100,7 +112,9 @@ export default {
       default: 1.5,
       type: Number,
     },
-    circle: Boolean,
+    circle: Boolean, 
+    // If circle is true, the icon will be displayed in a circle with the color in the background. This is meant for the top right corner of a CRD.
+    // If circle is false, the icon will be displayed in a square with the color as the border. This is meant for the condition chips in the CRD views.
     spinner: Boolean,
     left: Boolean,
   },
@@ -112,6 +126,8 @@ export default {
   methods: {
     getColor(type) {
       if (!this.circle) return "";
+
+      if (type === "unknown") return "error";
 
       if (this.spinner && (type === "warning" || type === "info"))
         return "warning";

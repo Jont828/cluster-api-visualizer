@@ -21,6 +21,23 @@ export default new Vuetify({
           infrastructure: colors.green.base,
           addons: colors.red.darken1,
           virtual: colors.grey.darken1,
+        },
+        // TODO: adjust color for others and key names
+        legendTab: {
+          cluster: colors.blue.darken2,
+          bootstrap: colors.amber.darken3,
+          controlplane: colors.purple.darken2,
+          infrastructure: colors.green.darken1,
+          addons: colors.red.darken2,
+          virtual: colors.grey.darken2,
+        },
+        legendTabHover: {
+          cluster: colors.blue.base,
+          bootstrap: colors.amber.darken1,
+          controlplane: colors.purple.base,
+          infrastructure: colors.green.lighten1,
+          addons: colors.red.base,
+          virtual: colors.grey.base,
         }
       },
       dark: {

@@ -7,5 +7,5 @@ maintainers:
   name: Jonathan Tong
 sources:
 - https://github.com/Jont828/cluster-api-visualizer
-appVersion: "v1.3.1"
-version: 1.3.1
+appVersion: "v1.4.0"
+version: 1.4.0

@@ -1,5 +1,16 @@
 <template>
-  <v-card class="resourceCard mx-auto">
+  <v-card class="resource-card mx-auto">
+    <link
+      v-if="$vuetify.theme.dark"
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/stackoverflow-dark.min.css"
+    >
+    <link
+      v-else
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/stackoverflow-light.min.css"
+    >
+
     <v-sheet
       :color="($vuetify.theme.dark) ? '#272727' : color"
       class="resourceSheet pa-4"
@@ -62,7 +73,7 @@
             <v-tooltip
               :top="scrollY <= 20"
               :bottom="scrollY > 20"
-              :disabled="condition.status"
+              :disabled="condition.status === 'True'"
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-chip
@@ -78,18 +89,20 @@
                   v-bind="attrs"
                   v-on="on"
                 >
-                  <!-- :color="($vuetify.theme.dark) ? getType(condition) : 'white'"
-                  :text-color="($vuetify.theme.dark) ? 'black' : getType(condition)" -->
                   <StatusIcon
-                    :type="(condition.status) ? 'success' : condition.severity.toLowerCase()"
+                    :type="condition.status === 'True' ? 'success' : (condition.Status === 'Unknown' ? 'unknown' : (condition.severity ? condition.severity.toLowerCase() : 'unknown' ))"
                     :spinnerWidth="2"
                     left
                   >
+                  <!-- TODO: verify that StatusIcon works when passing in undefined as type, i.e. if condition.severity is undefined -->
                   </StatusIcon>
                   {{ condition.type }}
                 </v-chip>
               </template>
-              <span>{{ condition.severity }}: {{ condition.reason }}</span>
+              <span v-if="condition.severity && condition.reason">{{ condition.severity }}: {{ condition.reason }}</span>
+              <span v-else-if="condition.severity">{{ condition.severity }}</span>
+              <span v-else-if="condition.reason">{{ condition.reason }}</span>
+              <span v-else>Unknown</span>
             </v-tooltip>
           </div>
         </div>
@@ -126,15 +139,18 @@
         :search="search"
         :filter="filter"
         :open.sync="open"
+        :open-all="true"
         :active.sync="active"
         activatable
         class="text-wrap"
       >
         <template v-slot:label="{ item }">
-          <span
+          <highlightjs 
+            language="yaml" 
             :ref="item.id"
-            class="text-wrap"
-          >{{ item.name }}</span>
+            :code="item.name" 
+            class="text-wrap yaml-code" 
+          />
         </template>
       </v-treeview>
     </v-card-text>
@@ -187,11 +203,9 @@ export default {
   },
   methods: {
     getType(condition) {
-      return condition.status
-        ? "success"
-        : condition.isError
-        ? "error"
-        : "warning";
+      if (condition.status === "True") return "success";
+      else if (condition.isError || !condition.severity || condition.status === "Unknown") return "error"; // if severity is undefined, we assume it's an error
+      else return "warning";
     },
     onScroll(e) {
       this.scrollY = window.scrollY;
@@ -216,7 +230,7 @@ export default {
         conditions.forEach((e, i) => {
           this.conditions.push({
             type: e.type,
-            status: e.status === "True",
+            status: e.status,
             isError: e.severity === "Error",
             severity: e.severity,
             reason: e.reason,
@@ -244,9 +258,25 @@ export default {
   watch: {
     jsonItems: {
       handler(val, old) {
+        console.log("Val is", val);
         this.setConditions(val?.status?.conditions);
       },
     },
+    items: {
+      handler(val, old) {
+        let recurse = function(items, open = []) {
+          items.forEach((item) => {
+            if (item.children) {
+              open = open.concat(recurse(item.children));
+            }
+            open.push(item.id);
+          });
+          return open;
+        };
+
+        this.open = recurse(val);
+      },
+    }
   },
   computed: {
     filter() {
@@ -271,5 +301,13 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.v-treeview-node__label {
+  padding: 10px 0;
+}
+
+.resource-card .yaml-code code {
+  font-size: 100%;
 }
 </style>
