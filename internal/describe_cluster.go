@@ -68,7 +68,7 @@ func injectClusterTemplates(ctx context.Context, tree *ClusterResourceNode) erro
 	}
 
 	resourceID := schema.GroupVersionResource{
-		Group:    "hmc.mirantis.com",
+		Group:    "k0rdent.mirantis.com",
 		Version:  "v1alpha1",
 		Resource: "clustertemplates",
 	}
@@ -127,7 +127,7 @@ func injectHmcResources(ctx context.Context, resourceName string, displayName st
 	}
 
 	resourceID := schema.GroupVersionResource{
-		Group:    "hmc.mirantis.com",
+		Group:    "k0rdent.mirantis.com",
 		Version:  "v1alpha1",
 		Resource: resourceName,
 	}
