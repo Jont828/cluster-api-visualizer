@@ -42,6 +42,7 @@ type ClusterResourceNode struct {
 	Ready           bool                   `json:"ready"`
 	Severity        string                 `json:"severity"`
 	HasReady        bool                   `json:"hasReady"`
+	Reason          string                 `json:"reason"`
 	Children        []*ClusterResourceNode `json:"children"`
 }
 
@@ -173,6 +174,7 @@ func addAddonsGroupNode(_ context.Context, children []*ClusterResourceNode) []*C
 		HasReady:        false,
 		Ready:           true,
 		Severity:        "",
+		Reason:          "",
 		UID:             "addons",
 	}
 
@@ -206,114 +208,85 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 
 	log.V(4).Info("Starting children are ", "children", nodeArrayNames(children))
 
-	sort.Slice(children, func(i, j int) bool {
-		// TODO: make sure this is deterministic!
-		if getSortKeys(children[i])[0] == getSortKeys(children[j])[0] {
-			return getSortKeys(children[i])[1] < getSortKeys(children[j])[1]
-		}
-		return getSortKeys(children[i])[0] < getSortKeys(children[j])[0]
-	})
+	// sort.Slice(children, func(i, j int) bool {
+	// 	// TODO: make sure this is deterministic!
+	// 	if getSortKeys(children[i])[0] == getSortKeys(children[j])[0] {
+	// 		return getSortKeys(children[i])[1] < getSortKeys(children[j])[1]
+	// 	}
+	// 	return getSortKeys(children[i])[0] < getSortKeys(children[j])[0]
+	// })
 
 	resultChildren := []*ClusterResourceNode{}
 
 	// TODO: maybe in the future, we can group based on severity/error, but we'd still need a way to make sure the groups aren't too large.
 	// Init a parent node, if the child groups need to be broken up. For example, if we have 100 machines, it would be
 	// [MachineSet] -> [30 Machines] -> [10 Machines, 10 Machines, 10 Machines]
-	groupParent := &ClusterResourceNode{
-		Name:            "",
-		Namespace:       namespace,
-		DisplayName:     "",
-		Kind:            kind,
-		Provider:        provider,
-		CollapseWithTab: false,
-		CollapseOnClick: true,
-		Collapsible:     true,
-		Collapsed:       true,
-		HasReady:        false,
-		Ready:           true,
-		Severity:        "",
-		UID:             kind + ": ",
-	}
 
-	groupNodes := []*ClusterResourceNode{}
-	groupNode := &ClusterResourceNode{}
-	kindCount := 0
-	totalKindCount := 0
+	conditionToGroupNode := map[string]*ClusterResourceNode{}
 	for _, child := range children {
-		if kindCount == 0 {
-			groupNode = &ClusterResourceNode{
-				Name:            "",
-				Namespace:       namespace,
-				DisplayName:     "",
-				Kind:            kind,
-				Provider:        provider, // TODO: don't hardcode this
-				CollapseWithTab: false,
-				CollapseOnClick: true,
-				Collapsible:     true,
-				Collapsed:       true,
-				Children:        []*ClusterResourceNode{},
-				HasReady:        false,
-				Ready:           true,
-				Severity:        "",
-				UID:             kind + ": ",
-			}
-		}
 		if child.Kind == kind {
-			kindCount++
-			totalKindCount++
-			groupNode.Group = child.Group
-			groupNode.Version = child.Version
-			groupNode.Children = append(groupNode.Children, child)
-			groupNode.UID += child.UID + " "
+			conditionMapKey := fmt.Sprintf("HasReady: %s, Ready: %s, Severity: %s, Reason: %s", child.HasReady, child.Ready, child.Severity, child.Reason)
+			if existingGroupNode, ok := conditionToGroupNode[conditionMapKey]; ok {
+				// If we already have a group node for this condition, just add the child to it.
+				existingGroupNode.Children = append(existingGroupNode.Children, child)
+				existingGroupNode.UID += child.UID + " "
+			} else {
+				// If we don't have a group node for this condition, create a new one.
+				groupNode := &ClusterResourceNode{
+					Name:            "",
+					Namespace:       namespace,
+					DisplayName:     "",
+					Kind:            kind,
+					Group:           child.Group,
+					Version:         child.Version,
+					Provider:        provider, // TODO: don't hardcode this
+					CollapseWithTab: false,
+					CollapseOnClick: true,
+					Collapsible:     true,
+					Collapsed:       true,
+					Children:        []*ClusterResourceNode{child},
+					HasReady:        child.HasReady,
+					Ready:           child.Ready,
+					Severity:        child.Severity,
+					Reason:          child.Reason,
+					UID:             kind + ": " + child.UID + " ",
+				}
 
-			groupParent.Group = child.Group
-			groupParent.Version = child.Version
-			groupParent.UID += child.UID + " "
-			if child.HasReady {
-				groupNode.HasReady = true
-				groupNode.Ready = child.Ready && groupNode.Ready
-				groupNode.Severity = updateSeverityIfMoreSevere(groupNode.Severity, child.Severity)
-				// Set severity based on most severe child, i.e. Error > Warning > Info > Success
-				groupParent.HasReady = true
-				groupParent.Ready = child.Ready && groupParent.Ready
-				groupParent.Severity = updateSeverityIfMoreSevere(groupParent.Severity, child.Severity)
+				conditionToGroupNode[conditionMapKey] = groupNode
 			}
 		} else {
 			resultChildren = append(resultChildren, child)
 		}
+	}
 
-		if kindCount >= maxGroupSize {
-			groupNode.DisplayName = fmt.Sprintf("%d %s", kindCount, flect.Pluralize(kind))
-			groupNodes = append(groupNodes, groupNode)
-			kindCount = 0
+	for _, groupNode := range conditionToGroupNode {
+		// If the group node has one child, we can just add it to the result children.
+		if len(groupNode.Children) == 1 {
+			resultChildren = append(resultChildren, groupNode.Children[0])
+		} else {
+			// If the group node has more than one child, we need to add it to the result children.
+			groupNode.DisplayName = fmt.Sprintf("%d %s", len(groupNode.Children), flect.Pluralize(groupNode.Kind))
+			resultChildren = append(resultChildren, groupNode)
 		}
-	}
-
-	if totalKindCount == 1 {
-		// Don't group if there is only one, and there are no other groups.
-		groupNodes = append(groupNodes, groupNode.Children...)
-	} else if kindCount == 1 {
-		// If there is only one, and there are other groups, group it without pluralizing.
-		groupNode.DisplayName = fmt.Sprintf("1 %s", kind)
-		groupNodes = append(groupNodes, groupNode)
-	} else if kindCount > 1 {
-		// Otherwise, create a group for the remaining children, to account for remainders, i.e. 8 left overe in groups of 10.
-		groupNode.DisplayName = fmt.Sprintf("%d %s", kindCount, flect.Pluralize(kind))
-		groupNodes = append(groupNodes, groupNode)
-	}
-
-	if len(groupNodes) > 1 { // If we have multiple groups, add a parent node for them.
-		groupParent.DisplayName = fmt.Sprintf("%d %s", totalKindCount, flect.Pluralize(kind))
-		groupParent.Children = groupNodes
-		resultChildren = append(resultChildren, groupParent)
-	} else { // Otherwise, just add the single group node without a parent.
-		resultChildren = append(resultChildren, groupNodes...)
 	}
 
 	log.V(4).Info("Result children are", "children", nodeArrayNames(resultChildren))
 
 	return resultChildren
 }
+
+// func hasSameReadyStatusSeverityAndReason(a, b *clusterv1.Condition) bool {
+// 	if a == nil && b == nil {
+// 		return true
+// 	}
+// 	if (a == nil) != (b == nil) {
+// 		return false
+// 	}
+
+// 	return a.Status == b.Status &&
+// 		a.Severity == b.Severity &&
+// 		a.Reason == b.Reason
+// }
 
 // injectCustomResourcesToObjectTree amends the clusterctl ObjectTree with custom CRDs that are not included in the clusterctl resource discovery.
 // It queries all CRD types and their instances containing the visualizer label and the cluster name label.
