@@ -9,6 +9,7 @@ import (
 	visualizerv1 "github.com/Jont828/cluster-api-visualizer/api/v1"
 	"github.com/gobuffalo/flect"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	maxGroupSize = 10
+	maxGroupSize = 3
 
 	addonsAmountToCollapse = 4
 )
@@ -45,8 +46,7 @@ type ClusterResourceNode struct {
 	HasReady        bool                   `json:"hasReady"`
 	Reason          string                 `json:"reason"`
 	Children        []*ClusterResourceNode `json:"children"`
-	IsGroupingNode  bool                   `json:"isGroupingNode"` // Only used for grouping nodes, indicates that the node is a grouping node.
-	GroupItemNames  string                 `json:"groupItemNames"` // Only used for group nodes, contains the names of the items in the group.
+	IsOverflowNode  bool                   `json:"isOverflowNode"` // Used to indicate that this node is an overflow node, e.g. when there are too many machines in a group.
 }
 
 type ClusterResourceTreeOptions struct {
@@ -88,17 +88,20 @@ func ConstructClusterResourceTree(ctx context.Context, defaultClient client.Clie
 	}
 	treeOptions.providerTypeOverrideMap = overrides
 
-	resourceTree := objectTreeToResourceTree(ctx, objTree, objTree.GetRoot(), treeOptions)
+	resourceTree, err := objectTreeToResourceTree(ctx, runtimeClient, objTree, objTree.GetRoot(), treeOptions)
+	if err != nil {
+		return nil, NewInternalError(err)
+	}
 
 	return resourceTree, nil
 }
 
 // objectTreeToResourceTree converts an clusterctl ObjectTree to a ClusterResourceNode tree.
-func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, object ctrlclient.Object, treeOptions ClusterResourceTreeOptions) *ClusterResourceNode {
+func objectTreeToResourceTree(ctx context.Context, runtimeClient ctrlclient.Client, objTree *tree.ObjectTree, object ctrlclient.Object, treeOptions ClusterResourceTreeOptions) (*ClusterResourceNode, error) {
 	log := ctrl.LoggerFrom(ctx)
 
 	if object == nil {
-		return nil
+		return nil, nil
 	}
 
 	group := object.GetObjectKind().GroupVersionKind().Group
@@ -107,15 +110,14 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 
 	_, collapsed := treeOptions.KindsToCollapse[kind]
 	node := &ClusterResourceNode{
-		Name:           object.GetName(),
-		DisplayName:    getDisplayName(object),
-		Kind:           kind,
-		Group:          group,
-		Version:        version,
-		Collapsed:      collapsed,
-		Children:       []*ClusterResourceNode{},
-		UID:            string(object.GetUID()),
-		GroupItemNames: "",
+		Name:        object.GetName(),
+		DisplayName: getDisplayName(object),
+		Kind:        kind,
+		Group:       group,
+		Version:     version,
+		Collapsed:   collapsed,
+		Children:    []*ClusterResourceNode{},
+		UID:         string(object.GetUID()),
 	}
 
 	children := objTree.GetObjectsByParent(object.GetUID())
@@ -131,8 +133,6 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 			node.Provider = "cluster" // MachineGroup is a virtual node that represents a group of machines, so we set the provider to the same one as Machines.
 			node.Group = "cluster.x-k8s.io"
 		}
-		node.IsGroupingNode = true
-		node.GroupItemNames = tree.GetGroupItems(object)
 	}
 
 	if node.Namespace = object.GetNamespace(); node.Namespace == "" {
@@ -143,7 +143,11 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 
 	childTrees := []*ClusterResourceNode{}
 	for _, child := range children {
-		childTrees = append(childTrees, objectTreeToResourceTree(ctx, objTree, child, treeOptions))
+		tree, err := objectTreeToResourceTree(ctx, runtimeClient, objTree, child, treeOptions)
+		if err != nil {
+			return nil, err
+		}
+		childTrees = append(childTrees, tree)
 	}
 
 	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
@@ -162,12 +166,6 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 	node.CollapseWithTab = len(node.Children) > 0 && !node.CollapseOnClick
 	node.Collapsible = node.CollapseWithTab || node.CollapseOnClick
 
-	if tree.IsGroupObject(object) {
-		node.Collapsible = false
-		node.CollapseOnClick = false
-		node.CollapseWithTab = false
-	}
-
 	sort.Slice(node.Children, func(i, j int) bool {
 		// TODO: make sure this is deterministic!
 		if getSortKeys(node.Children[i])[0] == getSortKeys(node.Children[j])[0] {
@@ -176,7 +174,118 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		return getSortKeys(node.Children[i])[0] < getSortKeys(node.Children[j])[0]
 	})
 
-	return node
+	if tree.IsGroupObject(object) {
+		node.Collapsed = true // Group objects are always collapsed by default.
+		node.Collapsible = true
+		node.CollapseOnClick = true
+		node.CollapseWithTab = false
+
+		if node.Kind == "Machine" {
+			machineNames := strings.Split(tree.GetGroupItems(object), tree.GroupItemsSeparator)
+			log.Info("Len machineNames", "machineNames", machineNames, "maxGroupSize", maxGroupSize)
+			numTotalMachines := len(machineNames)
+			if numTotalMachines > maxGroupSize {
+				machineNames = machineNames[:maxGroupSize]
+			}
+			log.Info("Length of machineNames after slicing", "machineNames", machineNames, "maxGroupSize", maxGroupSize)
+
+			for _, machineName := range machineNames {
+				m := clusterv1.Machine{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      machineName,
+						Namespace: object.GetNamespace(),
+					},
+				}
+
+				err := runtimeClient.Get(ctx, ctrlclient.ObjectKeyFromObject(&m), &m)
+				if err != nil {
+					log.Error(err, "failed to get machine object", "name", machineName, "namespace", object.GetNamespace())
+					return nil, errors.Wrapf(err, "failed to get machine object %s/%s", object.GetNamespace(), machineName)
+				}
+
+				machineNode := &ClusterResourceNode{
+					Name:            machineName,
+					DisplayName:     machineName,
+					Kind:            "Machine",
+					Group:           "cluster.x-k8s.io",
+					Version:         "v1beta1",
+					Provider:        "cluster", // TODO: don't hardcode this
+					UID:             string(m.GetUID()),
+					Namespace:       m.GetNamespace(),
+					Collapsed:       true,
+					Collapsible:     true,
+					CollapseWithTab: true,
+					CollapseOnClick: false,
+					Children:        []*ClusterResourceNode{},
+				}
+				setReadyFields(&m, machineNode)
+				if (m.Spec.InfrastructureRef != corev1.ObjectReference{}) {
+					if machineInfra, err := external.Get(ctx, runtimeClient, &m.Spec.InfrastructureRef, m.Namespace); err == nil {
+						infraNode := &ClusterResourceNode{
+							Name:            m.Spec.InfrastructureRef.Name,
+							DisplayName:     m.Spec.InfrastructureRef.Name,
+							Kind:            m.Spec.InfrastructureRef.Kind,
+							Group:           m.Spec.InfrastructureRef.GroupVersionKind().Group,
+							Version:         m.Spec.InfrastructureRef.GroupVersionKind().Version,
+							Provider:        "infrastructure", // TODO: don't hardcode this
+							UID:             string(m.Spec.InfrastructureRef.UID),
+							Namespace:       m.Spec.InfrastructureRef.Namespace,
+							Collapsed:       true,
+							Collapsible:     false,
+							CollapseWithTab: false,
+							Children:        []*ClusterResourceNode{},
+						}
+						setReadyFields(machineInfra, infraNode)
+						machineNode.Children = append(machineNode.Children, infraNode)
+						// tree.Add(m, machineInfra, ObjectMetaName("MachineInfrastructure"), NoEcho(true))
+					}
+				}
+
+				if m.Spec.Bootstrap.ConfigRef != nil {
+					if machineBootstrap, err := external.Get(ctx, runtimeClient, m.Spec.Bootstrap.ConfigRef, m.Namespace); err == nil {
+						bootstrapNode := &ClusterResourceNode{
+							Name:            m.Spec.Bootstrap.ConfigRef.Name,
+							DisplayName:     m.Spec.Bootstrap.ConfigRef.Name,
+							Kind:            m.Spec.Bootstrap.ConfigRef.Kind,
+							Group:           m.Spec.Bootstrap.ConfigRef.GroupVersionKind().Group,
+							Version:         m.Spec.Bootstrap.ConfigRef.GroupVersionKind().Version,
+							Provider:        "bootstrap", // TODO: don't hardcode this
+							UID:             string(m.Spec.Bootstrap.ConfigRef.UID),
+							Namespace:       m.Spec.Bootstrap.ConfigRef.Namespace,
+							Collapsed:       false,
+							Collapsible:     false,
+							CollapseWithTab: false,
+							Children:        []*ClusterResourceNode{},
+						}
+						setReadyFields(machineBootstrap, bootstrapNode)
+						machineNode.Children = append(machineNode.Children, bootstrapNode)
+					}
+				}
+
+				node.Children = append(node.Children, machineNode)
+			}
+
+			if numTotalMachines > maxGroupSize {
+				node.Children = append(node.Children, &ClusterResourceNode{
+					Name:            "",
+					DisplayName:     fmt.Sprintf("%d %s...", numTotalMachines-maxGroupSize, flect.Pluralize(node.Kind)),
+					Kind:            "Machine",
+					Group:           "cluster.x-k8s.io",
+					Version:         "v1beta1",
+					Provider:        "cluster", // TODO: don't hardcode this
+					UID:             node.UID + "more",
+					Namespace:       node.Namespace,
+					Collapsed:       true,
+					Collapsible:     false,
+					CollapseWithTab: false,
+					Children:        []*ClusterResourceNode{},
+					IsOverflowNode:  true, // This is an overflow node, meaning it contains more machines than the max group size.
+				})
+			}
+		}
+	}
+
+	return node, nil
 }
 
 // addAddonsGroupNode finds all objects in children with `provider=addons` and create a parent node for them.

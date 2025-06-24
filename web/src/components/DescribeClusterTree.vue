@@ -46,14 +46,14 @@
                         }"
                       >
 
-                        <p class="kind font-weight-medium text-truncate">{{ node.collapseOnClick || node.isGroupingNode ? node.displayName : node.kind }}</p>
+                        <p class="kind font-weight-medium text-truncate">{{ node.collapseOnClick || node.isOverflowNode ? node.displayName : node.kind }}</p>
 
                         <p
                           class="name font-italic text-truncate"
-                          v-if="!node.collapseOnClick && !node.isGroupingNode"
+                          v-if="!node.collapseOnClick && !node.isOverflowNode"
                         >{{ node.displayName }}</p>
                         <div 
-                          v-else
+                          v-else-if="!node.isOverflowNode"
                           class="mini-chevron-wrap"
                         >
                           <v-icon

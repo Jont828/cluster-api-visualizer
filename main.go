@@ -143,7 +143,6 @@ func main() {
 
 	http.Handle("/api/v1/management-cluster/", http.HandlerFunc(handleManagementClusterTree))
 	http.Handle("/api/v1/custom-resource-definition/", http.HandlerFunc(handleCustomResourceDefinitionTree))
-	http.Handle("/api/v1/get-grouping-items/", http.HandlerFunc(handleGetGroupingItems))
 	http.Handle("/api/v1/resource-logs/", http.HandlerFunc(handleGetResourceLogs))
 	http.Handle("/api/v1/describe-cluster/", http.HandlerFunc(handleDescribeClusterTree))
 	http.Handle("/api/v1/version/", http.HandlerFunc(handleGetVersion))
@@ -319,39 +318,6 @@ func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		io.Copy(w, bytes.NewReader(marshalled))
 	}
-}
-
-func handleGetGroupingItems(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	log := ctrl.LoggerFrom(ctx)
-
-	log.V(2).Info("GET call to url", "url", r.URL.Path)
-	log.V(2).Info("GET call params are", "params", r.URL.Query())
-
-	kind := r.URL.Query().Get("kind")
-	apiVersion := r.URL.Query().Get("apiVersion")
-	namespace := r.URL.Query().Get("namespace")
-	status := r.URL.Query().Get("status")
-	severity := r.URL.Query().Get("severity")
-	reason := r.URL.Query().Get("reason")
-
-	// TODO: should the runtimeClient be regenerated here?
-	objects, httpErr := internal.GetGroupItems(ctx, c.ControllerRuntimeClient, kind, apiVersion, namespace, status, severity, reason)
-	if httpErr != nil {
-		log.Error(httpErr, "failed to get CRDs for", "kind", kind)
-		// http.Error(w, httpErr.Error(), httpErr.Status)
-		return
-	}
-
-	nodes := internal.GroupItemsToResourceNodes(ctx, objects)
-
-	data, err := json.MarshalIndent(nodes, "", "  ")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	io.Copy(w, bytes.NewReader(data))
 }
 
 func handleCustomResourceDefinitionTree(w http.ResponseWriter, r *http.Request) {
