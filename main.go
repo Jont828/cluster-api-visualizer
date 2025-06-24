@@ -22,7 +22,6 @@ import (
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/config"
-	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	configclient "sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -331,15 +330,15 @@ func handleGetGroupingItems(w http.ResponseWriter, r *http.Request) {
 
 	kind := r.URL.Query().Get("kind")
 	apiVersion := r.URL.Query().Get("apiVersion")
-	names := r.URL.Query().Get("names")
 	namespace := r.URL.Query().Get("namespace")
+	status := r.URL.Query().Get("status")
+	severity := r.URL.Query().Get("severity")
+	reason := r.URL.Query().Get("reason")
 
-	log.Info("Names are", "names", names)
-	nameList := strings.Split(names, tree.GroupItemsSeparator)
 	// TODO: should the runtimeClient be regenerated here?
-	objects, httpErr := internal.GetGroupItems(ctx, c.ControllerRuntimeClient, kind, apiVersion, namespace, nameList)
+	objects, httpErr := internal.GetGroupItems(ctx, c.ControllerRuntimeClient, kind, apiVersion, namespace, status, severity, reason)
 	if httpErr != nil {
-		log.Error(httpErr, "failed to get CRDs for", "kind", kind, "names", names)
+		log.Error(httpErr, "failed to get CRDs for", "kind", kind)
 		// http.Error(w, httpErr.Error(), httpErr.Status)
 		return
 	}

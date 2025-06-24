@@ -228,8 +228,10 @@ export default {
         const params = new URLSearchParams();
         params.append("kind", node.kind);
         params.append("apiVersion", node.group + "/" + node.version);
-        params.append("names", node.groupItemNames);
         params.append("namespace", node.namespace);
+        params.append("status", node.status);
+        params.append("severity", node.severity);
+        params.append("reason", node.reason);
   
         const response = await Vue.axios.get("/get-grouping-items", {
           params: params,
@@ -241,11 +243,6 @@ export default {
       } catch (error) {
         console.log("Error:", error.toJSON());
         this.alert = true;
-        if (closeOnFailure) {
-          this.resourceIsReady = false;
-          this.selected = {}; // TODO: do we want to reset the selected variable or is `this.resourceIsReady = false` enough?
-        }
-
         if (error.response) {
           if (error.response.status == 404) {
             this.errorMessage =

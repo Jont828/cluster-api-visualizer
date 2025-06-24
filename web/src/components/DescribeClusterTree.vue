@@ -46,11 +46,11 @@
                         }"
                       >
 
-                        <p class="kind font-weight-medium text-truncate">{{ node.collapseOnClick ? node.displayName : node.kind }}</p>
+                        <p class="kind font-weight-medium text-truncate">{{ node.collapseOnClick || node.isGroupingNode ? node.displayName : node.kind }}</p>
 
                         <p
                           class="name font-italic text-truncate"
-                          v-if="!node.collapseOnClick"
+                          v-if="!node.collapseOnClick && !node.isGroupingNode"
                         >{{ node.displayName }}</p>
                         <div 
                           v-else

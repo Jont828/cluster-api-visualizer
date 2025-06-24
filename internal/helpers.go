@@ -147,6 +147,7 @@ func setReadyFields(object ctrlclient.Object, node *ClusterResourceNode) {
 	if readyCondition := tree.GetReadyCondition(object); readyCondition != nil {
 		node.HasReady = true
 		node.Ready = readyCondition.Status == corev1.ConditionTrue
+		node.Status = string(readyCondition.Status)
 		node.Severity = string(readyCondition.Severity)
 		node.Reason = readyCondition.Reason
 	}

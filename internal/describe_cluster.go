@@ -40,6 +40,7 @@ type ClusterResourceNode struct {
 	Collapsible     bool                   `json:"collapsible"`
 	Collapsed       bool                   `json:"collapsed"`
 	Ready           bool                   `json:"ready"`
+	Status          string                 `json:"status"` // Used for calculating groups, `Ready` is used for displaying the status of the node.
 	Severity        string                 `json:"severity"`
 	HasReady        bool                   `json:"hasReady"`
 	Reason          string                 `json:"reason"`
