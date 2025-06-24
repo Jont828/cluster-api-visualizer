@@ -44,6 +44,8 @@ type ClusterResourceNode struct {
 	HasReady        bool                   `json:"hasReady"`
 	Reason          string                 `json:"reason"`
 	Children        []*ClusterResourceNode `json:"children"`
+	IsGroupingNode  bool                   `json:"isGroupingNode"` // Only used for grouping nodes, indicates that the node is a grouping node.
+	GroupItemNames  string                 `json:"groupItemNames"` // Only used for group nodes, contains the names of the items in the group.
 }
 
 type ClusterResourceTreeOptions struct {
@@ -104,17 +106,15 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 
 	_, collapsed := treeOptions.KindsToCollapse[kind]
 	node := &ClusterResourceNode{
-		Name:        object.GetName(),
-		DisplayName: getDisplayName(object),
-		Kind:        kind,
-		Group:       group,
-		Version:     version,
-		Collapsed:   collapsed,
-		Children:    []*ClusterResourceNode{},
-		UID:         string(object.GetUID()),
-	}
-	if node.Namespace = object.GetNamespace(); node.Namespace == "" {
-		node.Namespace = "default"
+		Name:           object.GetName(),
+		DisplayName:    getDisplayName(object),
+		Kind:           kind,
+		Group:          group,
+		Version:        version,
+		Collapsed:      collapsed,
+		Children:       []*ClusterResourceNode{},
+		UID:            string(object.GetUID()),
+		GroupItemNames: "",
 	}
 
 	children := objTree.GetObjectsByParent(object.GetUID())
@@ -123,6 +123,20 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 		log.Error(err, "failed to get provider for object", "kind", kind, "name", object.GetName())
 	}
 	node.Provider = provider
+	if tree.IsGroupObject(object) {
+		node.Kind = strings.TrimSuffix(object.GetObjectKind().GroupVersionKind().Kind, "Group")
+		// TODO: don't hard code this.
+		if node.Kind == "Machine" {
+			node.Provider = "cluster" // MachineGroup is a virtual node that represents a group of machines, so we set the provider to the same one as Machines.
+			node.Group = "cluster.x-k8s.io"
+		}
+		node.IsGroupingNode = true
+		node.GroupItemNames = tree.GetGroupItems(object)
+	}
+
+	if node.Namespace = object.GetNamespace(); node.Namespace == "" {
+		node.Namespace = "default"
+	}
 
 	setReadyFields(object, node)
 
@@ -132,11 +146,11 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 	}
 
 	log.V(4).Info("Node is", "node", node.Kind+"/"+node.Name)
-	if treeOptions.GroupMachines {
-		node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, maxGroupSize)
-	} else {
-		node.Children = childTrees
-	}
+	// if treeOptions.GroupMachines {
+	// 	node.Children = createKindGroupNode(ctx, object.GetNamespace(), "Machine", "cluster", childTrees, maxGroupSize)
+	// } else {
+	node.Children = childTrees
+	// }
 
 	if kind == "Cluster" {
 		node.Children = addAddonsGroupNode(ctx, node.Children)
@@ -146,6 +160,12 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 	node.CollapseOnClick = tree.IsVirtualObject(object)
 	node.CollapseWithTab = len(node.Children) > 0 && !node.CollapseOnClick
 	node.Collapsible = node.CollapseWithTab || node.CollapseOnClick
+
+	if tree.IsGroupObject(object) {
+		node.Collapsible = false
+		node.CollapseOnClick = false
+		node.CollapseWithTab = false
+	}
 
 	sort.Slice(node.Children, func(i, j int) bool {
 		// TODO: make sure this is deterministic!

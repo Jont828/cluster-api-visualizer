@@ -22,7 +22,7 @@
         :treeData="treeData"
         :isStraight="store.straightLinks"
         :legend="legend"
-        @selectNode="fetchCRD"
+        @selectNode="handleSelectNode"
         @scale="(val) => { scale = val }"
         :style="{
           height: Object.keys(selected).length == 0 ? '100%' : (hasConditions() ? 'calc(100% - 84px - 40px)' : 'calc(100% - 84px)') 
@@ -32,7 +32,21 @@
 
       <div
         class="resourceView"
-        v-if="resourceIsReady && this.selected.name"
+        v-if="groupingItemListIsReady && this.selected.name && this.selected.isGroupingNode"
+      >
+        <GroupingItem
+          :items="groupingItemList"
+          :name="selected.displayName"
+          :color="$vuetify.theme.themes[theme].legend[selected.provider]"
+          :ready="selected.ready"
+          :severity="selected.severity"
+          @unselectNode="(val) => { this.selected=val; this.groupingItemListIsReady = false; }"
+          @selectGroupedItem="(val) => { this.selected=val; this.fetchCRD(val, true); }"
+        />
+      </div>
+      <div
+        class="resourceView"
+        v-else-if="resourceIsReady && this.selected.name && !this.selected.isGroupingNode"
       >
         <CustomResourceDefinition
           :items="treeviewResource"
@@ -83,6 +97,7 @@ import Vue from "vue";
 import DescribeClusterTree from "../components/DescribeClusterTree.vue";
 import AppBar from "../components/AppBar.vue";
 import CustomResourceDefinition from "../components/CustomResourceDefinition.vue";
+import GroupingItem from "../components/GroupingItem.vue";
 import AlertMessage from "../components/AlertMessage.vue";
 import SettingsCard from "../components/SettingsCard.vue";
 import ScrollButton from "../components/ScrollButton.vue";
@@ -100,6 +115,7 @@ export default {
     AppBar,
     SettingsCard,
     CustomResourceDefinition,
+    GroupingItem,
     AlertMessage,
     ScrollButton,
   },
@@ -113,6 +129,8 @@ export default {
       treeIsReady: false,
       resourceIsReady: false,
       resource: {},
+      groupingItemListIsReady: false,
+      groupingItemList: [],
       selected: {},
       treeData: {},
       cachedTreeString: "",
@@ -195,6 +213,59 @@ export default {
     },
     linkHandler(val) {
       this.isStraight = val;
+    },
+    async handleSelectNode(node) {
+      if (node.isGroupingNode) {
+        console.log("Selected grouping node:", node);
+        this.fetchGroupItems(node);
+      } else {
+        this.fetchCRD(node, true);
+      }
+    },
+    async fetchGroupItems(node) {
+      try {
+        this.groupingItemListIsReady = false;
+        const params = new URLSearchParams();
+        params.append("kind", node.kind);
+        params.append("apiVersion", node.group + "/" + node.version);
+        params.append("names", node.groupItemNames);
+        params.append("namespace", node.namespace);
+  
+        const response = await Vue.axios.get("/get-grouping-items", {
+          params: params,
+        });
+        console.log("Response is", response.data);
+        this.groupingItemList = response.data;
+        this.selected = node; // Don't select until an error won't pop up
+        this.groupingItemListIsReady = true;
+      } catch (error) {
+        console.log("Error:", error.toJSON());
+        this.alert = true;
+        if (closeOnFailure) {
+          this.resourceIsReady = false;
+          this.selected = {}; // TODO: do we want to reset the selected variable or is `this.resourceIsReady = false` enough?
+        }
+
+        if (error.response) {
+          if (error.response.status == 404) {
+            this.errorMessage =
+              "Cluster Resource `" +
+              node.kind +
+              "` not found";
+          } else {
+            this.errorMessage =
+              "Unable to load Cluster Resource `" +
+              node.kind +
+              "/" +
+              node.name +
+              "`";
+          }
+        } else if (error.request) {
+          this.errorMessage = "No server response received";
+        } else {
+          this.errorMessage = "Unable to create request";
+        }
+      }
     },
     async fetchCRD(node, closeOnFailure = false) {
       if (!node.name || !node.kind || !node.group || !node.version) {

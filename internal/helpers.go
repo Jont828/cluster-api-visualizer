@@ -2,8 +2,10 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	"github.com/gobuffalo/flect"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -43,26 +45,26 @@ func getObjList(ctx context.Context, c ctrlclient.Client, typeMeta metav1.TypeMe
 
 // updateSeverityIfMoreSevere takes an existing severity and a new severity and returns the more severe of the two based on the rule that Error > Warning > Info > None.
 // This is used to determine the severity of a group node, i.e. a node representing 2 Machines in the DescribeCluster resource tree.
-func updateSeverityIfMoreSevere(existingSev string, newSev string) string {
-	switch {
-	case existingSev == "":
-		return newSev
-	case existingSev == "Info":
-		if newSev == "Error" || newSev == "Warning" {
-			return newSev
-		}
-		return existingSev
-	case existingSev == "Warning":
-		if newSev == "Error" {
-			return newSev
-		}
-		return existingSev
-	case existingSev == "Error":
-		return existingSev
-	}
+// func updateSeverityIfMoreSevere(existingSev string, newSev string) string {
+// 	switch {
+// 	case existingSev == "":
+// 		return newSev
+// 	case existingSev == "Info":
+// 		if newSev == "Error" || newSev == "Warning" {
+// 			return newSev
+// 		}
+// 		return existingSev
+// 	case existingSev == "Warning":
+// 		if newSev == "Error" {
+// 			return newSev
+// 		}
+// 		return existingSev
+// 	case existingSev == "Error":
+// 		return existingSev
+// 	}
 
-	return existingSev
-}
+// 	return existingSev
+// }
 
 // getProvider returns the provider type for an object in the Cluster resource tree. If the object is a virtual object and its kind is
 // listed in treeOptions.VNodesToInheritChildProvider, the provider type of the object's children is checked. If all children have the
@@ -124,6 +126,11 @@ func lookUpProvider(object ctrlclient.Object) (string, error) {
 
 // getDisplayName returns the name of an object or the metaName if the object is virtual or has no name.
 func getDisplayName(object ctrlclient.Object) string {
+	if tree.IsGroupObject(object) {
+		items := strings.Split(tree.GetGroupItems(object), tree.GroupItemsSeparator)
+		kind := flect.Pluralize(strings.TrimSuffix(object.GetObjectKind().GroupVersionKind().Kind, "Group"))
+		return fmt.Sprintf("%d %s", len(items), kind)
+	}
 	metaName := tree.GetMetaName(object)
 	displayName := object.GetName()
 	if metaName != "" {

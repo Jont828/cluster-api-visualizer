@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/cluster"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/config"
+	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	configclient "sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -143,6 +144,7 @@ func main() {
 
 	http.Handle("/api/v1/management-cluster/", http.HandlerFunc(handleManagementClusterTree))
 	http.Handle("/api/v1/custom-resource-definition/", http.HandlerFunc(handleCustomResourceDefinitionTree))
+	http.Handle("/api/v1/get-grouping-items/", http.HandlerFunc(handleGetGroupingItems))
 	http.Handle("/api/v1/resource-logs/", http.HandlerFunc(handleGetResourceLogs))
 	http.Handle("/api/v1/describe-cluster/", http.HandlerFunc(handleDescribeClusterTree))
 	http.Handle("/api/v1/version/", http.HandlerFunc(handleGetVersion))
@@ -295,7 +297,7 @@ func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {
 		ShowOtherConditions:     "",
 		ShowMachineSets:         true,
 		Echo:                    true,
-		Grouping:                false,
+		Grouping:                true,
 		AddTemplateVirtualNode:  true,
 		ShowClusterResourceSets: true,
 		ShowTemplates:           true,
@@ -318,6 +320,39 @@ func handleDescribeClusterTree(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		io.Copy(w, bytes.NewReader(marshalled))
 	}
+}
+
+func handleGetGroupingItems(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := ctrl.LoggerFrom(ctx)
+
+	log.V(2).Info("GET call to url", "url", r.URL.Path)
+	log.V(2).Info("GET call params are", "params", r.URL.Query())
+
+	kind := r.URL.Query().Get("kind")
+	apiVersion := r.URL.Query().Get("apiVersion")
+	names := r.URL.Query().Get("names")
+	namespace := r.URL.Query().Get("namespace")
+
+	log.Info("Names are", "names", names)
+	nameList := strings.Split(names, tree.GroupItemsSeparator)
+	// TODO: should the runtimeClient be regenerated here?
+	objects, httpErr := internal.GetGroupItems(ctx, c.ControllerRuntimeClient, kind, apiVersion, namespace, nameList)
+	if httpErr != nil {
+		log.Error(httpErr, "failed to get CRDs for", "kind", kind, "names", names)
+		// http.Error(w, httpErr.Error(), httpErr.Status)
+		return
+	}
+
+	nodes := internal.GroupItemsToResourceNodes(ctx, objects)
+
+	data, err := json.MarshalIndent(nodes, "", "  ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	io.Copy(w, bytes.NewReader(data))
 }
 
 func handleCustomResourceDefinitionTree(w http.ResponseWriter, r *http.Request) {

@@ -52,7 +52,6 @@
     tile
     min-width="0"
     min-height="0"
-    :color="getColor(type)"
     :left="left"
     class="mr-1"
     v-else
@@ -117,6 +116,7 @@ export default {
     // If circle is false, the icon will be displayed in a square with the color as the border. This is meant for the condition chips in the CRD views.
     spinner: Boolean,
     left: Boolean,
+    setColor: Boolean,
   },
   data() {
     return {
@@ -125,8 +125,6 @@ export default {
   },
   methods: {
     getColor(type) {
-      if (!this.circle) return "";
-
       if (type === "unknown") return "error";
 
       if (this.spinner && (type === "warning" || type === "info"))
