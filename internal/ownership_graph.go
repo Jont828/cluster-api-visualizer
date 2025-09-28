@@ -39,7 +39,7 @@ func constructOwnershipGraph(ctx context.Context, c ctrlclient.Client, object ct
 	ownershipGraph.Objects[object.GetUID()] = object
 	for _, ownerRef := range object.GetOwnerReferences() {
 		ref := OwnerRefToObjectRef(ownerRef, object.GetNamespace())
-		owner, err := external.Get(ctx, c, ref, object.GetNamespace())
+		owner, err := external.Get(ctx, c, ref)
 		if err != nil {
 			return err
 		}

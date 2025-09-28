@@ -139,8 +139,8 @@ func getDisplayName(object ctrlclient.Object) string {
 func setReadyFields(object ctrlclient.Object, node *ClusterResourceNode) {
 	if readyCondition := tree.GetReadyCondition(object); readyCondition != nil {
 		node.HasReady = true
-		node.Ready = readyCondition.Status == corev1.ConditionTrue
-		node.Severity = string(readyCondition.Severity)
+		node.Ready = readyCondition.Status == metav1.ConditionTrue // string comparison
+		node.Severity = "" // No Severity field; optionally use readyCondition.Reason or Message if needed
 	}
 }
 
