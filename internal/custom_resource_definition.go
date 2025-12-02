@@ -16,7 +16,7 @@ func GetCustomResource(ctx context.Context, runtimeClient ctrlclient.Client, kin
 		Name:       name,
 		APIVersion: apiVersion,
 	}
-	object, err := external.Get(ctx, runtimeClient, &objectRef, namespace)
+	object, err := external.Get(ctx, runtimeClient, &objectRef)
 	if err != nil {
 		return nil, &HTTPError{404, err.Error()}
 	}

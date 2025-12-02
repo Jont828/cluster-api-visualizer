@@ -17,7 +17,7 @@ RUN npm run build
 # Build the Go binary.
 # Alpine is chosen for its small footprint
 # compared to Ubuntu
-FROM golang:1.22-alpine as builder
+FROM golang:1.24-alpine as builder
 
 # Need to redeclare ARCH to use in Go build stage
 ARG ARCH
@@ -31,7 +31,7 @@ COPY go.mod ./
 COPY go.sum ./
 
 RUN --mount=type=cache,target=/go/pkg/mod \
-go mod download
+  go mod download
 
 COPY ./main.go /app/
 COPY ./internal /app/internal

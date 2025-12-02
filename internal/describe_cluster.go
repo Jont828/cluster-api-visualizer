@@ -10,7 +10,7 @@ import (
 	"github.com/gobuffalo/flect"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/tree"
 	"sigs.k8s.io/cluster-api/controllers/external"
@@ -332,7 +332,7 @@ func injectCustomResourcesToObjectTree(ctx context.Context, c ctrlclient.Client,
 
 	clusterObjSelector := []ctrlclient.ListOption{
 		ctrlclient.InNamespace(namespace),
-		ctrlclient.MatchingLabels{clusterv1.ClusterNameLabel: clusterName},
+		ctrlclient.MatchingLabels{clusterv2.ClusterNameLabel: clusterName},
 	}
 
 	providerTypeOverrideMap := make(map[string]string)
@@ -411,7 +411,7 @@ func ensureObjConnectedTotree(ctx context.Context, c ctrlclient.Client, objTree 
 	// TODO: handle case where there is no controllerRef or how to resolve multiple owners.
 	ref := pickOwner(ctx, c, object)
 	if ref != nil {
-		if p, err := external.Get(ctx, c, ref, object.GetNamespace()); err != nil {
+		if p, err := external.Get(ctx, c, ref); err != nil {
 			return err
 		} else {
 			parent = p

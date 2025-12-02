@@ -4,9 +4,9 @@ import (
 	"context"
 	"sort"
 
-	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,7 +42,7 @@ func ConstructMultiClusterTree(ctx context.Context, ctrlClient ctrlclient.Client
 		IsManagement:           true,
 	}
 
-	clusterList := &clusterv1.ClusterList{}
+	clusterList := &clusterv2.ClusterList{}
 
 	// TODO: should we use ctrlClient.MatchingLabels or try to use the labelSelector itself?
 	if err := ctrlClient.List(ctx, clusterList); err != nil {
@@ -60,20 +60,20 @@ func ConstructMultiClusterTree(ctx context.Context, ctrlClient ctrlclient.Client
 	})
 
 	for _, cluster := range clusterList.Items {
-		readyCondition := conditions.Get(&cluster, clusterv1.ReadyCondition)
+		readyCondition := conditions.Get(&cluster, clusterv2.ReadyCondition)
 
 		workloadCluster := MultiClusterTreeNode{
 			Name:         cluster.GetName(),
 			Namespace:    cluster.GetNamespace(),
 			IsManagement: false,
 			Phase:        cluster.Status.Phase,
-			Ready:        readyCondition != nil && readyCondition.Status == corev1.ConditionTrue,
+			Ready:        readyCondition != nil && readyCondition.Status == metav1.ConditionTrue,
 			Children:     []*MultiClusterTreeNode{},
 		}
 
 		// TODO: edge case in topology Clusters where infraRef is nil if it fails to create.
 		// In that case we can try to fetch the ClusterClass and read the infraRef from there and trim the output, i.e. DockerClusterTemplate => DockerCluster.
-		if cluster.Spec.InfrastructureRef != nil {
+		if cluster.Spec.InfrastructureRef != (clusterv2.ContractVersionedObjectReference{}) {
 			workloadCluster.InfrastructureProvider = cluster.Spec.InfrastructureRef.Kind
 		}
 
