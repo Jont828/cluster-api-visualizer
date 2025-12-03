@@ -39,9 +39,8 @@ type ClusterResourceNode struct {
 	CollapseOnClick bool                   `json:"collapseOnClick"`
 	Collapsible     bool                   `json:"collapsible"`
 	Collapsed       bool                   `json:"collapsed"`
-	Ready           bool                   `json:"ready"`
-	Severity        string                 `json:"severity"`
-	HasReady        bool                   `json:"hasReady"`
+	Status          metav1.ConditionStatus `json:"status"`
+	HasStatus       bool                   `json:"hasStatus"`
 	Children        []*ClusterResourceNode `json:"children"`
 }
 
@@ -123,7 +122,7 @@ func objectTreeToResourceTree(ctx context.Context, objTree *tree.ObjectTree, obj
 	}
 	node.Provider = provider
 
-	setReadyFields(object, node)
+	setStatusFields(object, node)
 
 	childTrees := []*ClusterResourceNode{}
 	for _, child := range children {
@@ -170,9 +169,8 @@ func addAddonsGroupNode(_ context.Context, children []*ClusterResourceNode) []*C
 		CollapseOnClick: true,
 		Collapsible:     true,
 		Collapsed:       false,
-		HasReady:        false,
-		Ready:           true,
-		Severity:        "",
+		HasStatus:       false,
+		Status:          "",
 		UID:             "addons",
 	}
 
@@ -229,9 +227,8 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 		CollapseOnClick: true,
 		Collapsible:     true,
 		Collapsed:       true,
-		HasReady:        false,
-		Ready:           true,
-		Severity:        "",
+		HasStatus:       false,
+		Status:          "",
 		UID:             kind + ": ",
 	}
 
@@ -252,9 +249,8 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 				Collapsible:     true,
 				Collapsed:       true,
 				Children:        []*ClusterResourceNode{},
-				HasReady:        false,
-				Ready:           true,
-				Severity:        "",
+				HasStatus:       false,
+				Status:          "",
 				UID:             kind + ": ",
 			}
 		}
@@ -269,14 +265,12 @@ func createKindGroupNode(ctx context.Context, namespace string, kind string, pro
 			groupParent.Group = child.Group
 			groupParent.Version = child.Version
 			groupParent.UID += child.UID + " "
-			if child.HasReady {
-				groupNode.HasReady = true
-				groupNode.Ready = child.Ready && groupNode.Ready
-				groupNode.Severity = updateSeverityIfMoreSevere(groupNode.Severity, child.Severity)
-				// Set severity based on most severe child, i.e. Error > Warning > Info > Success
-				groupParent.HasReady = true
-				groupParent.Ready = child.Ready && groupParent.Ready
-				groupParent.Severity = updateSeverityIfMoreSevere(groupParent.Severity, child.Severity)
+			if child.HasStatus {
+				groupNode.HasStatus = true
+				groupNode.Status = updateStatusIfMoreSevere(groupNode.Status, child.Status)
+				// Set severity based on most severe child, i.e. False > Unknown > True (assuming positive polarity)
+				groupParent.HasStatus = true
+				groupParent.Status = updateStatusIfMoreSevere(groupParent.Status, child.Status)
 			}
 		} else {
 			resultChildren = append(resultChildren, child)

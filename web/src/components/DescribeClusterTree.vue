@@ -110,8 +110,8 @@
             </v-hover>
 
             <StatusBadge
-              v-if="node.hasReady"
-              :type="(node.ready) ? 'success' : node.severity.toLowerCase()"
+              v-if="node.hasStatus"
+              :type="getStatusType(node)"
               :size="18"
             ></StatusBadge>
           </div>
@@ -175,6 +175,18 @@ export default {
     selectedNode: Object,
     legend: Object,
   },
+  methods: {
+    getStatusType(node) {
+      // Note: 
+      if (node.status === "True") {
+        return "success";
+      } else if (node.status === "False") {
+        return "error";
+      } else { // Handles the case for node.status === "Unknown"
+        return "warning";
+      } 
+    },
+  }
 };
 </script>
 

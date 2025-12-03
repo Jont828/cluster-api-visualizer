@@ -73,7 +73,6 @@
             <v-tooltip
               :top="scrollY <= 20"
               :bottom="scrollY > 20"
-              :disabled="condition.status === 'True'"
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-chip
@@ -90,7 +89,7 @@
                   v-on="on"
                 >
                   <StatusIcon
-                    :type="condition.status === 'True' ? 'success' : (condition.Status === 'Unknown' ? 'unknown' : (condition.severity ? condition.severity.toLowerCase() : 'unknown' ))"
+                    :type="getIconType(condition)"
                     :spinnerWidth="2"
                     left
                   >
@@ -99,10 +98,7 @@
                   {{ condition.type }}
                 </v-chip>
               </template>
-              <span v-if="condition.severity && condition.reason">{{ condition.severity }}: {{ condition.reason }}</span>
-              <span v-else-if="condition.severity">{{ condition.severity }}</span>
-              <span v-else-if="condition.reason">{{ condition.reason }}</span>
-              <span v-else>Unknown</span>
+              <span> {{ condition.reason }}</span>
             </v-tooltip>
           </div>
         </div>
@@ -189,6 +185,15 @@ export default {
       conditions: [],
       url: "",
       scrollY: 0,
+      negativePolarityConditions: new Set([
+        "Paused",
+        "Deleting",
+        "RollingOut",
+        "ScalingUp",
+        "ScalingDown",
+        "MachineUpdating",
+        "Remediating",
+      ]),
     };
   },
   mounted() {
@@ -202,10 +207,25 @@ export default {
     console.log("URL is", this.url);
   },
   methods: {
+    getIconType(condition) {
+      let negativePolarity = this.negativePolarityConditions.has(condition.type); 
+      if (condition.status === "True") {
+        if (negativePolarity) return "error";
+        return "success";
+      } else if (condition.status === "False") {
+        if (negativePolarity) return "success";
+        return "error";
+      } else {
+        return "unknown";
+      }
+    },
     getType(condition) {
-      if (condition.status === "True") return "success";
-      else if (condition.isError || !condition.severity || condition.status === "Unknown") return "error"; // if severity is undefined, we assume it's an error
-      else return "warning";
+      let type = this.getIconType(condition);
+      if (type === "unknown") {
+        return "warning";
+      } else {
+        return type;
+      }
     },
     onScroll(e) {
       this.scrollY = window.scrollY;
