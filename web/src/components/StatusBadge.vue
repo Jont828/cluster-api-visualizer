@@ -60,20 +60,6 @@ export default {
       return this.$vuetify.theme.dark ? "dark" : "light";
     },
   },
-  methods: {
-    getColor() {
-      switch (this.type) {
-        case "ready":
-          return colors.green.base;
-        case "error":
-          return colors.red.accent2;
-        case "loading":
-          return colors.orange.darken1;
-        default:
-          return colors.grey;
-      }
-    },
-  },
 };
 </script>
 

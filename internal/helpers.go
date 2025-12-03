@@ -41,27 +41,22 @@ func getObjList(ctx context.Context, c ctrlclient.Client, typeMeta metav1.TypeMe
 	return objList, nil
 }
 
-// updateSeverityIfMoreSevere takes an existing severity and a new severity and returns the more severe of the two based on the rule that Error > Warning > Info > None.
-// This is used to determine the severity of a group node, i.e. a node representing 2 Machines in the DescribeCluster resource tree.
-func updateSeverityIfMoreSevere(existingSev string, newSev string) string {
+// updateStatusIfMoreSevere takes an existing Status and a new Status and returns the more severe of the two based on the rule that False > Unknown > True.
+// Since Ready and Available conditions are used to determine the status of an object, both of which have positive polarity, we do not need to consider negative polarity conditions here.
+// This is used to determine the Status of a group node, i.e. a node representing 2 Machines in the DescribeCluster resource tree.
+func updateStatusIfMoreSevere(existingStatus metav1.ConditionStatus, newStatus metav1.ConditionStatus) metav1.ConditionStatus {
 	switch {
-	case existingSev == "":
-		return newSev
-	case existingSev == "Info":
-		if newSev == "Error" || newSev == "Warning" {
-			return newSev
-		}
-		return existingSev
-	case existingSev == "Warning":
-		if newSev == "Error" {
-			return newSev
-		}
-		return existingSev
-	case existingSev == "Error":
-		return existingSev
+	case existingStatus == "":
+		return newStatus
+	case existingStatus == metav1.ConditionTrue:
+		return newStatus
+	case existingStatus == metav1.ConditionFalse:
+		return existingStatus
+	case existingStatus == metav1.ConditionUnknown && newStatus == metav1.ConditionFalse:
+		return newStatus
 	}
 
-	return existingSev
+	return existingStatus
 }
 
 // getProvider returns the provider type for an object in the Cluster resource tree. If the object is a virtual object and its kind is
@@ -135,12 +130,17 @@ func getDisplayName(object ctrlclient.Object) string {
 	return displayName
 }
 
-// setReadyFields sets a marker on if an object has a ready condtion, and if so, whether it is ready or not and the severity of the condition.
-func setReadyFields(object ctrlclient.Object, node *ClusterResourceNode) {
-	if readyCondition := tree.GetReadyCondition(object); readyCondition != nil {
-		node.HasReady = true
-		node.Ready = readyCondition.Status == metav1.ConditionTrue // string comparison
-		node.Severity = "" // No Severity field; optionally use readyCondition.Reason or Message if needed
+// setStatusFields sets a marker on if an object has a ready condtion, and if so, whether it is ready or not and the severity of the condition.
+func setStatusFields(object ctrlclient.Object, node *ClusterResourceNode) {
+	// Note: Ready and Available conditions always have positive polarity.
+
+	// Available condition takes precedence over Ready condition. Note, clusterctl uses Ready over Available for Machines, which have both.
+	if available := tree.GetAvailableCondition(object); available != nil {
+		node.HasStatus = true
+		node.Status = available.Status
+	} else if readyCondition := tree.GetReadyCondition(object); readyCondition != nil {
+		node.HasStatus = true
+		node.Status = readyCondition.Status
 	}
 }
 

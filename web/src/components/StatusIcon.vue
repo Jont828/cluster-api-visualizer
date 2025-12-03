@@ -125,9 +125,10 @@ export default {
   },
   methods: {
     getColor(type) {
+      console.log("Getting color for type", type);
       if (!this.circle) return "";
 
-      if (type === "unknown") return "error";
+      if (type == "unknown") return "error";
 
       if (this.spinner && (type === "warning" || type === "info"))
         return "warning";
