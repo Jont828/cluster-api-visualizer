@@ -27,14 +27,7 @@ module.exports = {
     },
     client: {
       webSocketTransport: 'sockjs',
-      webSocketURL: 'auto://0.0.0.0:0/ws',
-      overlay: {
-        errors: true,
-        warnings: false,
-      },
     },
     webSocketServer: 'sockjs',
-    hot: true,
-    liveReload: true,
   },
 }
