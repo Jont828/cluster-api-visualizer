@@ -1,9 +1,12 @@
-# Cluster API Visualizer (CAPI V8r)
+<a href="https://cluster-api.sigs.k8s.io"><img alt="capi" src="./docs/images/cluster-api-logo.svg" width="160x" /></a>
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/Jont828/cluster-api-visualizer.svg)](https://pkg.go.dev/github.com/Jont828/cluster-api-visualizer)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Jont828/cluster-api-visualizer)](https://goreportcard.com/report/github.com/Jont828/cluster-api-visualizer)
+[![Slack](https://img.shields.io/badge/join%20slack-%23cluster--api-brightgreen)](http://slack.k8s.io/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Jont828/cluster-api-visualizer)
 [![Latest Release](https://img.shields.io/github/v/release/Jont828/cluster-api-visualizer)](https://github.com/Jont828/cluster-api-visualizer/releases/latest)
+
+# Cluster API Visualizer (CAPI V8r)
 
 Cluster API developers and operators often need to quickly get insight multicluster configuration. This app provides that insight by making Cluster API significantly more accessible and easier to understand for both new and experienced users. It gives a bird’s eye view of a multicluster architecture, visualizes all the Cluster API custom resources for each cluster, and provides quick access to the specs and status of any resource.
 
