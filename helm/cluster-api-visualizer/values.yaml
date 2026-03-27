@@ -11,3 +11,14 @@ label:
 
 service:
   type: ClusterIP
+
+ingress:
+  enabled: false
+  className: ""
+  #annotations:
+  #  cert-manager.io/cluster-issuer: vault
+  hostname: capi-visualizer.local
+  tls: [] 
+  #  - hosts:
+  #      - capi-visualizer.local
+  #    secretName: capi-visualizer-cert
