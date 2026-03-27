@@ -8,4 +8,4 @@ maintainers:
 sources:
 - https://github.com/Jont828/cluster-api-visualizer
 appVersion: "v1.5.0"
-version: 1.5.0
+version: 1.6.0
